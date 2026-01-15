@@ -1,4 +1,7 @@
-mvn compile -DSkipTests ; mvn spring-boot:run
+mvn compile -DSkipTests ; mvn spring-boot:run -DSkipTests
+
+taskkill /F /IM java.exe
+mvn clean install -DskipTests ; mvn spring-boot:run -DSkipTests
 
 taskkill /F /IM node.exe # si claude dit addrinuse :  Unable to connect to API (EADDRINUSE)
 

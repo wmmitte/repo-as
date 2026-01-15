@@ -21,8 +21,11 @@ leMitte
 
 # Fichiers de dépendances (si vous utilisez un gestionnaire de dépendances comme Maven ou Gradle)
 *.jar
+*.jar.*
 *.war
+*.war.*
 *.ear
+*.ear.*
 
 # Fichiers de logs
 *.log
