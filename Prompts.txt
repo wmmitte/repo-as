@@ -1,0 +1,285 @@
+mvn compile -DSkipTests ; mvn spring-boot:run
+
+taskkill /F /IM node.exe # si claude dit addrinuse :  Unable to connect to API (EADDRINUSE)
+
+===
+Voici quelques regles que tu vas de voir savoir et note ça dans ta mémoire pour t'en souvenir à chaque contexte :
+# Utilise toujours le français tant que possible pour le nommage des noms des fonctions, des variables et aussi des colonnes dans les tables
+
+# Les interfaces doivent être mobiles firts, donc parfaitement responsives. l'application utitlise la librairies css "daysyUI" Donc il faut te baser sur ça.
+
+=====
+C'est un projet fait en microservices et ils se trouvent tous dans le dossier "D:\Binaries\repo-as\spring-microservice". 
+- Le backend est fait avec du java spring boot
+- le frontend se trouve dans le dossier "D:\Binaries\repo-as\spring-microservice\gateway\src\main\resources\frontend" et est fait avec du react. il fait partie du microservice "Gateway"
+- l'authentification utilise keycloak (tu verras les configs dans le docker-compose.yml
+- Toute l'infrastructure est piloté en utilisant docker / docker-compose. Le fichier docker-compose est situé à "D:\Binaries\repo-as\docker-compose.yml".
+
+Je veux tu stocke tout ceci en mémoire pour ne pas te perdre, et ensuite tu analyse bien ce qui est déjà fait dans le projet les différents microservices, le frontend (leur structuration, etc..) et ensuite tu sauvegarde ou documente le tout et enuite on va implémenter d'autres fonctionnalités
+
+
+==
+MAIL 
+ mail:
+    host: mail.songotechnologies.com
+    port: 587
+    username: noreply@songotechnologies.com
+    password: bQ6*uagUXnwV6JE
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# Configuration de la vérification d'email
+app:
+  verification:
+    token-expiration-hours: 72
+    base-url: http://localhost:8090
+  mail:
+    from: noreplay@songotechnologies.com
+    from-name: Plateforme Intermediation
+
+====
+POWERSHELL SCRIPT
+
+Pour exécuter le script PowerShell que j'ai créé, voici les étapes :
+
+  Exécution du Script
+
+  Depuis l'invite de commandes Windows (CMD) :
+  powershell -ExecutionPolicy Bypass -File "D:\Binaries\repo-as\check-keycloak-user.ps1"
+
+  Ou depuis PowerShell directement :
+  Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+  .\check-keycloak-user.ps1
+
+  Prérequis
+
+  1. Keycloak doit être démarré sur le port 8098
+  2. Le script utilise les credentials admin par défaut :
+    - Username: admin
+    - Password: admin
+
+  Modifier l'email à vérifier
+
+  Le script vérifie actuellement l'utilisateur anptic.gov.bf@gmail.com. Pour vérifier un autre utilisateur, modifiez la ligne 18 du script :
+
+  $email = "anptic.gov.bf@gmail.com"  # ← Remplacez par l'email désiré
+
+  Par exemple, pour vérifier l'utilisateur root :
+  $email = "root@pitm.com"
+
+  Ce que le script affiche
+
+  Le script affiche :
+  - ✅ Informations de l'utilisateur (ID, username, email, nom, statut email vérifié)
+  - ✅ Rôles Realm effectifs (hors rôles par défaut comme default-*, offline_*, uma_authorization)
+  - ✅ Groupes auxquels appartient l'utilisateur
+
+  D'après l'exécution précédente, l'utilisateur anptic.gov.bf@gmail.com possède :
+  - Rôles : expert, utilisateur
+  - Groupes : Expert
+  - Email vérifié : Non (False)
+
+===== SUITE COURS CLIENRS SCOPES
+
+ mais dis moi pour les clients scopes la, ya un format prédeifini qu"on doit forcement respecté pour le champ 'Token Claim
+  Name' ?
+
+● Excellente question ! Non, il n'y a pas de format obligatoire absolu, mais il y a des conventions standards et des formats attendus par votre code.
+
+  Conventions standards JWT
+
+  1. Claims standards OAuth2/OIDC (réservés)
+
+  Ces claims ont des noms prédéfinis par les spécifications OAuth2/OIDC :
+  - sub - Subject (ID utilisateur)
+  - email - Email
+  - name - Nom complet
+  - given_name - Prénom
+  - family_name - Nom de famille
+  - preferred_username - Username préféré
+  - iss - Issuer (émetteur du token)
+  - aud - Audience (destinataire)
+  - exp - Expiration
+  - iat - Issued At (date création)
+
+  👉 Ces noms sont standards et ne doivent PAS être modifiés
+
+  2. Claims personnalisés (vous choisissez)
+
+  Pour vos propres données, vous pouvez utiliser n'importe quel nom, mais certaines conventions existent :
+
+  a) Structure plate (simple)
+
+  {
+    "email": "user@example.com",
+    "mon_role": "expert",
+    "ma_donnee": "valeur"
+  }
+  ✅ Token Claim Name: mon_role, ma_donnee
+
+  b) Structure imbriquée (recommandée pour organiser)
+
+  {
+    "email": "user@example.com",
+    "realm_access": {
+      "roles": ["expert", "manager"]
+    },
+    "custom_data": {
+      "department": "IT",
+      "level": 5
+    }
+  }
+  ✅ Token Claim Name: realm_access.roles, custom_data.department
+
+  La notation pointée (realm_access.roles) crée automatiquement la structure imbriquée.
+
+  Formats spécifiques à Keycloak
+
+  Keycloak a des conventions recommandées (mais pas obligatoires) :
+
+  1. Rôles Realm
+
+  Convention Keycloak : realm_access.roles
+  {
+    "realm_access": {
+      "roles": ["expert", "manager", "rh"]
+    }
+  }
+
+  2. Rôles Client
+
+  Convention Keycloak : resource_access.${client_id}.roles
+  {
+    "resource_access": {
+      "pitm-auth-service": {
+        "roles": ["admin", "user"]
+      },
+      "autre-client": {
+        "roles": ["viewer"]
+      }
+    }
+  }
+
+  Le ${client_id} est une variable remplacée automatiquement par Keycloak.
+
+  3. Groupes
+
+  Convention Keycloak : groups
+  {
+    "groups": ["/Managers", "/Experts", "/RH"]
+  }
+
+  Pourquoi respecter certains formats ?
+
+  Ce qui est CRITIQUE : Cohérence avec votre code
+
+  Votre code s'attend à trouver les rôles à des endroits précis :
+
+  Dans le Gateway (UserPropagationGatewayFilter.java:99-114)
+
+  // Le code cherche ici :
+  Object realmAccess = oidcUser.getClaim("realm_access");
+  if (realmAccess instanceof Map) {
+      Object realmRoles = ((Map<?, ?>) realmAccess).get("roles");
+      // ...
+  }
+
+  Si vous mettez Token Claim Name = "mes_roles" au lieu de "realm_access.roles", le code ne trouvera rien ! ❌
+
+  Dans le Service Auth (AuthController.java:131-168)
+
+  // Le code cherche aussi ici :
+  Object resourceAccess = principal.getClaim("resource_access");
+  if (resourceAccess instanceof Map) {
+      Object clientResource = ((Map<?, ?>) resourceAccess).get("pitm-auth-service");
+      // ...
+  }
+
+  Exemples de configurations valides
+
+  ✅ Configuration 1 : Suivre la convention Keycloak (recommandé)
+
+  Token Claim Name: realm_access.roles
+  Le JWT contiendra :
+  {
+    "realm_access": {
+      "roles": ["expert", "manager"]
+    }
+  }
+  👉 Avantage : Compatible avec tous les clients Keycloak, standard
+
+  ✅ Configuration 2 : Format personnalisé (si vous adaptez le code)
+
+  Token Claim Name: user_permissions.application_roles
+  Le JWT contiendra :
+  {
+    "user_permissions": {
+      "application_roles": ["expert", "manager"]
+    }
+  }
+  👉 Mais il faut adapter le code Java pour chercher à cet endroit !
+
+  ❌ Configuration incorrecte (ce qui s'est passé chez vous)
+
+  Token Claim Name:  realm_access.roles
+                    ↑ ESPACE ICI
+  Le JWT contenait :
+  {
+    " realm_access": {
+      "roles": ["expert"]
+    }
+  }
+  👉 Le code cherche realm_access mais trouve " realm_access" (avec espace) → FAIL
+
+  Variables spéciales Keycloak
+
+  Certaines variables sont remplacées dynamiquement :
+
+  - ${client_id} → Remplacé par l'ID du client (ex: pitm-auth-service)
+  - ${azp} → Authorized party
+  - ${username} → Username de l'utilisateur
+
+  Exemple :
+  Token Claim Name: resource_access.${client_id}.roles
+  Devient dans le JWT :
+  {
+    "resource_access": {
+      "pitm-auth-service": {
+        "roles": ["admin"]
+      }
+    }
+  }
+
+  Règles d'or
+
+  1. ✅ Utiliser les conventions Keycloak pour les rôles et groupes (plus facile à maintenir)
+  2. ✅ Pas d'espaces avant ou après les noms de claims
+  3. ✅ Cohérence avec le code : si votre code cherche realm_access.roles, utilisez ce format
+  4. ✅ Documentation : si vous créez des claims personnalisés, documentez-les
+  5. ⚠️ Ne pas modifier les claims standards (sub, email, name, etc.)
+
+  Pour vérifier vos claims
+
+  Vous pouvez toujours décoder un JWT pour voir exactement ce qu'il contient :
+
+  Outil en ligne : https://jwt.io
+
+  Ou utilisez le script PowerShell que j'ai créé :
+  powershell -ExecutionPolicy Bypass -File "D:\Binaries\repo-as\decode-jwt-token.ps1"
+
+  ---
+  En résumé : Pas de format obligatoire absolu, mais votre code s'attend à des formats spécifiques. Il faut soit :
+  - Suivre les conventions Keycloak (realm_access.roles, resource_access.${client_id}.roles)
+  - Ou adapter votre code Java pour chercher vos claims personnalisés
+
+  Est-ce que ça répond à votre question ? 😊
+
+✻ Cogitated for 39s
