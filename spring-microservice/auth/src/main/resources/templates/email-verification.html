@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérifiez votre adresse email</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .email-wrapper {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 30px;
+            color: #555;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .verify-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            text-decoration: none;
+            padding: 14px 40px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+        .verify-button:hover {
+            transform: translateY(-2px);
+        }
+        .expiration-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #856404;
+        }
+        .link-fallback {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+            word-break: break-all;
+            color: #666;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="header">
+                <h1>Plateforme d'Intermédiation</h1>
+            </div>
+            <div class="content">
+                <p class="greeting">Bonjour <strong><span th:text="${prenom}">Prénom</span> <span th:text="${nom}">Nom</span></strong>,</p>
+
+                <p class="message">
+                    Merci de vous être inscrit sur notre plateforme ! Pour finaliser votre inscription
+                    et accéder à toutes les fonctionnalités, veuillez vérifier votre adresse email
+                    en cliquant sur le bouton ci-dessous.
+                </p>
+
+                <div class="button-container">
+                    <a th:href="${lienVerification}" class="verify-button">
+                        Vérifier mon email
+                    </a>
+                </div>
+
+                <div class="expiration-notice">
+                    <strong>Important :</strong> Ce lien est valide pendant <span th:text="${dureeValidite}">72 heures</span>.
+                    Passé ce délai, vous devrez demander un nouveau lien de vérification.
+                </div>
+
+                <div class="link-fallback">
+                    <p>Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur :</p>
+                    <p th:text="${lienVerification}">https://example.com/verifier-email?token=xxx</p>
+                </div>
+            </div>
+            <div class="footer">
+                <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+                <p>Si vous n'5avez pas créé de compte, vous pouvez ignorer cet email.</p>
+                <p>&copy; 2025 Plateforme d'Intermédiation. Tous droits réservés.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

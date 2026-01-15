@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email vérifié avec succès</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .email-wrapper {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px 10px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 30px;
+            color: #555;
+        }
+        .success-box {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+            color: #155724;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .login-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            text-decoration: none;
+            padding: 14px 40px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .features-list {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .features-list h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .features-list ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #666;
+        }
+        .features-list li {
+            margin: 8px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="header">
+                <div class="success-icon">&#10004;</div>
+                <h1>Email vérifié !</h1>
+            </div>
+            <div class="content">
+                <p class="greeting">Félicitations <strong><span th:text="${prenom}">Prénom</span></strong> !</p>
+
+                <div class="success-box">
+                    Votre adresse email a été vérifiée avec succès.
+                    Votre compte est maintenant actif.
+                </div>
+
+                <p class="message">
+                    Vous pouvez désormais vous connecter à votre compte et profiter
+                    de toutes les fonctionnalités de notre plateforme.
+                </p>
+
+                <div class="features-list">
+                    <h3>Quelle suite ?</h3>
+                    <ul>
+                        <li>Compléter votre profil</li>
+                        <li>Parcourir les expertises disponibles</li>
+                        <li>Contacter des experts</li>
+                        <li>Proposer vos propres services</li>
+                    </ul>
+                </div>
+
+                <div class="button-container">
+                    <a th:href="${lienConnexion}" class="login-button">
+                        Se connecter
+                    </a>
+                </div>
+            </div>
+            <div class="footer">
+                <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+                <p>&copy; 2025 Plateforme d'Intermédiation. Tous droits réservés.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

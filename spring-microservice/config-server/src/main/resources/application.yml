@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: config-server
+
+  security:
+    user:
+      name: root
+      password: s3cr3t
+
+  cloud:
+    config:
+      server:
+        git:
+#          uri: ${user.home}/WindsurfProjects/projects/config-repo
+          uri: D:\Binaries\repo-as\config-repo
+          default-label: main
+          clone-on-start: true
+          force-pull: true
+        bootstrap: true
+
+server:
+  port: 8888

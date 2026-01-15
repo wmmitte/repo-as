@@ -1,0 +1,122 @@
+[
+  {
+    "intitule": "AWS Certified Solutions Architect",
+    "description": "Certification Amazon Web Services pour architectes cloud",
+    "organismeDelivrant": "Amazon Web Services",
+    "urlVerification": "https://aws.amazon.com/certification/"
+  },
+  {
+    "intitule": "AWS Certified Developer",
+    "description": "Certification Amazon Web Services pour développeurs",
+    "organismeDelivrant": "Amazon Web Services",
+    "urlVerification": "https://aws.amazon.com/certification/"
+  },
+  {
+    "intitule": "Google Cloud Professional",
+    "description": "Certification Google Cloud Platform",
+    "organismeDelivrant": "Google",
+    "urlVerification": "https://cloud.google.com/certification"
+  },
+  {
+    "intitule": "Microsoft Azure Administrator",
+    "description": "Certification Microsoft Azure pour administrateurs",
+    "organismeDelivrant": "Microsoft",
+    "urlVerification": "https://learn.microsoft.com/certifications/"
+  },
+  {
+    "intitule": "Microsoft Azure Developer",
+    "description": "Certification Microsoft Azure pour développeurs",
+    "organismeDelivrant": "Microsoft",
+    "urlVerification": "https://learn.microsoft.com/certifications/"
+  },
+  {
+    "intitule": "Oracle Certified Professional Java",
+    "description": "Certification Oracle pour développeurs Java",
+    "organismeDelivrant": "Oracle",
+    "urlVerification": "https://education.oracle.com/certification"
+  },
+  {
+    "intitule": "Certified Kubernetes Administrator (CKA)",
+    "description": "Certification d'administration Kubernetes",
+    "organismeDelivrant": "Cloud Native Computing Foundation",
+    "urlVerification": "https://www.cncf.io/certification/cka/"
+  },
+  {
+    "intitule": "Certified Kubernetes Application Developer (CKAD)",
+    "description": "Certification de développement d'applications Kubernetes",
+    "organismeDelivrant": "Cloud Native Computing Foundation",
+    "urlVerification": "https://www.cncf.io/certification/ckad/"
+  },
+  {
+    "intitule": "PMP - Project Management Professional",
+    "description": "Certification en gestion de projet",
+    "organismeDelivrant": "Project Management Institute",
+    "urlVerification": "https://www.pmi.org/certifications"
+  },
+  {
+    "intitule": "Scrum Master Certified (SMC)",
+    "description": "Certification Scrum Master",
+    "organismeDelivrant": "Scrum Alliance",
+    "urlVerification": "https://www.scrumalliance.org/"
+  },
+  {
+    "intitule": "Certified Scrum Product Owner (CSPO)",
+    "description": "Certification Product Owner Scrum",
+    "organismeDelivrant": "Scrum Alliance",
+    "urlVerification": "https://www.scrumalliance.org/"
+  },
+  {
+    "intitule": "ITIL Foundation",
+    "description": "Certification en gestion des services informatiques",
+    "organismeDelivrant": "AXELOS",
+    "urlVerification": "https://www.axelos.com/certifications/itil"
+  },
+  {
+    "intitule": "Cisco CCNA",
+    "description": "Certification réseau Cisco niveau associé",
+    "organismeDelivrant": "Cisco",
+    "urlVerification": "https://www.cisco.com/c/en/us/training-events/training-certifications.html"
+  },
+  {
+    "intitule": "Cisco CCNP",
+    "description": "Certification réseau Cisco niveau professionnel",
+    "organismeDelivrant": "Cisco",
+    "urlVerification": "https://www.cisco.com/c/en/us/training-events/training-certifications.html"
+  },
+  {
+    "intitule": "CompTIA Security+",
+    "description": "Certification en sécurité informatique",
+    "organismeDelivrant": "CompTIA",
+    "urlVerification": "https://www.comptia.org/certifications/security"
+  },
+  {
+    "intitule": "Certified Information Security Manager (CISM)",
+    "description": "Certification en gestion de la sécurité de l'information",
+    "organismeDelivrant": "ISACA",
+    "urlVerification": "https://www.isaca.org/credentialing/cism"
+  },
+  {
+    "intitule": "Certified Ethical Hacker (CEH)",
+    "description": "Certification en hacking éthique",
+    "organismeDelivrant": "EC-Council",
+    "urlVerification": "https://www.eccouncil.org/programs/certified-ethical-hacker-ceh/"
+  },
+  {
+    "intitule": "Terraform Associate",
+    "description": "Certification HashiCorp Terraform",
+    "organismeDelivrant": "HashiCorp",
+    "urlVerification": "https://www.hashicorp.com/certification"
+  },
+  {
+    "intitule": "Docker Certified Associate",
+    "description": "Certification Docker",
+    "organismeDelivrant": "Docker",
+    "urlVerification": "https://www.docker.com/certification/"
+  },
+  {
+    "intitule": "MongoDB Certified Developer",
+    "description": "Certification développeur MongoDB",
+    "organismeDelivrant": "MongoDB",
+    "urlVerification": "https://university.mongodb.com/certification"
+  }
+]

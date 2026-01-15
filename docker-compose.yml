@@ -1,0 +1,155 @@
+#version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=elasticsearch
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - camunda-platform
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  zeebe:
+    image: camunda/zeebe:8.5.7
+    container_name: zeebe
+    ports:
+      - "26500:26500"
+      - "9600:9600"
+    environment:
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_CLASSNAME=io.camunda.zeebe.exporter.ElasticsearchExporter
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_BULK_SIZE=1
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - camunda-platform
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 10s bash -c ':> /dev/tcp/127.0.0.1/9600' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  operate:
+    image: camunda/operate:8.5.7
+    container_name: operate
+    ports:
+      - "8096:8080"
+    environment:
+      - CAMUNDA_OPERATE_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_OPERATE_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      zeebe:
+        condition: service_healthy
+    networks:
+      - camunda-platform
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  tasklist:
+    image: camunda/tasklist:8.5.7
+    container_name: tasklist
+    ports:
+      - "8097:8080"
+    environment:
+      - CAMUNDA_TASKLIST_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CAMUNDA_TASKLIST_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      zeebe:
+        condition: service_healthy
+    networks:
+      - camunda-platform
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak
+    environment:
+      # Configuration administrateur
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Configuration base de données PostgreSQL
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres_:5432/keycloak_db
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: admin
+      # Configuration réseau
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: true
+      KC_HTTP_MANAGEMENT_ENABLED: true
+      # Configuration pour les tests locaux
+      KC_HOSTNAME_URL: http://localhost:8098
+      KC_HOSTNAME_ADMIN_URL: http://localhost:8098
+    ports:
+      - "8098:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    command:
+      - start-dev
+      - --import-realm
+      - --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - camunda-platform
+    restart: unless-stopped
+  postgres_:
+    image: postgres:17.4
+    container_name: postgres17
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - D:\Binaries\PITC-DOCKER_DATAS\postgres17.4\datas:/var/lib/postgresql/data
+#      - /Users/abdramane/Documents/DOCKER_DATAS/postgres17.4/datas:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    ports:
+      - 5433:5432
+    networks:
+      - camunda-platform
+    restart: unless-stopped
+volumes:
+  keycloak_data:
+    driver: local
+  postgres_:
+    driver: local
+
+networks:
+  camunda-platform:
+    driver: bridge

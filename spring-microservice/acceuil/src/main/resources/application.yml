@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: Acceuil
+
+  config:
+    import: optional:configserver:http://root:s3cr3t@localhost:8888
+
+  cloud:
+    config:
+      uri: http://localhost:8888/
+      name: common,acceuil
+
+  profiles:
+    active: dev
+
+# Configuration des services dépendants
+expertise:
+  service:
+    url: http://localhost:8086
+
+auth:
+  service:
+    url: http://localhost:8084

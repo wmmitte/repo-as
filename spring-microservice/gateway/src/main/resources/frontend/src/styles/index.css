@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import du système de thème personnalisable */
+@import './theme.css';
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-gray-900;
+  }
+  
+  /* Support pour le thème sombre si nécessaire */
+  [data-theme="pitm-dark"] body {
+    @apply bg-slate-900 text-gray-200;
+  }
+}
+
+@layer utilities {
+  .scroll-snap-y {
+    scroll-snap-type: y mandatory;
+  }
+  
+  .scroll-snap-start {
+    scroll-snap-align: start;
+  }
+  
+  .snap-y {
+    scroll-snap-type: y mandatory;
+  }
+  
+  .snap-mandatory {
+    scroll-snap-type: y mandatory;
+  }
+  
+  .snap-start {
+    scroll-snap-align: start;
+  }
+  
+  .snap-always {
+    scroll-snap-stop: always;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1d2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
+}

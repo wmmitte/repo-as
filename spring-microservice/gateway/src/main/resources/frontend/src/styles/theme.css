@@ -1,0 +1,198 @@
+/* Variables CSS pour le système de thème personnalisable */
+
+:root {
+  /* Couleurs principales */
+  --primary-50: #DDF6F8;
+  --primary-100: #CDF2F4;
+  --primary-200: #ABE9ED;
+  --primary-300: #8AE0E5;
+  --primary-400: #68D8DE;
+  --primary-500: #166064; /* Couleur principale personnalisée */
+  --primary-600: #2CC0C8;
+  --primary-700: #25A0A7;
+  --primary-800: #1D8085;
+  --primary-900: #165764;
+
+  /* Couleurs secondaires */
+  --secondary-50: #f8fafc;
+  --secondary-100: #f1f5f9;
+  --secondary-200: #e2e8f0;
+  --secondary-300: #cbd5e1;
+  --secondary-400: #94a3b8;
+  --secondary-500: #64748b;
+  --secondary-600: #475569;
+  --secondary-700: #334155;
+  --secondary-800: #1e293b;
+  --secondary-900: #0f172a;
+
+  /* Couleurs de l'interface light */
+  --light-bg: #f8fafc;
+  --light-card: #ffffff;
+  --light-border: #e2e8f0;
+  --light-secondary: #f1f5f9;
+  --light-text: #1e293b;
+  --light-text-secondary: #64748b;
+
+  /* Couleurs d'état (conservées en rouge pour la sémantique) */
+  --error-50: #fef2f2;
+  --error-100: #fee2e2;
+  --error-200: #fecaca;
+  --error-300: #fca5a5;
+  --error-400: #f87171;
+  --error-500: #ef4444;
+  --error-600: #dc2626;
+  --error-700: #b91c1c;
+  --error-800: #991b1b;
+  --error-900: #7f1d1d;
+
+  /* Couleurs de succès */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  --success-800: #166534;
+  --success-900: #14532d;
+
+  /* Couleurs d'avertissement */
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+}
+
+/* Classe utilitaire pour le thème PITM Light */
+[data-theme="pitm-light"] {
+  --primary: var(--primary-500);
+  --primary-foreground: white;
+  
+  /* Surcharge des couleurs DaisyUI */
+  --p: 26 61 100; /* HSL equivalent de #1A3D64 */
+  --pc: 0 0 100; /* White foreground */
+  
+  --s: 210 40 64; /* Secondary color */
+  --sc: 0 0 100;
+  
+  --a: 158 64 52; /* Accent color */
+  --ac: 0 0 100;
+  
+  --n: 219 14 28; /* Neutral */
+  --nc: 0 0 100;
+  
+  --b1: 0 0 100; /* Base-100 (background) */
+  --b2: 210 40 98; /* Base-200 */
+  --b3: 210 40 95; /* Base-300 */
+  --bc: 219 14 28; /* Base content */
+  
+  --in: 198 93 60; /* Info */
+  --inc: 0 0 100;
+  
+  --su: 158 64 52; /* Success */
+  --suc: 0 0 100;
+  
+  --wa: 43 96 56; /* Warning */
+  --wac: 0 0 100;
+  
+  --er: 0 91 71; /* Error */
+  --erc: 0 0 100;
+}
+
+/* Classes utilitaires personnalisées */
+.bg-primary {
+  background-color: var(--primary-500);
+}
+
+.bg-primary\/5 {
+  background-color: rgba(22, 96, 100, 0.05);
+}
+
+.bg-primary\/10 {
+  background-color: rgba(22, 96, 100, 0.1);
+}
+
+.bg-primary\/90 {
+  background-color: rgba(22, 96, 100, 0.9);
+}
+
+.text-primary {
+  color: var(--primary-500);
+}
+
+.text-primary\/70 {
+  color: rgba(22, 96, 100, 0.7);
+}
+
+.border-primary {
+  border-color: var(--primary-500);
+}
+
+.hover\:bg-primary\/90:hover {
+  background-color: rgba(22, 96, 100, 0.9);
+}
+
+.hover\:bg-primary\/5:hover {
+  background-color: rgba(22, 96, 100, 0.05);
+}
+
+.hover\:text-primary\/70:hover {
+  color: rgba(22, 96, 100, 0.7);
+}
+
+.hover\:text-primary\/80:hover {
+  color: rgba(22, 96, 100, 0.8);
+}
+
+.hover\:border-primary:hover {
+  border-color: var(--primary-500);
+}
+
+.focus\:ring-primary:focus {
+  --tw-ring-color: var(--primary-500);
+}
+
+.focus\:border-primary:focus {
+  border-color: var(--primary-500);
+}
+
+/* Classes pour les couleurs de l'interface light - maintenant gérées par Tailwind CSS standard */
+/* bg-slate-50, bg-white, border-slate-200, bg-slate-100, text-slate-900, text-slate-600 */
+
+/* Animation pour les transitions de thème */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Personnalisation des scrollbars pour le thème light */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--light-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-400);
+}
+
+/* Support pour Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-300) var(--light-secondary);
+}

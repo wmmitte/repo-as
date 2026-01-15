@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: Gateway
+
+  config:
+    import: optional:configserver:http://root:s3cr3t@localhost:8888
+
+  cloud:
+    config:
+      uri: http://localhost:8888/
+      name: common,security-common,gateway
+      # OAuth2, logging, management sont chargés depuis le Config Server
+      # Les routes sont définies en Java dans GatewayRoutesConfig.java

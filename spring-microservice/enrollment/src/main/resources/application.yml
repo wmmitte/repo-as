@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: Enrollment
+
+  config:
+    import: optional:configserver:http://root:s3cr3t@localhost:8888
+
+  cloud:
+    config:
+      uri: http://localhost:8888/
+      name: common,db-common,security-common,enrollment

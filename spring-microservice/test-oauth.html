@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OAuth PITM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-google {
+            background: #4285f4;
+            color: white;
+        }
+        .btn-google:hover {
+            background: #357ae8;
+        }
+        .btn-check {
+            background: #28a745;
+            color: white;
+        }
+        .btn-check:hover {
+            background: #218838;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        .user-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #d4edda;
+            border-radius: 5px;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8d7da;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test OAuth PITM</h1>
+        
+        <button class="btn btn-google" onclick="loginWithGoogle()">
+            🔑 Se connecter avec Google
+        </button>
+        
+        <button class="btn btn-check" onclick="checkAuth()">
+            ✅ Vérifier l'authentification
+        </button>
+        
+        <div class="info">
+            <strong>ℹ️ Instructions :</strong>
+            <ol>
+                <li>Cliquez sur "Se connecter avec Google"</li>
+                <li>Vous serez redirigé vers Keycloak</li>
+                <li>Keycloak affichera Google comme option</li>
+                <li>Après connexion, revenez ici et cliquez "Vérifier l'authentification"</li>
+            </ol>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const AUTH_SERVICE_URL = 'http://localhost:8084';
+        const GATEWAY_URL = 'http://localhost:8090';
+        
+        // Connexion avec Google via le service Auth
+        function loginWithGoogle() {
+            // Rediriger vers le service Auth qui gérera l'OAuth2
+            window.location.href = `${AUTH_SERVICE_URL}/oauth2/authorization/keycloak`;
+        }
+        
+        // Vérifier si l'utilisateur est authentifié
+        async function checkAuth() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>⏳ Vérification en cours...</p>';
+            
+            try {
+                const response = await fetch(`${AUTH_SERVICE_URL}/api/me`, {
+                    credentials: 'include' // Inclure les cookies de session
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.authenticated) {
+                        resultDiv.innerHTML = `
+                            <div class="user-info">
+                                <h3>✅ Authentifié !</h3>
+                                <p><strong>ID:</strong> ${data.utilisateur.id}</p>
+                                <p><strong>Email:</strong> ${data.utilisateur.email}</p>
+                                <p><strong>Nom:</strong> ${data.utilisateur.nom} ${data.utilisateur.prenom}</p>
+                                ${data.utilisateur.photoUrl ? `<img src="${data.utilisateur.photoUrl}" alt="Photo" style="width: 50px; border-radius: 50%;">` : ''}
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = '<div class="error">❌ Non authentifié. Veuillez vous connecter.</div>';
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erreur: ${response.status} ${response.statusText}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Erreur: ${error.message}</div>`;
+            }
+        }
+        
+        // Vérifier automatiquement si on revient après une connexion
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('auth') === 'success') {
+                checkAuth();
+            }
+        };
+    </script>
+</body>
+</html>

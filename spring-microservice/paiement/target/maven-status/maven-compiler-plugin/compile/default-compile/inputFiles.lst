@@ -1,0 +1,8 @@
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/PaiementApplication.java
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/config/CorsConfig.java
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/controller/PaiementController.java
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/dto/CreatePaiementRequest.java
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/dto/PaiementDTO.java
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/entity/Paiement.java
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/repository/PaiementRepository.java
+/Users/abdramane/WindsurfProjects/projects/spring-microservice/paiement/src/main/java/com/intermediation/paiement/service/PaiementService.java

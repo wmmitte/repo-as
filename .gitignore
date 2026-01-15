@@ -1,0 +1,52 @@
+.DS_Store
+.vscode
+local-camunda8-with-docker-main.zip
+docker-compose_old.yml
+spring-microservice/logs
+leMitte
+
+# Fichiers Java compilés
+*.class
+
+# Fichiers d'IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Fichiers de build
+/target/
+/build/
+
+# Fichiers de dépendances (si vous utilisez un gestionnaire de dépendances comme Maven ou Gradle)
+*.jar
+*.war
+*.ear
+
+# Fichiers de logs
+*.log
+
+# Fichiers temporaires
+.DS_Store
+Thumbs.db
+
+# Fichiers liés à Maven
+.mvn/
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Fichiers liés à Gradle
+.gradle/
+
+# Fichiers de configuration du système
+*.swp
+*.swo
+
+# Fichiers générés par Spring Boot (exemple)
+.spring/
+
+# Autres
+*.bak
+*.tmp
+._*
+.DS_Store
