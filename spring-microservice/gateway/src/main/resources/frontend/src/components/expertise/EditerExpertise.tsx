@@ -733,17 +733,17 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
               <p>Aucune compétence. Cliquez sur "Ajouter" pour commencer.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {competences.map((competence) => (
                 <div
                   key={competence.id}
-                  className="bg-base-200/50 border border-base-300 rounded-lg p-3 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+                  className="bg-base-200/50 border border-base-300 rounded-lg p-4 hover:border-primary/30 hover:bg-primary/5 transition-all group min-h-[140px]"
                 >
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                  <div className="flex justify-between items-start gap-3 h-full">
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <div className="flex items-center gap-2">
                         <h3
-                          className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
+                          className="font-semibold text-sm line-clamp-2 cursor-pointer hover:text-primary transition-colors"
                           onClick={() => {
                             setCompetencePourDetails(competence);
                             setModalDetailsOuvert(true);
@@ -753,15 +753,15 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
                           {competence.nom}
                         </h3>
                         {competence.estFavorite && (
-                          <Star className="w-3 h-3 fill-warning text-warning flex-shrink-0" />
+                          <Star className="w-3.5 h-3.5 fill-warning text-warning flex-shrink-0" />
                         )}
                       </div>
                       {competence.description && (
-                        <p className="text-xs text-base-content/60 mt-0.5 line-clamp-1">
+                        <p className="text-xs text-base-content/60 mt-1 line-clamp-2">
                           {competence.description}
                         </p>
                       )}
-                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
                         {competence.niveauMaitrise && (
                           <div className="rating rating-xs">
                             {[1, 2, 3, 4, 5].map((level) => (
@@ -776,113 +776,113 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
                           </div>
                         )}
                         {competence.anneesExperience !== undefined && competence.anneesExperience > 0 && (
-                          <span className="badge badge-ghost badge-xs">
+                          <span className="badge badge-ghost badge-sm">
                             {competence.anneesExperience}an{competence.anneesExperience > 1 ? 's' : ''}
                           </span>
                         )}
                         {competence.thm && (
-                          <span className="badge badge-primary badge-xs badge-outline">
+                          <span className="badge badge-primary badge-sm badge-outline">
                             {(competence.thm / 1000).toFixed(0)}k/h
                           </span>
                         )}
-                          {competence.nombreProjets !== undefined && competence.nombreProjets > 0 && (
-                            <span className="badge badge-ghost badge-xs">
-                              {competence.nombreProjets}proj
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {/* Actions compactes */}
-                      <div className="flex flex-col items-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                        <div className="flex gap-0.5">
-                          <button
-                            className="btn btn-ghost btn-xs btn-circle"
-                            onClick={() => handleToggleFavorite(competence)}
-                            title={competence.estFavorite ? "Retirer des favoris" : "Favoris"}
-                          >
-                            <Star className={`w-3 h-3 ${competence.estFavorite ? 'fill-warning text-warning' : ''}`} />
-                          </button>
-                          <button
-                            className="btn btn-ghost btn-xs btn-circle"
-                            onClick={() => handleEditCompetence(competence)}
-                            title="Modifier"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                          <button
-                            className="btn btn-ghost btn-xs btn-circle text-error"
-                            onClick={() => handleDeleteCompetence(competence.id!, competence.nom)}
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                        {/* Badge/Statut certification */}
-                        {(() => {
-                          const badge = getBadgeActuel(competence.nom);
-                          const demandeEnCours = aDemandeEnCours(competence.nom);
-                          const demandeRejetee = aDerniereDemandeRejetee(competence.nom);
-
-                          if (demandeEnCours) {
-                            return (
-                              <span className="badge badge-warning badge-xs gap-0.5">
-                                <Clock className="w-2.5 h-2.5" />
-                                En cours
-                              </span>
-                            );
-                          }
-
-                          if (badge) {
-                            const badgeColors: Record<string, string> = {
-                              'BRONZE': 'badge-warning',
-                              'ARGENT': 'badge-info',
-                              'OR': 'badge-accent',
-                              'PLATINE': 'badge-secondary'
-                            };
-                            return (
-                              <span className={`badge ${badgeColors[badge.niveauCertification] || 'badge-success'} badge-xs gap-0.5`}>
-                                <CheckCircle className="w-2.5 h-2.5" />
-                                {badge.niveauCertification}
-                              </span>
-                            );
-                          }
-
-                          // Demande rejetée - permettre de resoumettre
-                          if (demandeRejetee) {
-                            return (
-                              <div className="flex flex-col items-end gap-0.5">
-                                <span className="badge badge-error badge-xs gap-0.5 opacity-70">
-                                  Rejetée
-                                </span>
-                                <button
-                                  className="btn btn-outline btn-primary btn-xs h-5 min-h-0 gap-0.5 text-[10px]"
-                                  onClick={() => ouvrirModalReconnaissance(competence)}
-                                  title="Soumettre une nouvelle demande"
-                                >
-                                  <Award className="w-2.5 h-2.5" />
-                                  Resoumettre
-                                </button>
-                              </div>
-                            );
-                          }
-
-                          // Pas de demande - permettre de certifier
-                          if (!demandeEnCours && !badge) {
-                            return (
-                              <button
-                                className="btn btn-primary btn-xs h-5 min-h-0 gap-0.5 text-[10px]"
-                                onClick={() => ouvrirModalReconnaissance(competence)}
-                              >
-                                <Award className="w-2.5 h-2.5" />
-                                Certifier
-                              </button>
-                            );
-                          }
-                          return null;
-                        })()}
+                        {competence.nombreProjets !== undefined && competence.nombreProjets > 0 && (
+                          <span className="badge badge-ghost badge-sm">
+                            {competence.nombreProjets}proj
+                          </span>
+                        )}
                       </div>
                     </div>
+                    {/* Actions */}
+                    <div className="flex flex-col items-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1">
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle"
+                          onClick={() => handleToggleFavorite(competence)}
+                          title={competence.estFavorite ? "Retirer des favoris" : "Favoris"}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${competence.estFavorite ? 'fill-warning text-warning' : ''}`} />
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle"
+                          onClick={() => handleEditCompetence(competence)}
+                          title="Modifier"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-xs btn-circle text-error"
+                          onClick={() => handleDeleteCompetence(competence.id!, competence.nom)}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      {/* Badge/Statut certification */}
+                      {(() => {
+                        const badge = getBadgeActuel(competence.nom);
+                        const demandeEnCours = aDemandeEnCours(competence.nom);
+                        const demandeRejetee = aDerniereDemandeRejetee(competence.nom);
+
+                        if (demandeEnCours) {
+                          return (
+                            <span className="badge badge-warning badge-sm gap-1">
+                              <Clock className="w-3 h-3" />
+                              En cours
+                            </span>
+                          );
+                        }
+
+                        if (badge) {
+                          const badgeColors: Record<string, string> = {
+                            'BRONZE': 'badge-warning',
+                            'ARGENT': 'badge-info',
+                            'OR': 'badge-accent',
+                            'PLATINE': 'badge-secondary'
+                          };
+                          return (
+                            <span className={`badge ${badgeColors[badge.niveauCertification] || 'badge-success'} badge-sm gap-1`}>
+                              <CheckCircle className="w-3 h-3" />
+                              {badge.niveauCertification}
+                            </span>
+                          );
+                        }
+
+                        // Demande rejetée - permettre de resoumettre
+                        if (demandeRejetee) {
+                          return (
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="badge badge-error badge-sm gap-1 text-white">
+                                Rejetée
+                              </span>
+                              <button
+                                className="btn btn-outline btn-primary btn-xs gap-1 text-xs"
+                                onClick={() => ouvrirModalReconnaissance(competence)}
+                                title="Soumettre une nouvelle demande"
+                              >
+                                <Award className="w-3 h-3" />
+                                Resoumettre
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        // Pas de demande - permettre de certifier
+                        if (!demandeEnCours && !badge) {
+                          return (
+                            <button
+                              className="btn btn-primary btn-xs gap-1 text-xs"
+                              onClick={() => ouvrirModalReconnaissance(competence)}
+                            >
+                              <Award className="w-3 h-3" />
+                              Certifier
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
+                </div>
               ))}
             </div>
           )}

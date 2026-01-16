@@ -371,59 +371,76 @@ const RechercherExpertises: React.FC = () => {
               </div>
             )}
 
-            {/* Vue Cartes */}
+            {/* Vue Cartes avec Subgrid */}
             {vueAffichage === 'cartes' && expertises.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div
+                className="gap-4"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                  gridAutoRows: 'auto auto auto',
+                }}
+              >
                 {expertises.map((exp, index) => (
                   <Link
                     key={`${exp.utilisateurId}-${index}`}
                     to={`/expertise-profil/${exp.utilisateurId}`}
-                    className="group bg-primary/5 rounded-xl border border-primary/20 shadow-sm hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+                    className="group bg-primary/5 rounded-xl border border-primary/20 shadow-sm hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden p-4"
+                    style={{
+                      display: 'grid',
+                      gridTemplateRows: 'subgrid',
+                      gridRow: 'span 3',
+                      gap: '12px',
+                    }}
                   >
-                    <div className="p-4">
-                      {/* En-tête */}
-                      <div className="flex gap-3 mb-3">
-                        <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="md" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-base-content truncate group-hover:text-primary transition-colors">
-                            {exp.titre}
+                    {/* Ligne 1: En-tête (avatar, nom, localisation, disponibilité) */}
+                    <div className="flex gap-3 overflow-hidden">
+                      <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="md" />
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="font-semibold text-sm text-base-content line-clamp-2 group-hover:text-primary transition-colors">
+                          {exp.titre}
+                        </div>
+                        {exp.localisation && (
+                          <div className="flex items-center gap-1 text-xs text-base-content/70 mt-0.5 overflow-hidden">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{exp.localisation}</span>
                           </div>
-                          {exp.localisation && (
-                            <div className="flex items-center gap-1 text-xs text-base-content/70 mt-0.5">
-                              <MapPin className="w-3 h-3" />
-                              <span className="truncate">{exp.localisation}</span>
-                            </div>
+                        )}
+                        <div className="mt-1">
+                          {exp.disponible ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-success font-medium">
+                              <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
+                              Disponible
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs text-base-content/60">
+                              <span className="w-1.5 h-1.5 bg-base-content/40 rounded-full"></span>
+                              Indisponible
+                            </span>
                           )}
-                          <div className="mt-1">
-                            {exp.disponible ? (
-                              <span className="inline-flex items-center gap-1 text-xs text-success font-medium">
-                                <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
-                                Disponible
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs text-base-content/60">
-                                <span className="w-1.5 h-1.5 bg-base-content/40 rounded-full"></span>
-                                Indisponible
-                              </span>
-                            )}
-                          </div>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Description courte */}
-                      {exp.description && (
-                        <p className="text-xs text-base-content/70 line-clamp-2 mb-3">{exp.description}</p>
+                    {/* Ligne 2: Description */}
+                    <div className="min-h-[40px]">
+                      {exp.description ? (
+                        <p className="text-xs text-base-content/70 line-clamp-2">{exp.description}</p>
+                      ) : (
+                        <p className="text-xs text-base-content/40 italic">Aucune description</p>
                       )}
+                    </div>
 
-                      {/* Compétences */}
-                      {exp.competences && exp.competences.length > 0 && (
-                        <div className="space-y-1.5">
+                    {/* Ligne 3: Compétences */}
+                    <div className="space-y-1.5 overflow-hidden">
+                      {exp.competences && exp.competences.length > 0 ? (
+                        <>
                           {exp.competences.slice(0, 2).map((comp, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between bg-base-100/80 border border-base-300 rounded-lg px-2.5 py-1.5"
+                              className="flex items-center justify-between bg-base-100/80 border border-base-300 rounded-lg px-2.5 py-1.5 min-w-0 overflow-hidden"
                             >
-                              <span className="text-xs font-medium text-base-content truncate">{comp.nom}</span>
+                              <span className="text-xs font-medium text-base-content truncate min-w-0 flex-1">{comp.nom}</span>
                               <div className="flex items-center gap-2 text-xs text-base-content/70 flex-shrink-0 ml-2">
                                 {comp.anneesExperience && <span>{comp.anneesExperience}a</span>}
                                 {comp.thm && <span className="text-success font-semibold">{comp.thm.toLocaleString()}F/h</span>}
@@ -435,6 +452,10 @@ const RechercherExpertises: React.FC = () => {
                               +{exp.competences.length - 2} autre{exp.competences.length > 3 ? 's' : ''}
                             </div>
                           )}
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-center h-[52px] text-xs text-base-content/40 italic">
+                          Aucune compétence listée
                         </div>
                       )}
                     </div>
