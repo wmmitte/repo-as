@@ -13,6 +13,7 @@ import { Expert } from '@/types/expert.types';
 import ModalPartageExpert from '@/components/partage/ModalPartageExpert';
 import ModalPropositionProjet from '@/components/proposition/ModalPropositionProjet';
 import ModalContact from '@/components/contact/ModalContact';
+import ModalDetailsCompetence, { CompetencePublic } from '@/components/competence/ModalDetailsCompetence';
 
 interface Expertise {
   utilisateurId: string;
@@ -58,6 +59,8 @@ export default function ExpertiseProfilPage() {
   const [modalPartageOuvert, setModalPartageOuvert] = useState(false);
   const [modalPropositionOuvert, setModalPropositionOuvert] = useState(false);
   const [modalContactOuvert, setModalContactOuvert] = useState(false);
+  const [modalCompetenceOuvert, setModalCompetenceOuvert] = useState(false);
+  const [competenceSelectionnee, setCompetenceSelectionnee] = useState<CompetencePublic | null>(null);
 
   // Configurer le Header
   useHeaderConfig({});
@@ -514,7 +517,14 @@ export default function ExpertiseProfilPage() {
                     {/* LIGNE 1: Titre + Niveau */}
                     <div className="space-y-1.5 pr-6">
                       <div className="flex items-start gap-2">
-                        <h3 className="text-sm font-bold text-base-content leading-tight">
+                        <h3
+                          className="text-sm font-bold text-base-content leading-tight cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => {
+                            setCompetenceSelectionnee(comp);
+                            setModalCompetenceOuvert(true);
+                          }}
+                          title="Cliquez pour voir les détails"
+                        >
                           {comp.nom}
                         </h3>
                         {comp.estFavorite && (
@@ -619,6 +629,17 @@ export default function ExpertiseProfilPage() {
           onClose={() => setModalContactOuvert(false)}
         />
       )}
+
+      {/* Modal Détails Compétence */}
+      <ModalDetailsCompetence
+        isOpen={modalCompetenceOuvert}
+        onClose={() => {
+          setModalCompetenceOuvert(false);
+          setCompetenceSelectionnee(null);
+        }}
+        competence={competenceSelectionnee}
+        badge={competenceSelectionnee ? getBadgeForCompetence(competenceSelectionnee.nom) : null}
+      />
     </div>
   );
 }

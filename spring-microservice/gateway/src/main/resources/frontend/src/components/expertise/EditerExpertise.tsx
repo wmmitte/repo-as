@@ -3,6 +3,7 @@ import { Save, CheckCircle, Plus, Star, Trash2, Edit2, Award, Clock } from 'luci
 import { Expertise, defaultExpertise, Competence } from '../../types/expertise.types';
 import { expertiseService } from '../../services/expertiseService';
 import ModalDemandeReconnaissance from '@/components/reconnaissance/ModalDemandeReconnaissance';
+import ModalDetailsCompetence from '@/components/competence/ModalDetailsCompetence';
 import { reconnaissanceService } from '@/services/reconnaissanceService';
 import { BadgeCompetenceDTO, DemandeReconnaissanceDTO, StatutDemande } from '@/types/reconnaissance.types';
 import { useToast } from '@/contexts/ToastContext';
@@ -51,6 +52,10 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
   // État pour la demande de reconnaissance
   const [modalReconnaissanceOuvert, setModalReconnaissanceOuvert] = useState(false);
   const [competenceSelectionnee, setCompetenceSelectionnee] = useState<Competence | null>(null);
+
+  // État pour le modal de détails de compétence
+  const [modalDetailsOuvert, setModalDetailsOuvert] = useState(false);
+  const [competencePourDetails, setCompetencePourDetails] = useState<Competence | null>(null);
   const [badgesCertifies, setBadgesCertifies] = useState<BadgeCompetenceDTO[]>([]);
   const [demandesEnCours, setDemandesEnCours] = useState<DemandeReconnaissanceDTO[]>([]);
   const [toutesMesDemandes, setToutesMesDemandes] = useState<DemandeReconnaissanceDTO[]>([]); // Inclut REJETEE
@@ -737,7 +742,16 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <h3 className="font-semibold text-sm truncate">{competence.nom}</h3>
+                        <h3
+                          className="font-semibold text-sm truncate cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => {
+                            setCompetencePourDetails(competence);
+                            setModalDetailsOuvert(true);
+                          }}
+                          title="Cliquez pour voir les détails"
+                        >
+                          {competence.nom}
+                        </h3>
                         {competence.estFavorite && (
                           <Star className="w-3 h-3 fill-warning text-warning flex-shrink-0" />
                         )}
@@ -1380,6 +1394,28 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
           }}
         />
       )}
+
+      {/* Modal de détails de compétence */}
+      <ModalDetailsCompetence
+        isOpen={modalDetailsOuvert}
+        onClose={() => {
+          setModalDetailsOuvert(false);
+          setCompetencePourDetails(null);
+        }}
+        competence={competencePourDetails}
+        badge={competencePourDetails ? getBadgeActuel(competencePourDetails.nom) : null}
+        montrerBoutonCertification={
+          competencePourDetails !== null &&
+          competencePourDetails.competenceReferenceId !== undefined &&
+          !getBadgeActuel(competencePourDetails.nom) &&
+          !aDemandeEnCours(competencePourDetails.nom)
+        }
+        onDemanderCertification={() => {
+          if (competencePourDetails) {
+            ouvrirModalReconnaissance(competencePourDetails);
+          }
+        }}
+      />
     </div>
   );
 };
