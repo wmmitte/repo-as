@@ -1,14 +1,18 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 // Types
 export type TypeToast = 'succes' | 'erreur' | 'avertissement' | 'info';
+type EtatAnimation = 'entree' | 'visible' | 'sortie';
 
 export interface Toast {
   id: string;
   message: string;
   type: TypeToast;
   duree?: number;
+  etatAnimation?: EtatAnimation;
+  timestampCreation?: number;
+  estEnPause?: boolean;
 }
 
 interface ToastContextType {
@@ -19,6 +23,8 @@ interface ToastContextType {
   info: (message: string, duree?: number) => void;
   fermer: (id: string) => void;
   fermerTous: () => void;
+  pauserToast: (id: string) => void;
+  reprendreToast: (id: string) => void;
 }
 
 // Configuration des toasts
@@ -132,30 +138,109 @@ const genererIdToast = (): string => {
   return `toast-${Date.now()}-${compteurId}`;
 };
 
+// Type pour les timers compatible navigateur
+type TimerType = ReturnType<typeof setTimeout>;
+
+
 // Provider
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const timersRef = useRef<Map<string, { timer: TimerType | null; restant: number; debutPause?: number }>>(new Map());
+
+  const supprimerToast = useCallback((id: string) => {
+    timersRef.current.delete(id);
+    setToasts((precedents) => precedents.filter((t) => t.id !== id));
+  }, []);
+
+  const demarrerSortie = useCallback((id: string) => {
+    // Annuler le timer si existant
+    const timerInfo = timersRef.current.get(id);
+    if (timerInfo?.timer) clearTimeout(timerInfo.timer);
+    timersRef.current.delete(id);
+
+    setToasts((precedents) =>
+      precedents.map((t) =>
+        t.id === id ? { ...t, etatAnimation: 'sortie' as EtatAnimation } : t
+      )
+    );
+    // Supprimer après l'animation de sortie (400ms)
+    setTimeout(() => supprimerToast(id), 400);
+  }, [supprimerToast]);
+
+  const pauserToast = useCallback((id: string) => {
+    const timerInfo = timersRef.current.get(id);
+    if (timerInfo?.timer) {
+      clearTimeout(timerInfo.timer!);
+      const maintenant = Date.now();
+      timersRef.current.set(id, {
+        ...timerInfo,
+        timer: null,
+        debutPause: maintenant,
+      });
+    }
+    setToasts((precedents) =>
+      precedents.map((t) =>
+        t.id === id ? { ...t, estEnPause: true } : t
+      )
+    );
+  }, []);
+
+  const reprendreToast = useCallback((id: string) => {
+    const timerInfo = timersRef.current.get(id);
+    if (timerInfo && timerInfo.debutPause) {
+      // Calculer le temps restant
+      const tempsEcoule = Date.now() - timerInfo.debutPause;
+      const nouveauRestant = Math.max(0, timerInfo.restant - tempsEcoule);
+
+      if (nouveauRestant > 0) {
+        const nouveauTimer = setTimeout(() => demarrerSortie(id), nouveauRestant);
+        timersRef.current.set(id, {
+          timer: nouveauTimer,
+          restant: nouveauRestant,
+        });
+      } else {
+        demarrerSortie(id);
+      }
+    }
+    setToasts((precedents) =>
+      precedents.map((t) =>
+        t.id === id ? { ...t, estEnPause: false } : t
+      )
+    );
+  }, [demarrerSortie]);
 
   const ajouterToast = useCallback((type: TypeToast, message: string, duree?: number) => {
     const id = genererIdToast();
+    const dureeFinale = duree ?? CONFIG_TOAST[type].dureeDefaut;
     const nouveauToast: Toast = {
       id,
       message,
       type,
-      duree: duree ?? CONFIG_TOAST[type].dureeDefaut,
+      duree: dureeFinale,
+      etatAnimation: 'entree',
+      timestampCreation: Date.now(),
+      estEnPause: false,
     };
 
     setToasts((precedents) => [...precedents, nouveauToast]);
 
-    // Auto-suppression
-    if (nouveauToast.duree && nouveauToast.duree > 0) {
-      setTimeout(() => {
-        setToasts((precedents) => precedents.filter((t) => t.id !== id));
-      }, nouveauToast.duree);
+    // Passer à l'état visible après l'animation d'entrée
+    setTimeout(() => {
+      setToasts((precedents) =>
+        precedents.map((t) =>
+          t.id === id ? { ...t, etatAnimation: 'visible' as EtatAnimation } : t
+        )
+      );
+    }, 50);
+
+    // Auto-suppression avec animation de sortie
+    if (dureeFinale && dureeFinale > 0) {
+      const timer = setTimeout(() => demarrerSortie(id), dureeFinale);
+      timersRef.current.set(id, { timer, restant: dureeFinale });
     }
 
     return id;
-  }, []);
+  }, [demarrerSortie]);
 
   const succes = useCallback((message: string, duree?: number) => {
     ajouterToast('succes', message, duree);
@@ -175,17 +260,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [ajouterToast]);
 
   const fermer = useCallback((id: string) => {
-    setToasts((precedents) => precedents.filter((t) => t.id !== id));
-  }, []);
+    demarrerSortie(id);
+  }, [demarrerSortie]);
 
   const fermerTous = useCallback(() => {
     setToasts([]);
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toasts, succes, erreur, avertissement, info, fermer, fermerTous }}>
+    <ToastContext.Provider value={{ toasts, succes, erreur, avertissement, info, fermer, fermerTous, pauserToast, reprendreToast }}>
       {children}
-      <ToastContainer toasts={toasts} onFermer={fermer} />
+      <ToastContainer toasts={toasts} onFermer={fermer} onPause={pauserToast} onResume={reprendreToast} />
     </ToastContext.Provider>
   );
 }
@@ -200,50 +285,161 @@ export function useToast(): ToastContextType {
 }
 
 // Composant ToastContainer
-function ToastContainer({ toasts, onFermer }: { toasts: Toast[]; onFermer: (id: string) => void }) {
+function ToastContainer({
+  toasts,
+  onFermer,
+  onPause,
+  onResume
+}: {
+  toasts: Toast[];
+  onFermer: (id: string) => void;
+  onPause: (id: string) => void;
+  onResume: (id: string) => void;
+}) {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-md w-full pointer-events-none">
-      {toasts.map((toast, index) => (
+    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+      {toasts.map((toast) => (
         <ToastItem
           key={toast.id}
           toast={toast}
           onFermer={() => onFermer(toast.id)}
-          index={index}
+          onPause={() => onPause(toast.id)}
+          onResume={() => onResume(toast.id)}
         />
       ))}
     </div>
   );
 }
 
-// Composant ToastItem
-function ToastItem({ toast, onFermer, index }: { toast: Toast; onFermer: () => void; index: number }) {
+// Composant ToastItem avec animations fluides
+function ToastItem({
+  toast,
+  onFermer,
+  onPause,
+  onResume
+}: {
+  toast: Toast;
+  onFermer: () => void;
+  onPause: () => void;
+  onResume: () => void;
+}) {
   const config = CONFIG_TOAST[toast.type];
   const Icone = config.icone;
+  const [progression, setProgression] = useState(100);
+  const intervalRef = useRef<TimerType | null>(null);
+  const progressionRef = useRef(100);
+
+  // Gérer le survol avec pause/reprise
+  const handleMouseEnter = () => {
+    onPause();
+  };
+
+  const handleMouseLeave = () => {
+    onResume();
+  };
+
+  // Animation de la barre de progression
+  useEffect(() => {
+    if (!toast.duree || toast.duree <= 0 || toast.etatAnimation === 'sortie') return;
+
+    const decrementParTick = 100 / (toast.duree / 50); // Mise à jour toutes les 50ms
+
+    intervalRef.current = setInterval(() => {
+      if (!toast.estEnPause) {
+        progressionRef.current = Math.max(0, progressionRef.current - decrementParTick);
+        setProgression(progressionRef.current);
+      }
+    }, 50);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [toast.duree, toast.etatAnimation, toast.estEnPause]);
+
+  // Classes d'animation selon l'état
+  const getClassesAnimation = () => {
+    switch (toast.etatAnimation) {
+      case 'entree':
+        return 'translate-x-full opacity-0 scale-95';
+      case 'sortie':
+        return 'translate-x-full opacity-0 scale-95';
+      case 'visible':
+      default:
+        return 'translate-x-0 opacity-100 scale-100';
+    }
+  };
+
+  // Couleur de la barre de progression
+  const getCouleurProgression = () => {
+    switch (toast.type) {
+      case 'succes': return 'bg-emerald-400';
+      case 'erreur': return 'bg-red-400';
+      case 'avertissement': return 'bg-amber-400';
+      case 'info': return 'bg-blue-400';
+    }
+  };
 
   return (
     <div
       className={`
         pointer-events-auto
-        flex items-start gap-3 p-4 rounded-xl border shadow-lg
+        relative overflow-hidden
+        flex items-start gap-3 p-4 rounded-xl border shadow-lg backdrop-blur-sm
         ${config.classeFond} ${config.classeBordure}
-        animate-in slide-in-from-right-5 fade-in duration-300
+        transform transition-all duration-400 ease-out
+        ${getClassesAnimation()}
+        hover:shadow-xl hover:scale-[1.02]
       `}
-      style={{ animationDelay: `${index * 50}ms` }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      }}
     >
-      <div className={`flex-shrink-0 ${config.classeIcone}`}>
-        <Icone size={22} />
+      {/* Icône avec animation de pulse à l'entrée */}
+      <div
+        className={`
+          flex-shrink-0 ${config.classeIcone}
+          ${toast.etatAnimation === 'visible' ? 'animate-pulse-once' : ''}
+        `}
+      >
+        <Icone size={22} strokeWidth={2.5} />
       </div>
-      <p className="flex-1 text-sm font-medium text-gray-800 leading-relaxed">
+
+      {/* Message */}
+      <p className="flex-1 text-sm font-medium text-gray-800 leading-relaxed pr-2">
         {toast.message}
       </p>
+
+      {/* Bouton fermer avec animation hover */}
       <button
         onClick={onFermer}
-        className="flex-shrink-0 p-1 rounded-lg hover:bg-black/5 transition-colors"
+        className="flex-shrink-0 p-1.5 -m-1 rounded-lg hover:bg-black/10 transition-all duration-200 hover:rotate-90 group"
       >
-        <X size={16} className="text-gray-400" />
+        <X size={16} className="text-gray-400 group-hover:text-gray-600 transition-colors" />
       </button>
+
+      {/* Barre de progression */}
+      {toast.duree && toast.duree > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/5 overflow-hidden">
+          <div
+            className={`h-full ${getCouleurProgression()} transition-all duration-100 ease-linear`}
+            style={{
+              width: `${progression}%`,
+              opacity: toast.estEnPause ? 0.5 : 1,
+            }}
+          />
+        </div>
+      )}
+
+      {/* Indicateur de pause au survol */}
+      {toast.estEnPause && toast.duree && toast.duree > 0 && (
+        <div className="absolute top-1 right-8 text-[10px] text-gray-400 font-medium animate-fade-in">
+          En pause
+        </div>
+      )}
     </div>
   );
 }
