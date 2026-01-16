@@ -135,7 +135,7 @@ export default function EvaluationDemande() {
 
   useEffect(() => {
     if (id) {
-      loadDemande(parseInt(id));
+      loadDemande(parseInt(id), true); // true = chargement initial
       chargerMethodesEvaluation();
     }
   }, [id]);
@@ -151,9 +151,10 @@ export default function EvaluationDemande() {
     }
   };
 
-  const loadDemande = async (demandeId: number) => {
+  const loadDemande = async (demandeId: number, isInitialLoad = false) => {
     try {
-      setLoading(true);
+      // Seulement afficher le loader pleine page au chargement initial
+      if (isInitialLoad) setLoading(true);
       const data = await traitementService.getDemandeDetails(demandeId);
       setDemande(data);
 
@@ -223,8 +224,11 @@ export default function EvaluationDemande() {
     };
     try {
       setSubmitting(true);
-      await traitementService.evaluerDemande(demande.id, evaluation);
-      await loadDemande(demande.id);
+      const updatedEvaluation = await traitementService.evaluerDemande(demande.id, evaluation);
+      // Mettre à jour l'état local sans recharger toute la page
+      if (updatedEvaluation) {
+        setDemande(prev => prev ? { ...prev, evaluation: updatedEvaluation } : null);
+      }
       toast.succes('Évaluation enregistrée');
     } catch (err) {
       toast.erreur(err);
@@ -706,8 +710,9 @@ export default function EvaluationDemande() {
                 <button
                   onClick={handleEvaluer}
                   disabled={submitting}
-                  className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
+                  {submitting && <span className="loading loading-spinner loading-sm"></span>}
                   Enregistrer l'évaluation
                 </button>
                 {demande.evaluation && (demande.statut === StatutDemande.ASSIGNEE_RH || demande.statut === StatutDemande.EN_COURS_EVALUATION) && (
@@ -716,7 +721,7 @@ export default function EvaluationDemande() {
                     disabled={submitting}
                     className="w-full py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    <Send size={18} />
+                    {submitting ? <span className="loading loading-spinner loading-sm"></span> : <Send size={18} />}
                     Soumettre au Manager
                   </button>
                 )}
@@ -888,8 +893,11 @@ export default function EvaluationDemande() {
               </div>
             )}
             <div className="flex gap-3">
-              <button onClick={() => setShowApprouverModal(false)} className="flex-1 py-2.5 border border-slate-200 rounded-lg font-medium hover:bg-slate-50">Annuler</button>
-              <button onClick={handleApprouverConfirmed} disabled={submitting || (!validitePermanente && !dateExpiration)} className="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg font-medium hover:bg-emerald-600 disabled:opacity-50">Approuver</button>
+              <button onClick={() => setShowApprouverModal(false)} disabled={submitting} className="flex-1 py-2.5 border border-slate-200 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-50">Annuler</button>
+              <button onClick={handleApprouverConfirmed} disabled={submitting || (!validitePermanente && !dateExpiration)} className="flex-1 py-2.5 bg-emerald-500 text-white rounded-lg font-medium hover:bg-emerald-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                {submitting && <span className="loading loading-spinner loading-sm"></span>}
+                Approuver
+              </button>
             </div>
           </div>
         </div>
