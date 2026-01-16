@@ -318,7 +318,7 @@ export default function ExpertiseProfilPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       {/* Bouton retour - Compact */}
       <button
         onClick={() => navigate(-1)}
@@ -478,82 +478,108 @@ export default function ExpertiseProfilPage() {
           </h2>
 
           {expertise.competences && expertise.competences.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            /* Grid parent avec subgrid - 3 lignes par card alignées */
+            <div
+              className="grid gap-4"
+              style={{
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gridAutoRows: 'auto auto auto',
+              }}
+            >
               {expertise.competences.map((comp, idx) => {
                 const badge = getBadgeForCompetence(comp.nom);
                 return (
+                  /* Card avec subgrid pour aligner les 3 lignes */
                   <div
                     key={`${comp.nom}-${idx}`}
-                    className={`relative bg-base-200/50 rounded-lg p-3 border transition-all hover:shadow-md ${
-                      badge ? 'border-primary/30 bg-primary/5' : 'border-base-300 hover:border-primary/30'
+                    className={`relative rounded-xl p-4 border transition-all hover:shadow-lg ${
+                      badge ? 'border-primary/30 bg-primary/5' : 'border-base-300 bg-base-200/50 hover:border-primary/30'
                     }`}
+                    style={{
+                      display: 'grid',
+                      gridTemplateRows: 'subgrid',
+                      gridRow: 'span 3',
+                      gap: '12px',
+                    }}
                   >
-                    {/* Badge de certification - Plus petit et discret */}
+                    {/* Badge de certification en position absolue */}
                     {badge && (
                       <div className="absolute -top-2 -right-2 z-10">
-                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${BADGE_COLORS[badge.niveauCertification]} flex items-center justify-center shadow-md border-2 border-white`}>
-                          <span className="text-sm">{BADGE_ICONS[badge.niveauCertification]}</span>
+                        <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${BADGE_COLORS[badge.niveauCertification]} flex items-center justify-center shadow-lg border-2 border-white`}>
+                          <span className="text-base">{BADGE_ICONS[badge.niveauCertification]}</span>
                         </div>
                       </div>
                     )}
 
-                    {/* En-tête compétence */}
-                    <div className="flex items-start gap-2 mb-2">
-                      <h3 className="text-sm font-semibold text-base-content flex-1 pr-6">
-                        {comp.nom}
-                      </h3>
-                      {comp.estFavorite && (
-                        <span className="text-warning text-xs">⭐</span>
-                      )}
+                    {/* LIGNE 1: Titre + Niveau */}
+                    <div className="space-y-1.5 pr-6">
+                      <div className="flex items-start gap-2">
+                        <h3 className="text-sm font-bold text-base-content leading-tight">
+                          {comp.nom}
+                        </h3>
+                        {comp.estFavorite && (
+                          <span className="text-warning text-sm flex-shrink-0">⭐</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {comp.niveauMaitrise !== undefined && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-base-content/50">Niveau</span>
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((level) => (
+                                <span
+                                  key={level}
+                                  className={`w-2 h-2 rounded-full ${
+                                    level <= comp.niveauMaitrise! ? 'bg-warning' : 'bg-base-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {badge && (
+                          <span className="badge badge-success badge-sm gap-1">
+                            <Award className="w-3 h-3" />
+                            {badge.niveauCertification}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Tags rapides */}
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {badge && (
-                        <span className="badge badge-success badge-xs gap-0.5">
-                          <Award className="w-2.5 h-2.5" />
-                          {badge.niveauCertification}
-                        </span>
-                      )}
-                      {comp.niveauMaitrise !== undefined && (
-                        <span className="badge badge-ghost badge-xs">
-                          Niv. {comp.niveauMaitrise}/5
-                        </span>
-                      )}
-                      {comp.anneesExperience !== undefined && (
-                        <span className="badge badge-ghost badge-xs">
-                          {comp.anneesExperience} an{comp.anneesExperience > 1 ? 's' : ''}
-                        </span>
-                      )}
+                    {/* LIGNE 2: Description + Métriques */}
+                    <div className="space-y-2">
+                      <p className={`text-xs leading-relaxed ${comp.description ? 'text-base-content/70' : 'text-base-content/30 italic'}`}>
+                        {comp.description || 'Aucune description'}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {comp.thm !== undefined && comp.thm > 0 && (
+                          <span className="badge badge-outline badge-success badge-sm">
+                            {comp.thm.toLocaleString()} FCFA/h
+                          </span>
+                        )}
+                        {comp.nombreProjets !== undefined && comp.nombreProjets > 0 && (
+                          <span className="badge badge-ghost badge-sm">
+                            {comp.nombreProjets} projet{comp.nombreProjets > 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {comp.anneesExperience !== undefined && comp.anneesExperience > 0 && (
+                          <span className="badge badge-ghost badge-sm">
+                            {comp.anneesExperience} an{comp.anneesExperience > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Description courte */}
-                    {comp.description && (
-                      <p className="text-xs text-base-content/60 line-clamp-2 mb-2">{comp.description}</p>
-                    )}
-
-                    {/* Métriques en ligne */}
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                      {comp.thm !== undefined && (
-                        <span className="text-success font-medium">
-                          {comp.thm.toLocaleString()} FCFA/h
-                        </span>
-                      )}
-                      {comp.nombreProjets !== undefined && comp.nombreProjets > 0 && (
-                        <span className="text-base-content/70">
-                          {comp.nombreProjets} projet{comp.nombreProjets > 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Certification texte - Collapsé */}
-                    {comp.certifications && (
-                      <div className="mt-2 pt-2 border-t border-base-300">
-                        <p className="text-xs text-accent truncate" title={comp.certifications}>
+                    {/* LIGNE 3: Certifications */}
+                    <div className="pt-2 border-t border-base-300/50">
+                      {comp.certifications ? (
+                        <p className="text-xs text-accent line-clamp-1" title={comp.certifications}>
                           📜 {comp.certifications}
                         </p>
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-xs text-base-content/25 italic">Aucune certification</p>
+                      )}
+                    </div>
                   </div>
                 );
               })}
