@@ -1,5 +1,6 @@
 package com.intermediation.expertise.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 
 /**
@@ -10,6 +11,8 @@ public class ApprobationRequest {
 
     private String commentaire;
     private Boolean validitePermanente = true; // Par défaut permanente
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateExpiration; // Obligatoire si validité limitée
 
     public ApprobationRequest() {}

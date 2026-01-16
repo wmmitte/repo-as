@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from '@/router';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import ModalConnexion from '@/components/auth/ModalConnexion';
 import { setGlobalAuthModalHandler } from '@/utils/authErrorHandler';
 
@@ -27,7 +28,9 @@ export default function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </ThemeProvider>
     </AuthProvider>
   );

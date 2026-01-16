@@ -1,32 +1,45 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { traitementService } from '@/services/traitementService';
 import { useHeaderConfig } from '@/hooks/useHeaderConfig';
 import { useIsManager, useIsRh } from '@/hooks/useHasRole';
 import ModalSelectionRh from '@/components/reconnaissance/ModalSelectionRh';
+import Loader from '@/components/ui/Loader';
+import {
+  Clock,
+  UserCheck,
+  CheckCircle,
+  FileText,
+  Calendar,
+  Paperclip,
+  User,
+  ChevronRight,
+  RefreshCw,
+  AlertCircle,
+} from 'lucide-react';
 import {
   DemandeReconnaissanceDTO,
   StatutDemande,
   NiveauCertification,
 } from '@/types/reconnaissance.types';
 
-const STATUT_COLORS: Record<StatutDemande, string> = {
-  [StatutDemande.EN_ATTENTE]: 'bg-yellow-100 text-yellow-800',
-  [StatutDemande.ASSIGNEE_RH]: 'bg-blue-100 text-blue-800',
-  [StatutDemande.EN_COURS_EVALUATION]: 'bg-indigo-100 text-indigo-800',
-  [StatutDemande.EN_ATTENTE_VALIDATION]: 'bg-purple-100 text-purple-800',
-  [StatutDemande.EN_COURS_TRAITEMENT]: 'bg-blue-100 text-blue-800',
-  [StatutDemande.COMPLEMENT_REQUIS]: 'bg-orange-100 text-orange-800',
-  [StatutDemande.APPROUVEE]: 'bg-green-100 text-green-800',
-  [StatutDemande.REJETEE]: 'bg-red-100 text-red-800',
-  [StatutDemande.ANNULEE]: 'bg-gray-100 text-gray-800',
+const STATUT_CONFIG: Record<StatutDemande, { bg: string; text: string; icon: typeof Clock }> = {
+  [StatutDemande.EN_ATTENTE]: { bg: 'bg-amber-50', text: 'text-amber-700', icon: Clock },
+  [StatutDemande.ASSIGNEE_RH]: { bg: 'bg-blue-50', text: 'text-blue-700', icon: UserCheck },
+  [StatutDemande.EN_COURS_EVALUATION]: { bg: 'bg-indigo-50', text: 'text-indigo-700', icon: FileText },
+  [StatutDemande.EN_ATTENTE_VALIDATION]: { bg: 'bg-purple-50', text: 'text-purple-700', icon: CheckCircle },
+  [StatutDemande.EN_COURS_TRAITEMENT]: { bg: 'bg-blue-50', text: 'text-blue-700', icon: Clock },
+  [StatutDemande.COMPLEMENT_REQUIS]: { bg: 'bg-orange-50', text: 'text-orange-700', icon: AlertCircle },
+  [StatutDemande.APPROUVEE]: { bg: 'bg-emerald-50', text: 'text-emerald-700', icon: CheckCircle },
+  [StatutDemande.REJETEE]: { bg: 'bg-red-50', text: 'text-red-700', icon: AlertCircle },
+  [StatutDemande.ANNULEE]: { bg: 'bg-gray-50', text: 'text-gray-700', icon: AlertCircle },
 };
 
-const NIVEAU_BADGES: Record<NiveauCertification, string> = {
-  [NiveauCertification.BRONZE]: '🥉',
-  [NiveauCertification.ARGENT]: '🥈',
-  [NiveauCertification.OR]: '🥇',
-  [NiveauCertification.PLATINE]: '💎',
+const NIVEAU_BADGES: Record<NiveauCertification, { emoji: string; label: string; color: string }> = {
+  [NiveauCertification.BRONZE]: { emoji: '🥉', label: 'Bronze', color: 'bg-amber-100 text-amber-800' },
+  [NiveauCertification.ARGENT]: { emoji: '🥈', label: 'Argent', color: 'bg-slate-100 text-slate-800' },
+  [NiveauCertification.OR]: { emoji: '🥇', label: 'Or', color: 'bg-yellow-100 text-yellow-800' },
+  [NiveauCertification.PLATINE]: { emoji: '💎', label: 'Platine', color: 'bg-cyan-100 text-cyan-800' },
 };
 
 export default function DemandeReconnaissance() {
@@ -41,72 +54,68 @@ export default function DemandeReconnaissance() {
   const [demandesAValider, setDemandesAValider] = useState<DemandeReconnaissanceDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'disponibles' | 'assignees' | 'a-valider' | 'demandes' | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('');
   const [modalSelectionRhOuvert, setModalSelectionRhOuvert] = useState(false);
   const [demandeSelectionne, setDemandeSelectionne] = useState<number | null>(null);
   const [donneesInitialesChargees, setDonneesInitialesChargees] = useState(false);
 
-  // Les rôles sont-ils chargés ?
   const rolesLoaded = !loadingManager && !loadingRh;
 
-  // Configurer le Header
+  // Construire les tabs selon le rôle
+  const tabs = useMemo(() => {
+    if (!rolesLoaded) return [];
+
+    const tabsList = [];
+    if (isManager) {
+      tabsList.push({ id: 'disponibles', label: `Nouvelles demandes (${demandes.length})` });
+      tabsList.push({ id: 'assignees', label: `En cours de traitement (${demandesAssignees.length})` });
+      tabsList.push({ id: 'a-valider', label: `Demandes à valider (${demandesAValider.length})` });
+    }
+    if (isRh) {
+      tabsList.push({ id: 'demandes', label: `Demandes à évaluer (${demandesAssignees.length})` });
+    }
+    return tabsList;
+  }, [rolesLoaded, isManager, isRh, demandes.length, demandesAssignees.length, demandesAValider.length]);
+
+  // Configurer le Header avec les onglets
   useHeaderConfig({
-    title: 'Demande de reconnaissance'
+    title: 'Demandes de reconnaissance',
+    tabs,
+    activeTab,
+    onTabChange: setActiveTab,
   });
 
-  // Définir l'onglet par défaut une fois les rôles chargés
+  // Charger les données ET définir l'onglet dès que les rôles sont chargés
   useEffect(() => {
-    if (rolesLoaded && activeTab === null) {
-      // Vérifier si un onglet est spécifié dans l'URL
-      const tabParam = searchParams.get('tab') as 'disponibles' | 'assignees' | 'a-valider' | 'demandes' | null;
-
-      let defaultTab: 'disponibles' | 'assignees' | 'a-valider' | 'demandes';
-
-      // Si un onglet valide est spécifié dans l'URL, l'utiliser
+    if (rolesLoaded && !donneesInitialesChargees) {
+      // Définir l'onglet par défaut
+      const tabParam = searchParams.get('tab');
       if (tabParam && ['disponibles', 'assignees', 'a-valider', 'demandes'].includes(tabParam)) {
-        defaultTab = tabParam;
+        setActiveTab(tabParam);
       } else {
-        // Sinon, utiliser l'onglet par défaut selon le rôle
-        defaultTab = isManager ? 'disponibles' : 'demandes';
+        setActiveTab(isManager ? 'disponibles' : 'demandes');
       }
-
-      setActiveTab(defaultTab);
-    }
-  }, [rolesLoaded, isManager, activeTab, searchParams]);
-
-  // Charger les demandes INITIALES (tous les onglets) une seule fois au démarrage
-  useEffect(() => {
-    if (activeTab !== null && !donneesInitialesChargees) {
+      // Charger immédiatement les données
       chargerDonneesInitiales();
     }
-  }, [activeTab, donneesInitialesChargees]);
+  }, [rolesLoaded, isManager, donneesInitialesChargees, searchParams]);
 
-  /**
-   * Charge toutes les données au démarrage
-   * Pour Manager: charge les 3 onglets (disponibles, assignées, à valider)
-   * Pour RH: charge uniquement ses demandes
-   */
   const chargerDonneesInitiales = async () => {
     try {
       setLoading(true);
-
       if (isManager) {
-        // Manager : charger tous les onglets en parallèle
         const [disponiblesData, assigneesData, aValiderData] = await Promise.all([
           traitementService.getDemandesATraiter(StatutDemande.EN_ATTENTE),
           traitementService.getDemandesAssigneesParManager(),
           traitementService.getDemandesEnAttenteValidation(),
         ]);
-
         setDemandes(disponiblesData);
         setDemandesAssignees(assigneesData);
         setDemandesAValider(aValiderData);
       } else {
-        // RH : charger uniquement ses demandes
         const data = await traitementService.getDemandesAssignees();
         setDemandesAssignees(data);
       }
-
       setError(null);
       setDonneesInitialesChargees(true);
     } catch (err) {
@@ -116,32 +125,23 @@ export default function DemandeReconnaissance() {
     }
   };
 
-  // Détecter le retour depuis une page d'évaluation et rafraîchir automatiquement
+  // Détecter le retour depuis une page d'évaluation
   useEffect(() => {
     const state = location.state as { refresh?: boolean } | null;
-    if (state?.refresh && activeTab !== null && isManager) {
-      console.log('[DEMANDE RECONNAISSANCE] Rafraîchissement automatique détecté');
+    if (state?.refresh && activeTab && isManager) {
       rafraichirTousLesOngletsManager();
-      // Nettoyer le state pour éviter des rafraîchissements multiples
       navigate(location.pathname + location.search, { replace: true, state: {} });
     }
   }, [location.state]);
 
-  /**
-   * Rafraîchit TOUS les onglets pour un Manager
-   * Utilisé après une action (assignation, validation, etc.) pour synchroniser tous les compteurs
-   */
   const rafraichirTousLesOngletsManager = async () => {
     try {
       setLoading(true);
-
-      // Charger tous les onglets en parallèle
       const [disponiblesData, assigneesData, aValiderData] = await Promise.all([
         traitementService.getDemandesATraiter(StatutDemande.EN_ATTENTE),
         traitementService.getDemandesAssigneesParManager(),
         traitementService.getDemandesEnAttenteValidation(),
       ]);
-
       setDemandes(disponiblesData);
       setDemandesAssignees(assigneesData);
       setDemandesAValider(aValiderData);
@@ -153,11 +153,6 @@ export default function DemandeReconnaissance() {
     }
   };
 
-  /**
-   * Rafraîchit les données après une action
-   * - Si Manager : recharge tous les onglets
-   * - Si RH : recharge ses demandes
-   */
   const rafraichirApresAction = async () => {
     if (isManager) {
       await rafraichirTousLesOngletsManager();
@@ -173,13 +168,8 @@ export default function DemandeReconnaissance() {
 
   const handleAssignerAuRh = async (rhId: string, commentaire?: string) => {
     if (!demandeSelectionne) return;
-
     try {
-      await traitementService.assignerDemandeAuRh(demandeSelectionne, {
-        rhId,
-        commentaire,
-      });
-      // Rafraîchir tous les onglets pour synchroniser les compteurs
+      await traitementService.assignerDemandeAuRh(demandeSelectionne, { rhId, commentaire });
       await rafraichirApresAction();
       setModalSelectionRhOuvert(false);
       setDemandeSelectionne(null);
@@ -191,10 +181,8 @@ export default function DemandeReconnaissance() {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('fr-FR', {
       day: '2-digit',
-      month: '2-digit',
+      month: 'short',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -205,221 +193,211 @@ export default function DemandeReconnaissance() {
     activeTab === 'demandes' ? demandesAssignees :
     [];
 
-  // Afficher un loader pendant le chargement des rôles
+  // Loader pendant le chargement des rôles
   if (!rolesLoaded) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center py-12">
-          <div className="text-xl">Vérification des permissions...</div>
-        </div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader />
       </div>
     );
   }
 
-  // Vérifier si l'utilisateur a au moins un des rôles requis
+  // Vérifier les permissions
   if (!isManager && !isRh) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p className="font-bold">Accès refusé</p>
-          <p>Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
-          <p className="text-sm mt-2">Rôles requis : MANAGER ou RH</p>
+      <div className="min-h-screen bg-slate-50 p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Accès refusé</h2>
+            <p className="text-red-600">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+            <p className="text-sm text-red-500 mt-2">Rôles requis : MANAGER ou RH</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  const obtenirTitreOnglet = () => {
+    switch (activeTab) {
+      case 'disponibles': return 'Nouvelles demandes';
+      case 'assignees': return 'Demandes en cours de traitement';
+      case 'a-valider': return 'Demandes en attente de validation';
+      case 'demandes': return 'Demandes à évaluer';
+      default: return 'Demandes';
+    }
+  };
+
+  const obtenirDescriptionOnglet = () => {
+    switch (activeTab) {
+      case 'disponibles': return 'Assignez ces demandes à un RH pour évaluation';
+      case 'assignees': return 'Suivez l\'avancement des évaluations en cours';
+      case 'a-valider': return 'Prenez une décision finale sur ces demandes évaluées';
+      case 'demandes': return 'Évaluez les compétences des experts';
+      default: return '';
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6 border-b overflow-x-auto">
-        {isManager && (
-          <>
-            <button
-              onClick={() => setActiveTab('disponibles')}
-              className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
-                activeTab === 'disponibles'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-blue-600'
-              }`}
-            >
-              📋 Disponibles ({demandes.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('assignees')}
-              className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
-                activeTab === 'assignees'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-blue-600'
-              }`}
-            >
-              👥 Assignées ({demandesAssignees.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('a-valider')}
-              className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
-                activeTab === 'a-valider'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-blue-600'
-              }`}
-            >
-              ✅ À valider ({demandesAValider.length})
-            </button>
-          </>
-        )}
-        {isRh && (
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto p-6 md:p-8">
+        {/* En-tête de section */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">{obtenirTitreOnglet()}</h2>
+            <p className="text-gray-600 mt-1">{obtenirDescriptionOnglet()}</p>
+          </div>
           <button
-            onClick={() => setActiveTab('demandes')}
-            className={`px-4 py-2 font-medium transition-colors whitespace-nowrap ${
-              activeTab === 'demandes'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-blue-600'
-            }`}
+            onClick={rafraichirApresAction}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-white rounded-lg transition-colors border border-slate-200"
           >
-            👤 Mes demandes ({demandesAssignees.length})
+            <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">Actualiser</span>
           </button>
+        </div>
+
+        {/* Erreur */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
+            <p className="text-red-700">{error}</p>
+          </div>
         )}
-      </div>
 
-      {/* Afficher un message si activeTab est null (ne devrait pas arriver) */}
-      {activeTab === null && (
-        <div className="flex justify-center items-center py-12">
-          <div className="text-xl">Chargement...</div>
-        </div>
-      )}
-
-      {/* Afficher le contenu uniquement si activeTab est défini */}
-      {activeTab !== null && (
-        <>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
+        {/* Contenu */}
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader />
+          </div>
+        ) : demandesAffichees.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileText className="text-slate-400" size={32} />
             </div>
-          )}
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Aucune demande</h3>
+            <p className="text-gray-500">
+              {activeTab === 'disponibles'
+                ? 'Aucune demande en attente d\'assignation'
+                : activeTab === 'a-valider'
+                ? 'Aucune demande en attente de validation'
+                : 'Vous n\'avez pas de demandes assignées'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {demandesAffichees.map((demande) => {
+              const statutConfig = STATUT_CONFIG[demande.statut];
+              const StatutIcon = statutConfig.icon;
 
-          {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="text-xl">Chargement...</div>
-        </div>
-      ) : demandesAffichees.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500">
-            {activeTab === 'disponibles'
-              ? 'Aucune demande disponible pour le moment'
-              : 'Vous n\'avez pas de demandes assignées'}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {demandesAffichees.map((demande) => (
-            <div
-              key={demande.id}
-              className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold mb-2">
-                    {demande.competenceNom}
-                  </h3>
-                  <div className="flex gap-2 flex-wrap items-center">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${STATUT_COLORS[demande.statut]}`}>
-                      {demande.statut.replace(/_/g, ' ')}
-                    </span>
-                    {demande.niveauVise && (
-                      <span className="text-2xl" title={demande.niveauVise}>
-                        {NIVEAU_BADGES[demande.niveauVise]}
+              return (
+                <div
+                  key={demande.id}
+                  className="bg-white border border-slate-200 rounded-xl hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group"
+                  onClick={() => navigate(`/demandes-reconnaissance/evaluer/${demande.id}`)}
+                >
+                  <div className="p-5">
+                    {/* Header de la carte */}
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">
+                          {demande.competenceNom}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Badge statut */}
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${statutConfig.bg} ${statutConfig.text}`}>
+                            <StatutIcon size={14} />
+                            {demande.statut.replace(/_/g, ' ')}
+                          </span>
+                          {/* Badge niveau */}
+                          {demande.niveauVise && (
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium ${NIVEAU_BADGES[demande.niveauVise].color}`}>
+                              {NIVEAU_BADGES[demande.niveauVise].emoji} {NIVEAU_BADGES[demande.niveauVise].label}
+                            </span>
+                          )}
+                          {/* Badge priorité */}
+                          {demande.priorite > 0 && (
+                            <span className="inline-flex items-center px-2.5 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+                              PRIORITÉ {demande.priorite}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Flèche */}
+                      <ChevronRight className="text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" size={24} />
+                    </div>
+
+                    {/* Métadonnées */}
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar size={16} className="text-gray-400" />
+                        {formatDate(demande.dateCreation)}
                       </span>
-                    )}
-                    {demande.priorite > 0 && (
-                      <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded">
-                        PRIORITÉ {demande.priorite}
+                      <span className="inline-flex items-center gap-1.5">
+                        <Paperclip size={16} className="text-gray-400" />
+                        {demande.nombrePieces} pièce{demande.nombrePieces > 1 ? 's' : ''}
                       </span>
+                      {demande.traitantId && (
+                        <span className="inline-flex items-center gap-1.5">
+                          |<User size={16} className="text-gray-400" />
+                           Chez {demande.traitantNom || 'RH assigné'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Commentaire expert */}
+                    {demande.commentaireExpert && (
+                      <div className="bg-slate-50 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-gray-700 line-clamp-2">
+                          <span className="font-semibold text-gray-900">Motif / Justification Demande: </span>
+                          {demande.commentaireExpert}
+                        </p>
+                      </div>
                     )}
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/demandes-reconnaissance/evaluer/${demande.id}`);
+                        }}
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                      >
+                        {activeTab === 'demandes' ? 'Évaluer' : 'Voir détails'}
+                      </button>
+
+                      {activeTab === 'disponibles' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            ouvrirModalAssignation(demande.id);
+                          }}
+                          className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium"
+                        >
+                          Assigner à un RH
+                        </button>
+                      )}
+
+                      {(activeTab === 'assignees' || activeTab === 'a-valider') && isManager && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            ouvrirModalAssignation(demande.id);
+                          }}
+                          className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                        >
+                          Réassigner
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="text-sm text-gray-600 space-y-1 mb-4">
-                <p>📅 Soumise le {formatDate(demande.dateCreation)}</p>
-                <p>📎 {demande.nombrePieces} pièce(s) justificative(s)</p>
-                {demande.traitantId && (
-                  <p>👤 Assigné à : {demande.traitantNom || demande.traitantId}</p>
-                )}
-              </div>
-
-              {demande.commentaireExpert && (
-                <div className="bg-gray-50 border-l-4 border-gray-300 p-3 mb-4">
-                  <p className="text-sm font-semibold mb-1">💬 Justification :</p>
-                  <p className="text-sm text-gray-700 line-clamp-2">{demande.commentaireExpert}</p>
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                {activeTab === 'disponibles' ? (
-                  <>
-                    <button
-                      onClick={() => navigate(`/demandes-reconnaissance/evaluer/${demande.id}`)}
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      🔍 Voir détails
-                    </button>
-                    <button
-                      onClick={() => ouvrirModalAssignation(demande.id)}
-                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                      👥 Assigner à un RH
-                    </button>
-                  </>
-                ) : activeTab === 'assignees' ? (
-                  <>
-                    <button
-                      onClick={() => navigate(`/demandes-reconnaissance/evaluer/${demande.id}`)}
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      🔍 Voir détails
-                    </button>
-                    {isManager && (
-                      <button
-                        onClick={() => ouvrirModalAssignation(demande.id)}
-                        className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-                      >
-                        🔄 Réassigner
-                      </button>
-                    )}
-                  </>
-                ) : activeTab === 'a-valider' ? (
-                  <>
-                    <button
-                      onClick={() => navigate(`/demandes-reconnaissance/evaluer/${demande.id}`)}
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    >
-                      🔍 Voir détails
-                    </button>
-                    {isManager && (
-                      <button
-                        onClick={() => ouvrirModalAssignation(demande.id)}
-                        className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
-                      >
-                        🔄 Réassigner
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <button
-                    onClick={() => navigate(`/demandes-reconnaissance/evaluer/${demande.id}`)}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    📝 Évaluer
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-        </>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Modal de sélection RH */}
       <ModalSelectionRh

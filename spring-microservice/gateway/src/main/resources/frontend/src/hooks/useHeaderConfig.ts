@@ -24,6 +24,9 @@ interface HeaderConfigOptions {
 export function useHeaderConfig(config: HeaderConfigOptions) {
   const { setConfig, resetConfig } = useHeader();
 
+  // Créer une clé stable pour les tabs (basée sur les labels qui contiennent les compteurs)
+  const tabsKey = config.tabs?.map(t => t.label).join('|') || '';
+
   useEffect(() => {
     setConfig(config);
 
@@ -35,6 +38,7 @@ export function useHeaderConfig(config: HeaderConfigOptions) {
     config.showSearch,
     config.visiteurId,
     config.activeTab,
+    tabsKey, // Se met à jour quand les labels des tabs changent (incluant les compteurs)
     // Ignorer les fonctions et ReactNode dans les deps pour éviter les re-renders infinis
   ]);
 }

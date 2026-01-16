@@ -14,7 +14,8 @@
       "Bash(set TOKEN=eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ0Z3VENE5idVU1ZWtCNW9tOTF6OFU4Yi1mem1OdEVEeGE5eDltdWU1blFNIn0.eyJleHAiOjE3NjgzOTMwNzUsImlhdCI6MTc2ODM5MzAxNSwianRpIjoiODE1MTk4YzgtM2JkMy00Zjc3LTkwMGUtMjE0YzQ1OGZjNTRhIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDk4L3JlYWxtcy9tYXN0ZXIiLCJzdWIiOiJkNmQwMTIyYi1kNTQ1LTQ2NzktYTI2OS1mNDE5MjY1ZmYyYmEiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJhZG1pbi1jbGkiLCJzZXNzaW9uX3N0YXRlIjoiNGZkZjdlODgtNmMyMy00MjlmLTllMmUtNGRmNWNmZDFlMWFkIiwiYWNyIjoiMSIsInNjb3BlIjoicHJvZmlsZSBlbWFpbCIsInNpZCI6IjRmZGY3ZTg4LTZjMjMtNDI5Zi05ZTJlLTRkZjVjZmQxZTFhZCIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwicHJlZmVycmVkX3VzZXJuYW1lIjoiYWRtaW4ifQ.jTrDlxLB7Ib7DJFVAmPI7edaD5btSxWx3hwCrleluoXX9OILBhFwcqs86nt6M2F7WxTrVyw_hsaH6eEiaXP89kHlq5aCBSmuoqREBi1hv-PGUWOM87tRe2JlxjssdRCLDTMwWU4W6tXRqdE0tifH5vBSSKrZvCSoNYIp5CLKGh-TKIoqHlD2iL9HNSfl4x-Ou_ioWAWB5bbi5wK6JTxz2Mtw5mRyIng2lFQmP7wd7fAKdFbbeSbe15Kzm4faaxS-gcQrmg2ocuKcclVb2ZoMGNIF-KKHmmC7SYUvmCjhRoAj9s358WqmWytdLlXACz4rtKFj4JZWiAz11VUHTkt3dg)",
       "Bash(powershell -Command \"$token = \\(Invoke-RestMethod -Uri ''http://localhost:8098/realms/master/protocol/openid-connect/token'' -Method Post -Body @{grant_type=''password'';client_id=''admin-cli'';username=''admin'';password=''admin''} -ContentType ''application/x-www-form-urlencoded''\\).access_token; Invoke-RestMethod -Uri ''http://localhost:8098/admin/realms/realm_picp/users?email=anptic.gov.bf@gmail.com&exact=true'' -Headers @{Authorization=\"\"Bearer $token\"\"}\")",
       "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\Binaries\\\\repo-as\\\\check-keycloak-user.ps1\")",
-      "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\Binaries\\\\repo-as\\\\fix-keycloak-roles-in-jwt.ps1\")"
+      "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\Binaries\\\\repo-as\\\\fix-keycloak-roles-in-jwt.ps1\")",
+      "Bash(mvn compile:*)"
     ],
     "deny": [],
     "ask": []

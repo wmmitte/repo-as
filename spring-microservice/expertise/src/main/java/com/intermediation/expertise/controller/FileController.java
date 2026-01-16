@@ -79,6 +79,53 @@ public class FileController {
     }
 
     /**
+     * Prévisualiser un fichier (inline dans le navigateur)
+     */
+    @GetMapping("/view/{utilisateurId}/{demandeId}/{filename:.+}")
+    public ResponseEntity<?> viewFile(
+            @RequestHeader("X-User-Id") String userId,
+            @PathVariable String utilisateurId,
+            @PathVariable String demandeId,
+            @PathVariable String filename) {
+
+        try {
+            String filePath = utilisateurId + "/" + demandeId + "/" + filename;
+            Path file = fileStorageService.getFilePath(filePath);
+
+            if (!fileStorageService.fileExists(filePath)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Fichier non trouvé");
+            }
+
+            Resource resource = new UrlResource(file.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Fichier non trouvé ou non lisible");
+            }
+
+            // Déterminer le type de contenu
+            String contentType = "application/octet-stream";
+            try {
+                contentType = java.nio.file.Files.probeContentType(file);
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+            } catch (IOException e) {
+                logger.warn("Impossible de déterminer le type de contenu du fichier", e);
+            }
+
+            // Utiliser "inline" pour afficher dans le navigateur au lieu de télécharger
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+
+        } catch (MalformedURLException e) {
+            logger.error("Erreur lors de la prévisualisation du fichier", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur lors de la prévisualisation");
+        }
+    }
+
+    /**
      * Vérifier si un fichier existe
      */
     @GetMapping("/exists/{utilisateurId}/{demandeId}/{filename:.+}")

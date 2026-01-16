@@ -5,6 +5,10 @@ mvn clean install -DskipTests ; mvn spring-boot:run -DSkipTests
 
 taskkill /F /IM node.exe # si claude dit addrinuse :  Unable to connect to API (EADDRINUSE)
 
+== POUR AUTORISER NPM
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass #temporaire
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser #permanent
+npm run dev 
 ===
 Voici quelques regles que tu vas de voir savoir et note ça dans ta mémoire pour t'en souvenir à chaque contexte :
 # Utilise toujours le français tant que possible pour le nommage des noms des fonctions, des variables et aussi des colonnes dans les tables

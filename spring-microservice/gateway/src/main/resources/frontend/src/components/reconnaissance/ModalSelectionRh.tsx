@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserCheck, TrendingUp, CheckCircle, Star, X } from 'lucide-react';
+import { UserCheck, CheckCircle, X, AlertCircle, Clock, TrendingUp, Users } from 'lucide-react';
 import { UtilisateurRhDTO } from '@/types/reconnaissance.types';
 import { traitementService } from '@/services/traitementService';
 
@@ -36,7 +36,7 @@ export default function ModalSelectionRh({
       const rh = await traitementService.getUtilisateursRh();
       setUtilisateursRh(rh);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des RH');
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +44,7 @@ export default function ModalSelectionRh({
 
   const handleConfirm = () => {
     if (!rhSelectionne) {
-      setError('Veuillez sélectionner un utilisateur RH');
+      setError('Veuillez sélectionner un RH');
       return;
     }
     onConfirm(rhSelectionne, commentaire || undefined);
@@ -54,144 +54,140 @@ export default function ModalSelectionRh({
   if (!isOpen) return null;
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-3xl">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-lg">Assigner la demande à un RH</h3>
-          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">
-            <X size={20} />
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-hidden shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Users size={20} className="text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Assigner à un RH</h3>
+              <p className="text-sm text-gray-500">Sélectionnez un évaluateur</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          >
+            <X size={20} className="text-gray-400" />
           </button>
         </div>
 
-        {error && (
-          <div className="alert alert-error mb-4">
-            <span>{error}</span>
-          </div>
-        )}
+        {/* Content */}
+        <div className="p-5 overflow-y-auto max-h-[calc(85vh-180px)]">
+          {error && (
+            <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <AlertCircle size={16} />
+              {error}
+            </div>
+          )}
 
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <span className="loading loading-spinner loading-lg"></span>
-          </div>
-        ) : (
-          <>
-            <div className="mb-6">
-              <p className="text-sm text-base-content/70 mb-4">
-                Sélectionnez un utilisateur RH pour évaluer cette demande de reconnaissance
-              </p>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
+              <p className="text-sm text-gray-500">Chargement des RH...</p>
+            </div>
+          ) : utilisateursRh.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">Aucun RH disponible</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {utilisateursRh.map((rh) => {
+                const isSelected = rhSelectionne === rh.userId;
+                const tauxColor = rh.tauxApprobation >= 70 ? 'text-emerald-600' :
+                                  rh.tauxApprobation >= 50 ? 'text-amber-600' : 'text-red-600';
 
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {utilisateursRh.length === 0 ? (
-                  <div className="alert alert-info">
-                    <span>Aucun utilisateur RH disponible</span>
-                  </div>
-                ) : (
-                  utilisateursRh.map((rh) => (
-                    <div
-                      key={rh.userId}
-                      onClick={() => setRhSelectionne(rh.userId)}
-                      className={`card border-2 cursor-pointer transition-all hover:shadow-md ${
-                        rhSelectionne === rh.userId
-                          ? 'border-primary bg-primary/5'
-                          : 'border-base-300 hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="card-body p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <UserCheck
-                                size={20}
-                                className={rhSelectionne === rh.userId ? 'text-primary' : ''}
-                              />
-                              <h4 className="font-semibold">{rh.nom}</h4>
-                              {rhSelectionne === rh.userId && (
-                                <CheckCircle size={20} className="text-primary" />
-                              )}
-                            </div>
-                            <p className="text-sm text-base-content/70">{rh.email}</p>
-                          </div>
+                return (
+                  <div
+                    key={rh.userId}
+                    onClick={() => setRhSelectionne(rh.userId)}
+                    className={`relative flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+                      isSelected
+                        ? 'bg-primary/5 ring-2 ring-primary'
+                        : 'bg-slate-50 hover:bg-slate-100'
+                    }`}
+                  >
+                    {/* Avatar */}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm ${
+                      isSelected ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {rh.nom.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">{rh.nom}</span>
+                        {isSelected && <CheckCircle size={16} className="text-primary" />}
+                      </div>
+                      <p className="text-sm text-gray-500 truncate">{rh.email}</p>
+                    </div>
+
+                    {/* Stats compactes */}
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="text-center">
+                        <div className="flex items-center gap-1 text-amber-600">
+                          <Clock size={12} />
+                          <span className="font-semibold">{rh.nombreDemandesEnCours}</span>
                         </div>
-
-                        <div className="divider my-2"></div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <div className="stat p-2 bg-base-200/50 rounded-lg">
-                            <div className="stat-title text-xs">En cours</div>
-                            <div className="stat-value text-lg text-warning">
-                              {rh.nombreDemandesEnCours}
-                            </div>
-                          </div>
-
-                          <div className="stat p-2 bg-base-200/50 rounded-lg">
-                            <div className="stat-title text-xs">Traitées</div>
-                            <div className="stat-value text-lg text-info">
-                              {rh.nombreDemandesTraitees}
-                            </div>
-                          </div>
-
-                          <div className="stat p-2 bg-base-200/50 rounded-lg">
-                            <div className="stat-title text-xs flex items-center gap-1">
-                              <TrendingUp size={12} />
-                              Taux approbation
-                            </div>
-                            <div
-                              className={`stat-value text-lg ${
-                                rh.tauxApprobation >= 70
-                                  ? 'text-success'
-                                  : rh.tauxApprobation >= 50
-                                  ? 'text-warning'
-                                  : 'text-error'
-                              }`}
-                            >
-                              {rh.tauxApprobation.toFixed(0)}%
-                            </div>
-                          </div>
-
-                          <div className="stat p-2 bg-base-200/50 rounded-lg">
-                            <div className="stat-title text-xs flex items-center gap-1">
-                              <Star size={12} />
-                              Note moyenne
-                            </div>
-                            <div className="stat-value text-lg text-accent">
-                              {rh.noteMoyenne.toFixed(1)}
-                              <span className="text-sm">/100</span>
-                            </div>
-                          </div>
+                        <span className="text-gray-400">en cours</span>
+                      </div>
+                      <div className="w-px h-8 bg-slate-200" />
+                      <div className="text-center">
+                        <div className={`flex items-center gap-1 ${tauxColor}`}>
+                          <TrendingUp size={12} />
+                          <span className="font-semibold">{rh.tauxApprobation.toFixed(0)}%</span>
                         </div>
+                        <span className="text-gray-400">approb.</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                );
+              })}
             </div>
+          )}
 
-            <div className="form-control mb-6">
-              <label className="label">
-                <span className="label-text">Commentaire (optionnel)</span>
+          {/* Commentaire */}
+          {!isLoading && utilisateursRh.length > 0 && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Instructions (optionnel)
               </label>
               <textarea
-                className="textarea textarea-bordered h-24"
-                placeholder="Ajoutez un commentaire ou des instructions pour le RH..."
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                rows={2}
+                placeholder="Ajoutez des instructions pour le RH..."
                 value={commentaire}
                 onChange={(e) => setCommentaire(e.target.value)}
-              ></textarea>
+              />
             </div>
+          )}
+        </div>
 
-            <div className="modal-action">
-              <button onClick={onClose} className="btn btn-ghost">
-                Annuler
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={!rhSelectionne}
-                className="btn btn-primary"
-              >
-                Assigner
-              </button>
-            </div>
-          </>
-        )}
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-slate-50">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 hover:bg-slate-200 rounded-lg transition-colors text-sm font-medium"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!rhSelectionne}
+            className="px-5 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <UserCheck size={16} />
+            Assigner
+          </button>
+        </div>
       </div>
     </div>
   );

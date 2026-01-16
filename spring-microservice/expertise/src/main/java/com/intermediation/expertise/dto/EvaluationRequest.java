@@ -1,9 +1,6 @@
 package com.intermediation.expertise.dto;
 
 import com.intermediation.expertise.model.EvaluationCompetence.Recommandation;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -14,8 +11,7 @@ public class EvaluationRequest {
     @NotNull(message = "La recommandation est obligatoire")
     private Recommandation recommandation;
 
-    @NotBlank(message = "Le commentaire est obligatoire")
-    private String commentaire;
+    private String commentaire; // Optionnel pour permettre les brouillons
 
     private Integer tempsEvaluationMinutes;
 

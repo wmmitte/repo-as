@@ -32,6 +32,8 @@ public class ReconnaissanceCompetenceWorkers {
 
     /**
      * Worker pour créer le badge de compétence après approbation
+     * NOTE: Le badge est déjà créé par TraitementDemandeService.approuverDemandeParManager()
+     * Ce worker vérifie simplement si le badge existe et retourne ses infos
      */
     @JobWorker(type = "creer-badge")
     public Map<String, Object> creerBadge(
@@ -39,7 +41,7 @@ public class ReconnaissanceCompetenceWorkers {
             @Variable Long demandeId,
             @Variable String expertId) {
 
-        logger.info("🎖️ [WORKER] Création du badge pour la demande {}", demandeId);
+        logger.info("🎖️ [WORKER] Vérification/Création du badge pour la demande {}", demandeId);
 
         Map<String, Object> variables = new HashMap<>();
 
@@ -48,18 +50,33 @@ public class ReconnaissanceCompetenceWorkers {
             var demande = demandeRepository.findById(demandeId)
                     .orElseThrow(() -> new RuntimeException("Demande non trouvée: " + demandeId));
 
-            // Créer le badge via le service (avec validité permanente par défaut)
-            BadgeCompetenceDTO badge = badgeService.attribuerBadge(demande);
+            // Vérifier si un badge a déjà été créé pour cette demande
+            // (créé par TraitementDemandeService lors de l'approbation)
+            var badgeExistant = badgeService.getBadgeParDemandeId(demandeId);
 
-            variables.put("badgeId", badge.getId());
-            variables.put("badgeCree", true);
-            variables.put("niveauCertification", badge.getNiveauCertification().toString());
+            if (badgeExistant != null) {
+                // Badge déjà créé par le service d'approbation, on retourne ses infos
+                logger.info("✅ [WORKER] Badge déjà existant pour la demande {}: badgeId={}, niveau={}",
+                        demandeId, badgeExistant.getId(), badgeExistant.getNiveauCertification());
 
-            logger.info("✅ [WORKER] Badge créé avec succès: badgeId={}, niveau={}",
-                    badge.getId(), badge.getNiveauCertification());
+                variables.put("badgeId", badgeExistant.getId());
+                variables.put("badgeCree", true);
+                variables.put("niveauCertification", badgeExistant.getNiveauCertification().toString());
+            } else {
+                // Cas exceptionnel : badge non créé, on le crée (validité permanente par défaut)
+                logger.warn("⚠️ [WORKER] Badge non trouvé pour la demande {}, création...", demandeId);
+                BadgeCompetenceDTO badge = badgeService.attribuerBadge(demande);
+
+                variables.put("badgeId", badge.getId());
+                variables.put("badgeCree", true);
+                variables.put("niveauCertification", badge.getNiveauCertification().toString());
+
+                logger.info("✅ [WORKER] Badge créé: badgeId={}, niveau={}",
+                        badge.getId(), badge.getNiveauCertification());
+            }
 
         } catch (Exception e) {
-            logger.error("❌ [WORKER] Erreur lors de la création du badge pour la demande {}", demandeId, e);
+            logger.error("❌ [WORKER] Erreur lors de la vérification/création du badge pour la demande {}", demandeId, e);
             variables.put("badgeCree", false);
             variables.put("erreur", e.getMessage());
             throw new RuntimeException("Échec de création du badge", e);

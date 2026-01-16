@@ -197,8 +197,8 @@ export default function FileTraitement() {
 
               {demande.commentaireExpert && (
                 <div className="bg-gray-50 border-l-4 border-gray-300 p-3 mb-4">
-                  <p className="text-sm font-semibold mb-1">💬 Justification :</p>
-                  <p className="text-sm text-gray-700 line-clamp-2">{demande.commentaireExpert}</p>
+                  <p className="text-sm font-semibold mb-1">💬 Motif / Justification : </p>
+                  <p className="text-justify text-sm text-gray-700 line-clamp-2">{demande.commentaireExpert}</p>
                 </div>
               )}
 

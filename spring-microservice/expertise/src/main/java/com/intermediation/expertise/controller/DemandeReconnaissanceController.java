@@ -167,13 +167,18 @@ public class DemandeReconnaissanceController {
             if (request == null) {
                 request = new ApprobationRequest(null, true, null);
             }
-            
+
+            logger.info("=== Approbation RH - Données reçues ===");
+            logger.info("validitePermanente: {}", request.getValiditePermanente());
+            logger.info("dateExpiration: {}", request.getDateExpiration());
+            logger.info("commentaire: {}", request.getCommentaire());
+
             // Valider les paramètres de validité
             request.valider();
-            
+
             DemandeReconnaissanceDTO demande = traitementService.approuverDemande(
-                demandeId, 
-                traitantId, 
+                demandeId,
+                traitantId,
                 request.getCommentaire(),
                 request.getValiditePermanente(),
                 request.getDateExpiration()
@@ -425,6 +430,12 @@ public class DemandeReconnaissanceController {
             if (request == null) {
                 request = new ApprobationRequest(null, true, null);
             }
+
+            logger.info("=== Approbation Manager - Données reçues ===");
+            logger.info("validitePermanente: {}", request.getValiditePermanente());
+            logger.info("dateExpiration: {}", request.getDateExpiration());
+            logger.info("commentaire: {}", request.getCommentaire());
+
             request.valider();
 
             DemandeReconnaissanceDTO demande = traitementService.approuverDemandeParManager(

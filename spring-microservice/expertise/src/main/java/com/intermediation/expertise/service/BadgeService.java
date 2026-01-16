@@ -17,8 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +43,9 @@ public class BadgeService {
 
     @Autowired
     private DemandeReconnaissanceRepository demandeRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     // Auto-injection pour permettre les appels transactionnels depuis la même classe
     // @Lazy évite la dépendance circulaire
@@ -73,8 +79,8 @@ public class BadgeService {
 
     /**
      * Attribuer un badge suite à une demande approuvée avec définition de la validité
-     * Gère également la progression : désactive l'ancien badge avant de créer le nouveau
-     * 
+     * Gère également la progression : met à jour le badge existant ou en crée un nouveau
+     *
      * @param demande La demande de reconnaissance approuvée
      * @param validitePermanente True pour validité permanente, false pour validité limitée
      * @param dateExpiration Date d'expiration (obligatoire si validitePermanente = false)
@@ -85,75 +91,71 @@ public class BadgeService {
                                              LocalDateTime dateExpiration) {
         logger.info("=== DÉBUT attribuerBadge pour competenceId={}, utilisateurId={} ===",
                    demande.getCompetenceId(), demande.getUtilisateurId());
-        
-        // Vérifier s'il existe déjà un badge actif
-        boolean badgeActifExiste = badgeRepository.existsByCompetenceIdAndUtilisateurIdAndEstActif(
-            demande.getCompetenceId(), 
-            demande.getUtilisateurId(), 
-            true
-        );
-        
-        logger.info("Badge actif existe avant désactivation: {}", badgeActifExiste);
-        
-        // Désactiver les badges actifs dans une NOUVELLE transaction
-        // REQUIRES_NEW force le COMMIT de la désactivation AVANT de continuer
-        // IMPORTANT : Utiliser self (proxy Spring) au lieu de this pour que @Transactional fonctionne
-        if (badgeActifExiste) {
-            try {
-                self.desactiverBadgesActifsDansNouvelleTransaction(
-                    demande.getCompetenceId(), 
-                    demande.getUtilisateurId()
-                );
-                logger.info("✓ Badges désactivés et transaction COMMIT-ée, prêt pour création nouveau badge");
-                
-                // Vérifier que la désactivation a bien fonctionné
-                boolean badgeActifEncorePresent = badgeRepository.existsByCompetenceIdAndUtilisateurIdAndEstActif(
-                    demande.getCompetenceId(), 
-                    demande.getUtilisateurId(), 
-                    true
-                );
-                
-                if (badgeActifEncorePresent) {
-                    logger.error("ERREUR: Badge actif toujours présent après désactivation!");
-                    throw new RuntimeException("Impossible de désactiver le badge existant");
-                }
-                
-                logger.info("✓ Vérification: aucun badge actif restant");
-                
-            } catch (Exception e) {
-                logger.error("Erreur lors de la désactivation des badges: {}", e.getMessage(), e);
-                throw new RuntimeException("Erreur lors de la désactivation du badge existant: " + e.getMessage());
-            }
-        } else {
-            logger.info("Pas de badge actif existant, première certification pour cette compétence");
-        }
 
         // Déterminer le niveau de certification basé sur le domaine de compétence
         NiveauCertification niveau = determinerNiveauCertification(demande.getCompetenceId());
 
-        // Créer le nouveau badge
-        BadgeCompetence badge = new BadgeCompetence(
+        // Vérifier s'il existe déjà un badge actif pour cette compétence/utilisateur
+        Optional<BadgeCompetence> badgeExistantOpt = badgeRepository.findByCompetenceIdAndUtilisateurIdAndEstActif(
             demande.getCompetenceId(),
             demande.getUtilisateurId(),
-            niveau,
-            demande.getId()
+            true
         );
 
-        // Appliquer la validité
-        if (validitePermanente != null && !validitePermanente && dateExpiration != null) {
-            badge.definirExpiration(dateExpiration);
-            logger.info("Badge avec validité limitée jusqu'au {}", dateExpiration);
+        BadgeCompetence badge;
+
+        if (badgeExistantOpt.isPresent()) {
+            // Mettre à jour le badge existant
+            badge = badgeExistantOpt.get();
+            logger.info("Badge actif existant trouvé (ID={}), mise à jour...", badge.getId());
+
+            badge.setNiveauCertification(niveau);
+            badge.setDemandeReconnaissanceId(demande.getId());
+            badge.setDateObtention(LocalDateTime.now());
+            badge.setDateRevocation(null);
+            badge.setMotifRevocation(null);
+            badge.setRevoquePar(null);
+
+            // Appliquer la validité
+            if (validitePermanente != null && !validitePermanente && dateExpiration != null) {
+                badge.setValiditePermanente(false);
+                badge.setDateExpiration(dateExpiration);
+                logger.info("Badge mis à jour avec validité limitée jusqu'au {}", dateExpiration);
+            } else {
+                badge.setValiditePermanente(true);
+                badge.setDateExpiration(null);
+                logger.info("Badge mis à jour avec validité permanente");
+            }
+
+            badge = badgeRepository.save(badge);
+            logger.info("Badge {} mis à jour (niveau {}) pour l'utilisateur {} pour la compétence {}",
+                        badge.getId(), niveau, badge.getUtilisateurId(), badge.getCompetenceId());
         } else {
-            logger.info("Badge avec validité permanente");
+            // Créer un nouveau badge
+            logger.info("Pas de badge actif existant, création d'un nouveau badge");
+
+            badge = new BadgeCompetence(
+                demande.getCompetenceId(),
+                demande.getUtilisateurId(),
+                niveau,
+                demande.getId()
+            );
+
+            // Appliquer la validité
+            if (validitePermanente != null && !validitePermanente && dateExpiration != null) {
+                badge.definirExpiration(dateExpiration);
+                logger.info("Badge créé avec validité limitée jusqu'au {}", dateExpiration);
+            } else {
+                logger.info("Badge créé avec validité permanente");
+            }
+
+            badge = badgeRepository.save(badge);
+            logger.info("Nouveau badge {} (niveau {}) attribué à l'utilisateur {} pour la compétence {}",
+                        badge.getId(), niveau, badge.getUtilisateurId(), badge.getCompetenceId());
         }
 
-        badge = badgeRepository.save(badge);
-
-        logger.info("Badge {} (niveau {}) attribué à l'utilisateur {} pour la compétence {}", 
-                    badge.getId(), niveau, badge.getUtilisateurId(), badge.getCompetenceId());
-
         BadgeCompetenceDTO dto = new BadgeCompetenceDTO(badge);
-        
+
         // Enrichir avec le nom de la compétence
         competenceRepository.findById(badge.getCompetenceId())
                 .ifPresent(c -> dto.setCompetenceNom(c.getNom()));
@@ -207,7 +209,28 @@ public class BadgeService {
                 .orElseThrow(() -> new RuntimeException("Badge non trouvé"));
 
         BadgeCompetenceDTO dto = new BadgeCompetenceDTO(badge);
-        
+
+        // Enrichir avec le nom de la compétence
+        competenceRepository.findById(badge.getCompetenceId())
+                .ifPresent(c -> dto.setCompetenceNom(c.getNom()));
+
+        return dto;
+    }
+
+    /**
+     * Récupérer un badge par ID de demande de reconnaissance
+     * Retourne null si aucun badge n'existe pour cette demande
+     */
+    public BadgeCompetenceDTO getBadgeParDemandeId(Long demandeId) {
+        Optional<BadgeCompetence> badgeOpt = badgeRepository.findByDemandeReconnaissanceId(demandeId);
+
+        if (badgeOpt.isEmpty()) {
+            return null;
+        }
+
+        BadgeCompetence badge = badgeOpt.get();
+        BadgeCompetenceDTO dto = new BadgeCompetenceDTO(badge);
+
         // Enrichir avec le nom de la compétence
         competenceRepository.findById(badge.getCompetenceId())
                 .ifPresent(c -> dto.setCompetenceNom(c.getNom()));
