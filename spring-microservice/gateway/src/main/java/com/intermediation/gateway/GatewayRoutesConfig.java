@@ -77,6 +77,11 @@ public class GatewayRoutesConfig {
                 .path("/api/referentiels/**")
                 .uri("lb://EXPERTISE"))
 
+            // Route API Contact (demandes de contact entre utilisateurs) vers le service Expertise
+            .route("contact-api", r -> r
+                .path("/api/contact/**")
+                .uri("lb://EXPERTISE"))
+
             .build();
     }
 }

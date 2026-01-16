@@ -5,6 +5,7 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\BadgeController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\CertificationController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\CompetenceReferenceController.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\DemandeContactController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\DemandeReconnaissanceController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\DomaineMetierController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\ExpertiseController.java
@@ -22,7 +23,9 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\CompetenceDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\CompetenceReferenceDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\CreateDemandeReconnaissanceRequest.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\CreerDemandeContactRequest.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\CritereEvaluationDTO.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\DemandeContactDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\DemandeReconnaissanceDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\DomaineCompetenceDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\DomaineMetierDTO.java
@@ -47,6 +50,7 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\model\Competence.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\model\CompetenceReference.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\model\CritereEvaluation.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\model\DemandeContact.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\model\DemandeReconnaissanceCompetence.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\model\DomaineCompetence.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\model\DomaineMetier.java
@@ -63,6 +67,7 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\repository\CompetenceReferenceRepository.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\repository\CompetenceRepository.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\repository\CritereEvaluationRepository.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\repository\DemandeContactRepository.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\repository\DemandeReconnaissanceRepository.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\repository\DomaineCompetenceRepository.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\repository\DomaineMetierRepository.java
@@ -81,6 +86,7 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\CertificationService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\CompetenceReferenceInitService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\CompetenceReferenceService.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\DemandeContactService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\DomaineMetierService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ExpertiseService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\FileStorageService.java

@@ -38,9 +38,7 @@ export default function RequireRole({ children, roles }: RequireRoleProps) {
   // Vérifier d'abord l'authentification
   if (!isAuthenticated) {
     const returnUrl = location.pathname + location.search;
-    console.log('🔒 [REQUIRE ROLE] Utilisateur non authentifié');
-    console.log('📍 [REQUIRE ROLE] Page demandée:', returnUrl);
-    openAuthModal(returnUrl);
+     openAuthModal(returnUrl);
     return <Navigate to="/" replace state={{ from: location, authRequired: true }} />;
   }
 
@@ -51,10 +49,7 @@ export default function RequireRole({ children, roles }: RequireRoleProps) {
     )
   );
 
-  if (!hasRequiredRole) {
-    console.error('❌ [REQUIRE ROLE] Accès refusé - Rôles insuffisants');
-    console.error('📋 [REQUIRE ROLE] Rôles requis:', roles);
-    console.error('👤 [REQUIRE ROLE] Rôles utilisateur:', userRoles);
+  if (!hasRequiredRole) { 
 
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-8">

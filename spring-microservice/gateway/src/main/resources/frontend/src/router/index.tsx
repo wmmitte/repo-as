@@ -30,6 +30,7 @@ import VerifierEmailPage from '@/pages/VerifierEmailPage';
 import GererDomainesMetier from '@/pages/GererDomainesMetier';
 import GererCriteresEvaluation from '@/pages/GererCriteresEvaluation';
 import GererMethodesEvaluation from '@/pages/GererMethodesEvaluation';
+import MesMessagesPage from '@/pages/MesMessagesPage';
 
 export const router = createBrowserRouter([
   {
@@ -159,6 +160,15 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <MesBadges />
+          </RequireAuth>
+        ),
+      },
+      // Route de messagerie
+      {
+        path: 'messages',
+        element: (
+          <RequireAuth>
+            <MesMessagesPage />
           </RequireAuth>
         ),
       },

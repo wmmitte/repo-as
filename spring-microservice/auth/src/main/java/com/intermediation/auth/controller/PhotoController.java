@@ -116,10 +116,18 @@ public class PhotoController {
 
     /**
      * Récupère la photo de profil d'un utilisateur par son ID (endpoint public)
+     * Cherche d'abord par keycloakId, puis par ID JPA si non trouvé
      */
     @GetMapping("/public/{utilisateurId}/photo")
     public ResponseEntity<?> getPhotoPublic(@PathVariable String utilisateurId) {
-        Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findById(utilisateurId);
+        // Chercher d'abord par keycloakId (ID propagé par le Gateway)
+        Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findByKeycloakId(utilisateurId);
+
+        // Si non trouvé, chercher par ID JPA (rétrocompatibilité)
+        if (utilisateurOpt.isEmpty()) {
+            utilisateurOpt = utilisateurRepository.findById(utilisateurId);
+        }
+
         if (utilisateurOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

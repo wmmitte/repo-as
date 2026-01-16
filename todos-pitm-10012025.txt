@@ -1,6 +1,6 @@
-- Actualiser les onglets / données apr7s la validation des formulaires (soumission des demandes de reconnaissance, etc..)
-- permettre de visualiser ou de télécharger les fichiers uploadas dans le profil RH
-- Corriger le fait que un badge temporaire ne doit pas apparaitre comme permanent
+OK - Actualiser les onglets / données apr7s la validation des formulaires (soumission des demandes de reconnaissance, etc..)
+OK - permettre de visualiser ou de télécharger les fichiers uploadas dans le profil RH
+OK - Corriger le fait que un badge temporaire ne doit pas apparaitre comme permanent
 
 - algorithme de moteur d'engagement (visibilité des experts)
 - Intégrer dans les filtres de /rechercher la recherche par domaine metier

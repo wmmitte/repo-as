@@ -20,8 +20,6 @@ export function useUserRoles(): UserRoles {
 
   // Récupérer les rôles depuis l'utilisateur
   const roles = user.roles || [];
-  console.log('🔑 [ROLES] Rôles de l\'utilisateur:', roles);
-
   return { roles, loading: false, error: null };
 }
 

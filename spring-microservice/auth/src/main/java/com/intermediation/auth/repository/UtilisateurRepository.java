@@ -12,6 +12,8 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, String
 
     Optional<Utilisateur> findByEmail(String email);
 
+    Optional<Utilisateur> findByKeycloakId(String keycloakId);
+
     Optional<Utilisateur> findByGoogleId(String googleId);
 
     Optional<Utilisateur> findByFacebookId(String facebookId);

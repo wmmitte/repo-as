@@ -1,6 +1,7 @@
 com\intermediation\expertise\controller\DemandeReconnaissanceController.class
 com\intermediation\expertise\dto\MethodeEvaluationDTO.class
 com\intermediation\expertise\model\DemandeReconnaissanceCompetence$NiveauCertification.class
+com\intermediation\expertise\dto\CreerDemandeContactRequest.class
 com\intermediation\expertise\dto\StatistiquesTraitementDTO.class
 com\intermediation\expertise\model\Pays.class
 com\intermediation\expertise\repository\CritereEvaluationRepository.class
@@ -9,6 +10,7 @@ com\intermediation\expertise\dto\ExpertPublicDTO$CompetencePublicDTO.class
 com\intermediation\expertise\dto\DomaineMetierDTO.class
 com\intermediation\expertise\dto\EvaluationCompetenceDTO.class
 com\intermediation\expertise\dto\CompetenceDTO.class
+com\intermediation\expertise\service\DemandeContactService.class
 com\intermediation\expertise\dto\VilleDTO.class
 com\intermediation\expertise\model\CritereEvaluation.class
 com\intermediation\expertise\model\ReseauExpertise.class
@@ -42,8 +44,10 @@ com\intermediation\expertise\model\PieceJustificative.class
 com\intermediation\expertise\repository\PieceJustificativeRepository.class
 com\intermediation\expertise\service\TraitementDemandeService.class
 com\intermediation\expertise\dto\DemandeReconnaissanceDTO.class
+com\intermediation\expertise\repository\DemandeContactRepository.class
 com\intermediation\expertise\dto\VilleAvecPaysDTO.class
 com\intermediation\expertise\dto\EvaluationRequest.class
+com\intermediation\expertise\model\DemandeContact$StatutDemande.class
 com\intermediation\expertise\dto\BadgeCompetenceDTO.class
 com\intermediation\expertise\service\PaysInitService$1.class
 com\intermediation\expertise\model\DemandeReconnaissanceCompetence.class
@@ -51,8 +55,10 @@ com\intermediation\expertise\dto\PaysDTO.class
 com\intermediation\expertise\service\PaysInitService.class
 com\intermediation\expertise\service\ExpertiseService.class
 com\intermediation\expertise\model\EvaluationCompetence.class
+com\intermediation\expertise\model\DemandeContact.class
 com\intermediation\expertise\service\CompetenceReferenceService.class
 com\intermediation\expertise\repository\EvaluationCompetenceRepository.class
+com\intermediation\expertise\service\DemandeContactService$1.class
 com\intermediation\expertise\controller\CompetenceReferenceController.class
 com\intermediation\expertise\repository\ExpertiseRepository.class
 com\intermediation\expertise\controller\ProcessController.class
@@ -70,6 +76,7 @@ com\intermediation\expertise\config\HeaderBasedAuthenticationFilter.class
 com\intermediation\expertise\exception\GlobalExceptionHandler.class
 com\intermediation\expertise\controller\ExpertiseController.class
 com\intermediation\expertise\model\EvaluationCompetence$Recommandation.class
+com\intermediation\expertise\controller\DemandeContactController.class
 com\intermediation\expertise\model\MethodeEvaluation.class
 com\intermediation\expertise\service\CompetenceReferenceInitService$1.class
 com\intermediation\expertise\repository\MethodeEvaluationRepository.class
@@ -83,6 +90,7 @@ com\intermediation\expertise\dto\SousDomaineMetierDTO.class
 com\intermediation\expertise\repository\SousDomaineMetierRepository.class
 com\intermediation\expertise\service\UtilisateurRhService$2.class
 com\intermediation\expertise\model\CompetenceReference$StatutCompetence.class
+com\intermediation\expertise\dto\DemandeContactDTO.class
 com\intermediation\expertise\controller\TraitementDemandeController.class
 com\intermediation\expertise\dto\CritereEvaluationDTO.class
 com\intermediation\expertise\model\Ville.class

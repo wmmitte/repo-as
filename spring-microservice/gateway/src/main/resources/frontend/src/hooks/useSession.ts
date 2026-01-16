@@ -14,36 +14,28 @@ export const useSession = () => {
 
   useEffect(() => {
     const initSession = () => {
-      console.log('🚀 [SESSION] Initialisation de la session...');
-      const session = loadSession();
-      console.log('🔍 [SESSION] Session chargée:', session);
-
+       const session = loadSession();
+ 
       if (session.visiteurId && !isExpired(session.ts)) {
         // Session existante valide
-        console.log('✅ [SESSION] Session existante valide:', session.visiteurId);
-        setVisiteurId(session.visiteurId);
+         setVisiteurId(session.visiteurId);
       } else {
         // Pas de session ou expirée: créer une nouvelle
         if (session.visiteurId && isExpired(session.ts)) {
-          console.log('⏱️ [SESSION] Session expirée, nettoyage...');
-          clearSession();
+           clearSession();
         } else {
-          console.log('🆕 [SESSION] Pas de session, création d\'une nouvelle...');
-        }
+         }
 
         // Génération d'un visiteurId local (sans appel API)
         const newId = `v-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        console.log('✅ [SESSION] VisiteurId généré localement:', newId);
-        setVisiteurId(newId);
+         setVisiteurId(newId);
 
         // Sauvegarde de la session sans instanceKey (le processus BPMN sera démarré plus tard)
         saveSession(newId, 0); // instanceKey à 0 car pas encore d'instance BPMN
-        console.log('💾 [SESSION] Session sauvegardée (sans instance BPMN)');
-      }
+       }
 
       setIsInitialized(true);
-      console.log('✅ [SESSION] Initialisation terminée');
-    };
+     };
 
     initSession();
   }, []);
@@ -52,8 +44,7 @@ export const useSession = () => {
     const newId = customVisiteurId || `v-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     setVisiteurId(newId);
     saveSession(newId, 0); // Pas d'instanceKey pour le moment
-    console.log('✅ [SESSION] Nouvelle session créée:', newId);
-  };
+   };
 
   return {
     visiteurId,

@@ -15,7 +15,9 @@
       "Bash(powershell -Command \"$token = \\(Invoke-RestMethod -Uri ''http://localhost:8098/realms/master/protocol/openid-connect/token'' -Method Post -Body @{grant_type=''password'';client_id=''admin-cli'';username=''admin'';password=''admin''} -ContentType ''application/x-www-form-urlencoded''\\).access_token; Invoke-RestMethod -Uri ''http://localhost:8098/admin/realms/realm_picp/users?email=anptic.gov.bf@gmail.com&exact=true'' -Headers @{Authorization=\"\"Bearer $token\"\"}\")",
       "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\Binaries\\\\repo-as\\\\check-keycloak-user.ps1\")",
       "Bash(powershell -ExecutionPolicy Bypass -File \"D:\\\\Binaries\\\\repo-as\\\\fix-keycloak-roles-in-jwt.ps1\")",
-      "Bash(mvn compile:*)"
+      "Bash(mvn compile:*)",
+      "Bash(pushd:*)",
+      "Bash(popd:*)"
     ],
     "deny": [],
     "ask": []

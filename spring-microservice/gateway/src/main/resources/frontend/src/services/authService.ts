@@ -60,8 +60,7 @@ class AuthService {
    */
   async checkAuth(): Promise<AuthResponse> {
     try {
-      console.log('🔍 [AUTH SERVICE] Vérification authentification...');
-      console.log('🍪 [AUTH SERVICE] Cookies avant checkAuth:', document.cookie);
+     
 
       const response = await fetch(`${this.AUTH_SERVICE_URL}/me`, {
         credentials: 'include',
@@ -70,23 +69,18 @@ class AuthService {
         },
       });
 
-      console.log('📡 [AUTH SERVICE] Réponse /api/me - Status:', response.status);
-
+ 
       if (!response.ok) {
         if (response.status === 401) {
-          console.log('🔒 [AUTH SERVICE] Non authentifié (401)');
-          throw new Error('401 - Session expirée');
+           throw new Error('401 - Session expirée');
         }
-        console.log('❌ [AUTH SERVICE] Erreur:', response.status);
-        return { authenticated: false };
+         return { authenticated: false };
       }
 
       const data = await response.json();
-      console.log('✅ [AUTH SERVICE] Authentifié:', data);
-      return data;
+       return data;
     } catch (error) {
-      console.error('❌ [AUTH SERVICE] Erreur lors de la vérification de l\'authentification:', error);
-      throw error;
+       throw error;
     }
   }
 
@@ -191,28 +185,23 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      console.log('🚪 [AUTH SERVICE] Début de la déconnexion...');
-
+ 
       // 1. D'abord invalider la session backend
       await fetch('/logout', {
         method: 'POST',
         credentials: 'include',
       });
-      console.log('✅ [AUTH SERVICE] Session backend invalidée');
-
+ 
       // 2. Ensuite nettoyer tout côté client
       // Nettoyer localStorage
       localStorage.clear();
-      console.log('🧹 [AUTH SERVICE] localStorage nettoyé');
-
+ 
       // Nettoyer sessionStorage
       sessionStorage.clear();
-      console.log('🧹 [AUTH SERVICE] sessionStorage nettoyé');
-
+ 
       // Supprimer tous les cookies
       const cookies = document.cookie.split(';');
-      console.log('🍪 [AUTH SERVICE] Cookies avant suppression:', cookies);
-
+ 
       cookies.forEach(cookie => {
         const name = cookie.split('=')[0].trim();
         // Supprimer avec différents chemins et domaines possibles
@@ -222,13 +211,10 @@ class AuthService {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
       });
 
-      console.log('🧹 [AUTH SERVICE] Cookies supprimés');
-      console.log('🍪 [AUTH SERVICE] Cookies après suppression:', document.cookie);
-
+ 
       // Note: La redirection est gérée par le AuthContext
     } catch (error) {
-      console.error('❌ [AUTH SERVICE] Erreur lors de la déconnexion:', error);
-      // Même en cas d'erreur, on nettoie quand même côté client
+       // Même en cas d'erreur, on nettoie quand même côté client
       localStorage.clear();
       sessionStorage.clear();
       // Ne pas rediriger automatiquement, laisser le AuthContext gérer

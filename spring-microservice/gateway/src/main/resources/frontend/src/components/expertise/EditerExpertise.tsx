@@ -8,9 +8,10 @@ import { BadgeCompetenceDTO, DemandeReconnaissanceDTO, StatutDemande } from '@/t
 
 interface EditerExpertiseProps {
   onSave?: () => void;
+  onDemandeSubmitted?: () => void;
 }
 
-const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave }) => {
+const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubmitted }) => {
   const [expertise, setExpertise] = useState<Expertise>(defaultExpertise);
   const [competences, setCompetences] = useState<Competence[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1397,6 +1398,10 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave }) => {
             // Recharger l'expertise et les demandes après succès
             chargerExpertise();
             chargerBadgesEtDemandes();
+            // Notifier le parent pour rafraîchir les onglets
+            if (onDemandeSubmitted) {
+              onDemandeSubmitted();
+            }
           }}
         />
       )}

@@ -110,10 +110,17 @@ public class ProfilController {
     /**
      * Endpoint public pour récupérer les informations basiques d'un utilisateur par son ID
      * Utilisé par les autres services pour afficher le nom/prénom
+     * Cherche d'abord par keycloakId, puis par ID JPA si non trouvé
      */
     @GetMapping("/public/{utilisateurId}")
     public ResponseEntity<UtilisateurPublicDTO> getUtilisateurPublic(@PathVariable String utilisateurId) {
-        Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findById(utilisateurId);
+        // Chercher d'abord par keycloakId (ID propagé par le Gateway)
+        Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findByKeycloakId(utilisateurId);
+
+        // Si non trouvé, chercher par ID JPA (rétrocompatibilité)
+        if (utilisateurOpt.isEmpty()) {
+            utilisateurOpt = utilisateurRepository.findById(utilisateurId);
+        }
 
         if (utilisateurOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -121,16 +128,16 @@ public class ProfilController {
 
         Utilisateur utilisateur = utilisateurOpt.get();
         UtilisateurPublicDTO dto = new UtilisateurPublicDTO();
-        dto.setId(utilisateur.getId());
+        dto.setId(utilisateur.getKeycloakId() != null ? utilisateur.getKeycloakId() : utilisateur.getId());
         dto.setNom(utilisateur.getNom());
         dto.setPrenom(utilisateur.getPrenom());
         dto.setPhotoUrl(utilisateur.getPhotoUrl());
         dto.setTypePersonne(utilisateur.getTypePersonne());
 
-         // Vérifier si l'utilisateur a une photo (uploadée ou URL externe)
-          boolean hasPhoto = (utilisateur.getPhotoData() != null && utilisateur.getPhotoData().length > 0)
-                  || (utilisateur.getPhotoUrl() != null && !utilisateur.getPhotoUrl().isEmpty());
-          dto.setHasPhoto(hasPhoto);
+        // Vérifier si l'utilisateur a une photo (uploadée ou URL externe)
+        boolean hasPhoto = (utilisateur.getPhotoData() != null && utilisateur.getPhotoData().length > 0)
+                || (utilisateur.getPhotoUrl() != null && !utilisateur.getPhotoUrl().isEmpty());
+        dto.setHasPhoto(hasPhoto);
 
         return ResponseEntity.ok(dto);
     }

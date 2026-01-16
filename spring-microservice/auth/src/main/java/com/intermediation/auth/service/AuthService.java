@@ -51,6 +51,12 @@ public class AuthService {
             // CONNEXION : Utilisateur existant
             utilisateur = existingUser.get();
 
+            // Stocker/Mettre à jour le keycloakId (subject du token OIDC)
+            if (utilisateur.getKeycloakId() == null && providerId != null) {
+                utilisateur.setKeycloakId(providerId);
+                System.out.println("✅ [AUTH] keycloakId stocké pour utilisateur existant: " + providerId);
+            }
+
             // Lier le provider s'il n'est pas déjà lié
             lierProvider(utilisateur, provider, providerId);
 
@@ -64,6 +70,10 @@ public class AuthService {
             utilisateur.setNom(userInfo.getFamilyName());
             utilisateur.setPrenom(userInfo.getGivenName());
             utilisateur.setPhotoUrl(userInfo.getPicture());
+
+            // Stocker le keycloakId (subject du token OIDC)
+            utilisateur.setKeycloakId(providerId);
+            System.out.println("✅ [AUTH] keycloakId stocké pour nouvel utilisateur: " + providerId);
 
             // Lier le provider
             lierProvider(utilisateur, provider, providerId);
@@ -257,9 +267,11 @@ public class AuthService {
         utilisateur.setDerniereConnexion(LocalDateTime.now());
         utilisateur.setActif(true);
         utilisateur.setEmailVerifie(false); // L'email n'est pas encore vérifié
+        utilisateur.setKeycloakId(keycloakUserId); // Stocker l'ID Keycloak
 
         utilisateur = utilisateurRepository.save(utilisateur);
         System.out.println("[AUTH SERVICE] Utilisateur créé dans la base de données avec l'ID: " + utilisateur.getId());
+        System.out.println("[AUTH SERVICE] keycloakId stocké: " + keycloakUserId);
 
         // Générer le token de vérification et envoyer l'email
         String token = tokenVerificationService.creerTokenPourUtilisateur(utilisateur);
@@ -310,6 +322,20 @@ public class AuthService {
                 if (!passwordEncoder.matches(motDePasse, utilisateur.getMotDePasseHash())) {
                     throw new Exception("Email ou mot de passe incorrect");
                 }
+            }
+        }
+
+        // Mettre à jour le keycloakId si null (pour les utilisateurs créés avant la migration)
+        if (utilisateur.getKeycloakId() == null) {
+            try {
+                String keycloakId = keycloakService.getKeycloakIdByEmail(email);
+                if (keycloakId != null) {
+                    utilisateur.setKeycloakId(keycloakId);
+                    System.out.println("✅ [AUTH SERVICE] keycloakId mis à jour pour utilisateur existant: " + keycloakId);
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ [AUTH SERVICE] Impossible de récupérer le keycloakId: " + e.getMessage());
+                // Ne pas bloquer la connexion si la récupération échoue
             }
         }
 

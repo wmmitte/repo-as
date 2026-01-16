@@ -51,6 +51,10 @@ public class Utilisateur {
     @Column(name = "profil_complet", nullable = false)
     private Boolean profilComplet = false;
 
+    // ID Keycloak (subject du token OIDC)
+    @Column(name = "keycloak_id", unique = true)
+    private String keycloakId;
+
     // IDs des providers OAuth (Google, Facebook, Apple)
     @Column(unique = true)
     private String googleId;
@@ -146,6 +150,14 @@ public class Utilisateur {
 
     public void setPhotoContentType(String photoContentType) {
         this.photoContentType = photoContentType;
+    }
+
+    public String getKeycloakId() {
+        return keycloakId;
+    }
+
+    public void setKeycloakId(String keycloakId) {
+        this.keycloakId = keycloakId;
     }
 
     public String getGoogleId() {

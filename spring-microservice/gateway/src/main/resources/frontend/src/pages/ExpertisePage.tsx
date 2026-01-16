@@ -235,6 +235,16 @@ export default function ExpertisePage() {
     }
   };
 
+  // Fonction pour rafraîchir toutes les données des onglets
+  const rafraichirToutesDonnees = async () => {
+    await Promise.all([
+      chargerDemandes(),
+      chargerBadges(),
+    ]);
+    // Recharger aussi les compétences utilisateur
+    chargerDonneesUtilisateur();
+  };
+
   const handleToggleVisibilite = async (badgeId: number, currentState: boolean) => {
     try {
       await reconnaissanceService.toggleVisibiliteBadge(badgeId);
@@ -471,7 +481,7 @@ export default function ExpertisePage() {
     <div className="p-6 max-w-6xl mx-auto">
       {/* Onglet Éditer et publier */}
           {ongletActif === 'editer' && (
-            <EditerExpertise />
+            <EditerExpertise onDemandeSubmitted={rafraichirToutesDonnees} />
           )}
 
           {/* Onglet Mes demandes */}

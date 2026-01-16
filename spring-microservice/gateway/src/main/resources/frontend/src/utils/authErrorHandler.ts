@@ -11,8 +11,7 @@ export const setGlobalAuthModalHandler = (handler: () => void) => {
 
 export const handleAuthError = (status: number) => {
   if ((status === 401 || status === 403) && globalAuthModalHandler) {
-    console.log(`🔒 [AUTH ERROR HANDLER] Erreur ${status} détectée, ouverture du modal`);
-    globalAuthModalHandler();
+     globalAuthModalHandler();
   }
 };
 

@@ -23,10 +23,10 @@ public class ReseauExpertiseController {
     
     /**
      * Ajouter un expert au réseau
-     * Réservé aux Experts pour gérer LEUR réseau
+     * Disponible pour tout utilisateur authentifié
      */
     @PostMapping("/{expertId}")
-    @PreAuthorize("hasRole('expert')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> ajouterAuReseau(
             @PathVariable String expertId,
             @RequestHeader("X-User-Id") String utilisateurId) {
@@ -45,10 +45,10 @@ public class ReseauExpertiseController {
 
     /**
      * Retirer un expert du réseau
-     * Réservé aux Experts pour gérer LEUR réseau
+     * Disponible pour tout utilisateur authentifié
      */
     @DeleteMapping("/{expertId}")
-    @PreAuthorize("hasRole('expert')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> retirerDuReseau(
             @PathVariable String expertId,
             @RequestHeader("X-User-Id") String utilisateurId) {
@@ -67,10 +67,10 @@ public class ReseauExpertiseController {
 
     /**
      * Vérifier si un expert est dans le réseau
-     * Réservé aux Experts pour consulter LEUR réseau
+     * Disponible pour tout utilisateur authentifié
      */
     @GetMapping("/{expertId}/est-dans-reseau")
-    @PreAuthorize("hasRole('expert')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Boolean>> verifierSiDansReseau(
             @PathVariable String expertId,
             @RequestHeader("X-User-Id") String utilisateurId) {
@@ -86,10 +86,10 @@ public class ReseauExpertiseController {
 
     /**
      * Récupérer tous les experts du réseau
-     * Réservé aux Experts pour voir LEUR réseau
+     * Disponible pour tout utilisateur authentifié
      */
     @GetMapping
-    @PreAuthorize("hasRole('expert')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ExpertPublicDTO>> getExpertsDuReseau(
             @RequestHeader("X-User-Id") String utilisateurId) {
 
@@ -107,10 +107,10 @@ public class ReseauExpertiseController {
 
     /**
      * Récupérer les IDs des experts du réseau
-     * Réservé aux Experts pour voir LEUR réseau
+     * Disponible pour tout utilisateur authentifié
      */
     @GetMapping("/ids")
-    @PreAuthorize("hasRole('expert')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<String>> getExpertIdsDuReseau(
             @RequestHeader("X-User-Id") String utilisateurId) {
 

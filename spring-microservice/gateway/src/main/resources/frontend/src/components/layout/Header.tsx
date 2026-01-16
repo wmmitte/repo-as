@@ -1,7 +1,9 @@
 import { useLocation, Link } from 'react-router-dom';
-import { Bell, Settings, UserCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, Settings, UserCircle, Mail } from 'lucide-react';
 import { useHeader } from '@/contexts/HeaderContext';
 import { useAuth } from '@/context/AuthContext';
+import { contactService } from '@/services/contactService';
 
 export default function Header() {
   const { config } = useHeader();
@@ -14,6 +16,26 @@ export default function Header() {
   } = config;
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+  const [nombreMessagesNonLus, setNombreMessagesNonLus] = useState(0);
+
+  // Charger le nombre de messages non lus
+  useEffect(() => {
+    if (isAuthenticated) {
+      chargerNombreMessagesNonLus();
+      // Rafraîchir toutes les 30 secondes
+      const interval = setInterval(chargerNombreMessagesNonLus, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
+  const chargerNombreMessagesNonLus = async () => {
+    try {
+      const count = await contactService.compterDemandesNonLues();
+      setNombreMessagesNonLus(count);
+    } catch (error) {
+      // Silencieux en cas d'erreur
+    }
+  };
 
   // Déterminer le titre en fonction de la route si non fourni
   const getPageTitle = () => {
@@ -35,6 +57,7 @@ export default function Header() {
     if (path === '/competences/methodes-evaluation') return 'Méthodes d\'Évaluation';
     if (path === '/competences') return 'Référentiel de Compétences';
     if (path === '/projets') return 'Mes Projets';
+    if (path === '/messages') return 'Messagerie';
     if (path === '/plus') return 'Plus';
     if (path.startsWith('/expert/')) return 'Détail Expert';
     return 'PITM';
@@ -57,9 +80,26 @@ export default function Header() {
 
           {/* Icônes d'action */}
           {isAuthenticated && (
-            <Link to="/mon-compte" className="p-2 hover:bg-slate-100 rounded-lg transition-colors" title="Mon Compte">
-              <UserCircle size={24} className="text-gray-600 hover:text-gray-800" />
-            </Link>
+            <>
+              {/* Messagerie */}
+              <Link
+                to="/messages"
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors relative"
+                title="Messagerie"
+              >
+                <Mail size={24} className="text-gray-600 hover:text-gray-800" />
+                {nombreMessagesNonLus > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-error text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                    {nombreMessagesNonLus > 9 ? '9+' : nombreMessagesNonLus}
+                  </span>
+                )}
+              </Link>
+
+              {/* Mon Compte */}
+              <Link to="/mon-compte" className="p-2 hover:bg-slate-100 rounded-lg transition-colors" title="Mon Compte">
+                <UserCircle size={24} className="text-gray-600 hover:text-gray-800" />
+              </Link>
+            </>
           )}
 
           <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors relative">

@@ -12,6 +12,7 @@ import { BadgeCompetenceDTO, NiveauCertification } from '@/types/reconnaissance.
 import { Expert } from '@/types/expert.types';
 import ModalPartageExpert from '@/components/partage/ModalPartageExpert';
 import ModalPropositionProjet from '@/components/proposition/ModalPropositionProjet';
+import ModalContact from '@/components/contact/ModalContact';
 
 interface Expertise {
   utilisateurId: string;
@@ -56,6 +57,7 @@ export default function ExpertiseProfilPage() {
   const [photoError, setPhotoError] = useState(false);
   const [modalPartageOuvert, setModalPartageOuvert] = useState(false);
   const [modalPropositionOuvert, setModalPropositionOuvert] = useState(false);
+  const [modalContactOuvert, setModalContactOuvert] = useState(false);
 
   // Configurer le Header
   useHeaderConfig({});
@@ -72,10 +74,14 @@ export default function ExpertiseProfilPage() {
   // Charger les informations publiques de l'utilisateur (nom, prénom, hasPhoto)
   const chargerUtilisateur = async () => {
     try {
-      const response = await fetch(`/api/profil/public/${id}`);
+      const response = await fetch(`/api/profil/public/${id}`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setUtilisateur(data);
+      } else {
+        console.warn('Utilisateur public non trouvé:', response.status);
       }
     } catch (err) {
       console.error('Erreur chargement utilisateur:', err);
@@ -97,14 +103,14 @@ export default function ExpertiseProfilPage() {
 
   // Convertir l'Expertise en Expert pour les modals
   const convertirEnExpert = (): Expert | null => {
-    if (!expertise || !utilisateur) return null;
+    if (!expertise) return null;
 
     return {
       id: expertise.utilisateurId,
-      nom: utilisateur.nom || '',
-      prenom: utilisateur.prenom || '',
+      nom: utilisateur?.nom || '',
+      prenom: utilisateur?.prenom || '',
       titre: expertise.titre,
-      photoUrl: utilisateur.hasPhoto ? `/api/profil/public/${id}/photo` : '',
+      photoUrl: utilisateur?.hasPhoto ? `/api/profil/public/${id}/photo` : '',
       rating: 0,
       nombreProjets: 0,
       description: expertise.description || '',
@@ -140,6 +146,16 @@ export default function ExpertiseProfilPage() {
     setModalPropositionOuvert(true);
   };
 
+  // Ouvrir le modal de contact
+  const ouvrirModalContact = () => {
+    if (!isAuthenticated) {
+      const currentUrl = window.location.pathname + window.location.search;
+      openAuthModal(currentUrl);
+      return;
+    }
+    setModalContactOuvert(true);
+  };
+
   // Re-vérifier le statut réseau quand l'authentification change
   useEffect(() => {
     if (isAuthenticated && id) {
@@ -150,9 +166,11 @@ export default function ExpertiseProfilPage() {
   // Vérifier si l'expert est dans le réseau
   const verifierSiDansReseau = async () => {
     if (!isAuthenticated) return;
-    
+
     try {
-      const response = await fetch(`/api/expertise/reseau/${id}/est-dans-reseau`);
+      const response = await fetch(`/api/expertise/reseau/${id}/est-dans-reseau`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setEstDansReseau(data.estDansReseau);
@@ -171,15 +189,18 @@ export default function ExpertiseProfilPage() {
       openAuthModal(currentUrl);
       return;
     }
-    
+
     try {
       setLoadingReseau(true);
       const response = await fetch(`/api/expertise/reseau/${id}`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       });
-      
+
       if (response.ok) {
         setEstDansReseau(true);
+      } else if (response.status === 403) {
+        console.error('Accès refusé - vérifiez vos permissions');
       }
     } catch (error) {
       console.error('Erreur lors de l\'ajout au réseau:', error);
@@ -193,9 +214,10 @@ export default function ExpertiseProfilPage() {
     try {
       setLoadingReseau(true);
       const response = await fetch(`/api/expertise/reseau/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
-      
+
       if (response.ok) {
         setEstDansReseau(false);
       }
@@ -313,16 +335,17 @@ export default function ExpertiseProfilPage() {
             {/* Photo/Avatar */}
             <div className="avatar">
               <div className="w-32 h-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                {utilisateur?.hasPhoto && !photoError ? (
+                {/* Essayer de charger la photo sauf si explicitement indiqué false ou si erreur précédente */}
+                {utilisateur?.hasPhoto === false || photoError ? (
+                  <div className="bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-4xl w-full h-full">
+                    {genererInitiales()}
+                  </div>
+                ) : (
                   <img
                     src={`/api/profil/public/${id}/photo`}
                     alt={expertise.titre}
                     onError={() => setPhotoError(true)}
                   />
-                ) : (
-                  <div className="bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-4xl w-full h-full">
-                    {genererInitiales()}
-                  </div>
                 )}
               </div>
             </div>
@@ -417,7 +440,10 @@ export default function ExpertiseProfilPage() {
             </button>
 
             {expertise.disponible && (
-              <button className="btn btn-success gap-2">
+              <button
+                onClick={ouvrirModalContact}
+                className="btn btn-success gap-2"
+              >
                 <Mail className="w-5 h-5" />
                 Contacter
               </button>
@@ -571,6 +597,15 @@ export default function ExpertiseProfilPage() {
           expert={convertirEnExpert()!}
           isOpen={modalPropositionOuvert}
           onClose={() => setModalPropositionOuvert(false)}
+        />
+      )}
+
+      {/* Modal Contact */}
+      {convertirEnExpert() && (
+        <ModalContact
+          expert={convertirEnExpert()!}
+          isOpen={modalContactOuvert}
+          onClose={() => setModalContactOuvert(false)}
         />
       )}
     </div>

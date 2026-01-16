@@ -26,7 +26,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   // Log pour déboguer l'état d'authentification et les permissions
   useEffect(() => {
-    console.log('🔍 [SIDEBAR] État authentification:', { isAuthenticated, user });
+    /*console.log('🔍 [SIDEBAR] État authentification:', { isAuthenticated, user });
     console.log('🔑 [SIDEBAR] Permissions:', {
       canManageReferentiels,
       canAccessExpertise,
@@ -34,7 +34,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       canManageExpertise,
       canAccessDemandesReconnaissance,
       canManageReferentielsManager
-    });
+    });*/
   }, [isAuthenticated, user, canManageReferentiels, canAccessExpertise, canManageNetwork, canManageExpertise, canAccessDemandesReconnaissance, canManageReferentielsManager]);
 
   const handleAuthButtonClick = async () => {
@@ -51,7 +51,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     // Si la page nécessite une authentification et que l'utilisateur n'est pas connecté
     if (requiresAuth && !isAuthenticated) {
       e.preventDefault(); // Empêcher la navigation
-      console.log('🔒 [SIDEBAR] Accès à', path, 'nécessite une authentification');
       openAuthModal(path); // Ouvrir le modal avec l'URL de destination
       return;
     }
