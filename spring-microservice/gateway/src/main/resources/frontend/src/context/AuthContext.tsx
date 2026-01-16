@@ -77,19 +77,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else {
        }
     } catch (error: any) {
- 
-      // Si erreur 401 (session expirée), déconnecter l'utilisateur
-      if (error.message?.includes('401') || error.status === 401) {
-         setIsAuthenticated(false);
-        setUser(null);
-        // Rediriger vers l'accueil si on n'y est pas déjà
-        if (window.location.pathname !== '/') {
-          window.location.href = '/';
-        }
-      } else {
-        setIsAuthenticated(false);
-        setUser(null);
-      }
+      // En cas d'erreur (401 ou autre), simplement marquer l'utilisateur comme non authentifié
+      // Ne PAS rediriger - les pages publiques doivent rester accessibles
+      // Les pages protégées utilisent RequireAuth pour gérer la redirection
+      setIsAuthenticated(false);
+      setUser(null);
     } finally {
       setIsLoading(false);
      }

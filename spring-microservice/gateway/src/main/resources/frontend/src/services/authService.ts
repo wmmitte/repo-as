@@ -71,10 +71,9 @@ class AuthService {
 
  
       if (!response.ok) {
-        if (response.status === 401) {
-           throw new Error('401 - Session expirée');
-        }
-         return { authenticated: false };
+        // Pour 401 (non authentifié) ou autres erreurs, retourner non authentifié
+        // Ne pas lancer d'erreur pour permettre l'accès aux pages publiques
+        return { authenticated: false };
       }
 
       const data = await response.json();

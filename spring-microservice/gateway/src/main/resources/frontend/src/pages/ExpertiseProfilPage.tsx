@@ -318,26 +318,25 @@ export default function ExpertiseProfilPage() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Bouton retour */}
-      <button 
-        onClick={() => navigate('/rechercher')} 
-        className="btn btn-ghost btn-sm mb-6"
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+      {/* Bouton retour - Compact */}
+      <button
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-1 text-sm text-base-content/60 hover:text-primary mb-4 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Retour à la recherche
+        <ArrowLeft className="w-4 h-4" />
+        <span className="hidden sm:inline">Retour</span>
       </button>
 
-      {/* En-tête du profil */}
+      {/* En-tête du profil - Design compact */}
       <div className="card bg-base-100 shadow-xl mb-6">
-        <div className="card-body">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Photo/Avatar */}
-            <div className="avatar">
-              <div className="w-32 h-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                {/* Essayer de charger la photo sauf si explicitement indiqué false ou si erreur précédente */}
+        <div className="card-body p-4 sm:p-6">
+          <div className="flex gap-4">
+            {/* Photo/Avatar - Taille réduite */}
+            <div className="avatar flex-shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full ring-2 ring-primary ring-offset-base-100 ring-offset-1">
                 {utilisateur?.hasPhoto === false || photoError ? (
-                  <div className="bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-4xl w-full h-full">
+                  <div className="bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl sm:text-2xl w-full h-full rounded-full">
                     {genererInitiales()}
                   </div>
                 ) : (
@@ -345,238 +344,224 @@ export default function ExpertiseProfilPage() {
                     src={`/api/profil/public/${id}/photo`}
                     alt={expertise.titre}
                     onError={() => setPhotoError(true)}
+                    className="rounded-full object-cover"
                   />
                 )}
               </div>
             </div>
 
-            {/* Informations principales */}
-            <div className="flex-1">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">{expertise.titre}</h1>
-                  <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    {expertise.typePersonne === 'MORALE' ? (
-                      <Building2 className="w-5 h-5" />
-                    ) : (
-                      <User className="w-5 h-5" />
-                    )}
-                    <span className="text-sm">
-                      {expertise.typePersonne === 'MORALE' ? 'Personne Morale' : 'Personne Physique'}
+            {/* Informations principales - Layout optimisé */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="min-w-0">
+                  <h1 className="text-lg sm:text-xl font-bold truncate">{expertise.titre}</h1>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-base-content/70 mt-1">
+                    <span className="inline-flex items-center gap-1">
+                      {expertise.typePersonne === 'MORALE' ? (
+                        <Building2 className="w-3.5 h-3.5" />
+                      ) : (
+                        <User className="w-3.5 h-3.5" />
+                      )}
+                      {expertise.typePersonne === 'MORALE' ? 'Entreprise' : 'Indépendant'}
                     </span>
+                    {expertise.localisation && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span className="truncate max-w-[150px]">{expertise.localisation}</span>
+                      </span>
+                    )}
                   </div>
-                  {expertise.localisation && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-5 h-5" />
-                      <span>{expertise.localisation}</span>
-                    </div>
-                  )}
                 </div>
-                
-                {/* Badge disponibilité */}
-                <div>
+
+                {/* Badge disponibilité - Plus compact */}
+                <div className="flex-shrink-0">
                   {expertise.disponible ? (
-                    <div className="badge badge-success badge-lg gap-2">
-                      <CheckCircle2 className="w-4 h-4" />
+                    <span className="badge badge-success badge-sm gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
                       Disponible
-                    </div>
+                    </span>
                   ) : (
-                    <div className="badge badge-ghost badge-lg gap-2">
-                      <XCircle className="w-4 h-4" />
-                      Non disponible
-                    </div>
+                    <span className="badge badge-ghost badge-sm gap-1">
+                      <XCircle className="w-3 h-3" />
+                      Indisponible
+                    </span>
                   )}
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Description - Plus compacte */}
               {expertise.description && (
-                <div className="mt-4">
-                  <h3 className="font-semibold mb-2">À propos</h3>
-                  <p className="text-gray-700">{expertise.description}</p>
-                </div>
+                <p className="text-sm text-base-content/80 mt-3 line-clamp-2 sm:line-clamp-3">
+                  {expertise.description}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Boutons d'action */}
-          <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-base-300">
-            <button
-              onClick={toggleReseau}
-              className={`btn ${estDansReseau ? 'btn-outline btn-error' : 'btn-primary'} gap-2`}
-              disabled={loadingReseau}
-            >
-              {loadingReseau ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : estDansReseau ? (
-                <>
-                  <UserMinus className="w-5 h-5" />
-                  Retirer du réseau
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-5 h-5" />
-                  Ajouter au réseau
-                </>
-              )}
-            </button>
-
-            {/* Bouton Partager */}
-            <button
-              onClick={ouvrirModalPartage}
-              className="btn btn-outline btn-info gap-2"
-            >
-              <Share2 className="w-5 h-5" />
-              Partager
-            </button>
-
-            {/* Bouton Proposer un projet */}
-            <button
-              onClick={ouvrirModalProposition}
-              className="btn btn-secondary gap-2"
-            >
-              <FileText className="w-5 h-5" />
-              Proposer un projet
-            </button>
-
-            {expertise.disponible && (
+          {/* Barre d'actions compacte */}
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-base-300">
+            {/* Actions disponibles pour tous */}
+            <div className="tooltip tooltip-bottom" data-tip="Partager le profil">
               <button
-                onClick={ouvrirModalContact}
-                className="btn btn-success gap-2"
+                onClick={ouvrirModalPartage}
+                className="btn btn-circle btn-sm btn-ghost hover:bg-info/20 hover:text-info"
               >
-                <Mail className="w-5 h-5" />
-                Contacter
+                <Share2 className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Actions nécessitant une authentification */}
+            {isAuthenticated ? (
+              <>
+                {/* Ajouter/Retirer du réseau */}
+                <div className="tooltip tooltip-bottom" data-tip={estDansReseau ? "Retirer du réseau" : "Ajouter au réseau"}>
+                  <button
+                    onClick={toggleReseau}
+                    className={`btn btn-circle btn-sm ${
+                      estDansReseau
+                        ? 'btn-error btn-outline hover:bg-error hover:text-white'
+                        : 'btn-ghost hover:bg-primary/20 hover:text-primary'
+                    }`}
+                    disabled={loadingReseau}
+                  >
+                    {loadingReseau ? (
+                      <span className="loading loading-spinner loading-xs"></span>
+                    ) : estDansReseau ? (
+                      <UserMinus className="w-4 h-4" />
+                    ) : (
+                      <UserPlus className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Proposer un projet */}
+                <div className="tooltip tooltip-bottom" data-tip="Proposer un projet">
+                  <button
+                    onClick={ouvrirModalProposition}
+                    className="btn btn-circle btn-sm btn-ghost hover:bg-secondary/20 hover:text-secondary"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Contacter - seulement si disponible */}
+                {expertise.disponible && (
+                  <div className="tooltip tooltip-bottom" data-tip="Contacter">
+                    <button
+                      onClick={ouvrirModalContact}
+                      className="btn btn-circle btn-sm btn-ghost hover:bg-success/20 hover:text-success"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* Indicateur pour les visiteurs non connectés */
+              <div className="text-xs text-base-content/50 ml-2">
+                <span className="hidden sm:inline">Connectez-vous pour plus d'actions</span>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Section Compétences */}
+      {/* Section Compétences - Design compact */}
       <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title text-2xl mb-6">
-            <Briefcase className="w-6 h-6" />
-            Compétences & Expertises
+        <div className="card-body p-4 sm:p-6">
+          <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold mb-4">
+            <Briefcase className="w-5 h-5 text-primary" />
+            Compétences
+            {expertise.competences && expertise.competences.length > 0 && (
+              <span className="badge badge-primary badge-sm">{expertise.competences.length}</span>
+            )}
           </h2>
 
           {expertise.competences && expertise.competences.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {expertise.competences.map((comp, idx) => {
                 const badge = getBadgeForCompetence(comp.nom);
                 return (
-                  <div 
+                  <div
                     key={`${comp.nom}-${idx}`}
-                    className={`card bg-base-200 border-2 transition-all relative ${
-                      badge ? 'border-primary/40 shadow-lg' : 'border-primary/20 hover:border-primary/40'
+                    className={`relative bg-base-200/50 rounded-lg p-3 border transition-all hover:shadow-md ${
+                      badge ? 'border-primary/30 bg-primary/5' : 'border-base-300 hover:border-primary/30'
                     }`}
                   >
-                    {/* Badge de certification en coin supérieur droit */}
+                    {/* Badge de certification - Plus petit et discret */}
                     {badge && (
-                      <div className="absolute -top-3 -right-3 z-10">
-                        <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${BADGE_COLORS[badge.niveauCertification]} flex items-center justify-center shadow-xl border-4 border-white`}>
-                          <span className="text-3xl">{BADGE_ICONS[badge.niveauCertification]}</span>
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${BADGE_COLORS[badge.niveauCertification]} flex items-center justify-center shadow-md border-2 border-white`}>
+                          <span className="text-sm">{BADGE_ICONS[badge.niveauCertification]}</span>
                         </div>
                       </div>
                     )}
 
-                    <div className="card-body p-4">
-                      {/* Nom de la compétence */}
-                      <div className="mb-3">
-                        <h3 className="card-title text-lg text-primary mb-2">
-                          {comp.nom}
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {badge && (
-                            <span className="badge badge-success badge-sm gap-1">
-                              <Award className="w-3 h-3" />
-                              Certifiée {badge.niveauCertification}
-                            </span>
-                          )}
-                          {comp.estFavorite && (
-                            <span className="badge badge-warning badge-sm">⭐ Favorite</span>
-                          )}
-                        </div>
-                      </div>
-
-                    {/* Description */}
-                    {comp.description && (
-                      <p className="text-sm text-gray-600 mb-3">{comp.description}</p>
-                    )}
-
-                    {/* Métriques en grille */}
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      {comp.anneesExperience !== undefined && (
-                        <div className="bg-base-100 p-3 rounded-lg">
-                          <div className="text-xs text-gray-500 mb-1">Expérience</div>
-                          <div className="text-lg font-bold text-primary">
-                            {comp.anneesExperience} {comp.anneesExperience > 1 ? 'ans' : 'an'}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {comp.thm !== undefined && (
-                        <div className="bg-base-100 p-3 rounded-lg">
-                          <div className="text-xs text-gray-500 mb-1">THM</div>
-                          <div className="text-lg font-bold text-success">
-                            {comp.thm} <span className="text-sm">FCFA/h</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {comp.nombreProjets !== undefined && (
-                        <div className="bg-base-100 p-3 rounded-lg">
-                          <div className="text-xs text-gray-500 mb-1">Projets</div>
-                          <div className="text-lg font-bold text-secondary">
-                            {comp.nombreProjets}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {comp.niveauMaitrise !== undefined && (
-                        <div className="bg-base-100 p-3 rounded-lg">
-                          <div className="text-xs text-gray-500 mb-1">Maîtrise</div>
-                          <div className="flex items-center gap-1">
-                            <div className="text-lg font-bold text-accent">
-                              {comp.niveauMaitrise}/5
-                            </div>
-                            <div className="rating rating-sm">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <input
-                                  key={star}
-                                  type="radio"
-                                  className="mask mask-star-2 bg-accent"
-                                  checked={star === comp.niveauMaitrise}
-                                  readOnly
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
+                    {/* En-tête compétence */}
+                    <div className="flex items-start gap-2 mb-2">
+                      <h3 className="text-sm font-semibold text-base-content flex-1 pr-6">
+                        {comp.nom}
+                      </h3>
+                      {comp.estFavorite && (
+                        <span className="text-warning text-xs">⭐</span>
                       )}
                     </div>
 
-                    {/* Certifications */}
+                    {/* Tags rapides */}
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {badge && (
+                        <span className="badge badge-success badge-xs gap-0.5">
+                          <Award className="w-2.5 h-2.5" />
+                          {badge.niveauCertification}
+                        </span>
+                      )}
+                      {comp.niveauMaitrise !== undefined && (
+                        <span className="badge badge-ghost badge-xs">
+                          Niv. {comp.niveauMaitrise}/5
+                        </span>
+                      )}
+                      {comp.anneesExperience !== undefined && (
+                        <span className="badge badge-ghost badge-xs">
+                          {comp.anneesExperience} an{comp.anneesExperience > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Description courte */}
+                    {comp.description && (
+                      <p className="text-xs text-base-content/60 line-clamp-2 mb-2">{comp.description}</p>
+                    )}
+
+                    {/* Métriques en ligne */}
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                      {comp.thm !== undefined && (
+                        <span className="text-success font-medium">
+                          {comp.thm.toLocaleString()} FCFA/h
+                        </span>
+                      )}
+                      {comp.nombreProjets !== undefined && comp.nombreProjets > 0 && (
+                        <span className="text-base-content/70">
+                          {comp.nombreProjets} projet{comp.nombreProjets > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Certification texte - Collapsé */}
                     {comp.certifications && (
-                      <div className="mt-3 pt-3 border-t border-primary/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Award className="w-4 h-4 text-accent" />
-                          <span className="text-sm font-semibold">Certification:</span>
-                        </div>
-                        <div className="bg-accent/10 p-2 rounded-lg">
-                          <p className="text-sm text-accent-content break-words">{comp.certifications}</p>
-                        </div>
+                      <div className="mt-2 pt-2 border-t border-base-300">
+                        <p className="text-xs text-accent truncate" title={comp.certifications}>
+                          📜 {comp.certifications}
+                        </p>
                       </div>
                     )}
                   </div>
-                </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-400">
-              <Briefcase className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Aucune compétence renseignée</p>
+            <div className="text-center py-6 text-base-content/40">
+              <Briefcase className="w-10 h-10 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Aucune compétence renseignée</p>
             </div>
           )}
         </div>
