@@ -64,10 +64,10 @@ export default function ExpertisePage() {
   useHeaderConfig({
     title: 'Mon Expertise',
     tabs: [
-      { id: 'editer', label: 'Éditer' },
-      { id: 'demandes', label: `Mes demandes (${demandes.length})` },
+      { id: 'editer', label: 'Editer mon profil' },
+      { id: 'demandes', label: `Mes demandes de reconnaissance (${demandes.length})` },
       { id: 'badges', label: `Mes badges (${badges.length})` },
-      { id: 'competences', label: `Compétences (${competencesUtilisateur.length})` },
+      { id: 'competences', label: `Mes Compétences (${competencesUtilisateur.length})` },
     ],
     activeTab: ongletActif,
     onTabChange: (tabId) => setOngletActif(tabId as typeof ongletActif),
@@ -478,7 +478,7 @@ export default function ExpertisePage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 max-w-7xl mx-auto">
       {/* Onglet Éditer et publier */}
           {ongletActif === 'editer' && (
             <EditerExpertise onDemandeSubmitted={rafraichirToutesDonnees} />
@@ -502,7 +502,7 @@ export default function ExpertisePage() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                 {demandes.map((demande) => {
                   const statutSynthetique = getStatutSynthetiqueExpert(demande.statut);
                   const StatutIcon = statutSynthetique === StatutDemande.APPROUVEE ? CheckCircle :
@@ -513,7 +513,8 @@ export default function ExpertisePage() {
                   return (
                     <div
                       key={demande.id}
-                      className="bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition-colors"
+                      onClick={() => setSelectedDemande(demande)}
+                      className="bg-white border border-slate-200 rounded-xl p-4 hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer group"
                     >
                       <div className="flex items-center gap-4">
                         {/* Icône statut */}
@@ -555,20 +556,14 @@ export default function ExpertisePage() {
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {demande.statut === StatutDemande.COMPLEMENT_REQUIS && (
                             <button
-                              onClick={() => handleFournirComplement(demande)}
+                              onClick={(e) => { e.stopPropagation(); handleFournirComplement(demande); }}
                               className="px-3 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-xs font-medium flex items-center gap-1"
                             >
                               <Upload size={14} />
                               Compléter
                             </button>
                           )}
-                          <button
-                            onClick={() => setSelectedDemande(demande)}
-                            className="p-1.5 text-gray-400 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors"
-                            title="Voir détails"
-                          >
-                            <ChevronRight size={18} />
-                          </button>
+                          <ChevronRight size={18} className="text-gray-400 group-hover:text-primary transition-colors" />
                         </div>
                       </div>
 
@@ -790,7 +785,7 @@ export default function ExpertisePage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {badges.map((badge) => {
                   const cardStyle = BADGE_CARD_STYLES[badge.niveauCertification];
                   return (
@@ -927,7 +922,7 @@ export default function ExpertisePage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {competencesUtilisateur.map((comp) => {
                       const propositionsComp = obtenirPropositionsPourCompetence(comp.competenceId);
                       const propositionsEnAttente = propositionsComp.filter(p => p.statut === 'en_attente').length;

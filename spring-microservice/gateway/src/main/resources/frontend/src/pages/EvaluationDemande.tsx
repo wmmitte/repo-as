@@ -392,7 +392,7 @@ export default function EvaluationDemande() {
     <div className="min-h-screen bg-slate-50">
       {/* Header sticky avec infos clés */}
       <div className="sticky top-16 z-30 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
@@ -482,7 +482,7 @@ export default function EvaluationDemande() {
       </div>
 
       {/* Contenu principal */}
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4">
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
             <AlertCircle className="text-red-500 flex-shrink-0" size={20} />
@@ -635,8 +635,8 @@ export default function EvaluationDemande() {
             </div>
           </div>
 
-          {/* Colonne droite - Actions */}
-          <div className="space-y-6">
+          {/* Colonne droite - Actions (sticky) */}
+          <div className="lg:sticky lg:top-36 lg:self-start space-y-4">
             {/* Recommandation */}
             <div className="bg-white border border-slate-200 rounded-xl p-5">
               <h3 className="font-semibold text-gray-900 mb-4">Recommandation</h3>
@@ -679,24 +679,26 @@ export default function EvaluationDemande() {
               />
             </div>
 
-            {/* Temps d'évaluation */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Clock size={18} className="text-gray-400" />
-                Temps d'évaluation
-              </h3>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={tempsEvaluation}
-                  onChange={(e) => setTempsEvaluation(parseInt(e.target.value) || 0)}
-                  className="w-20 px-3 py-2 border border-slate-200 rounded-lg text-center"
-                  min="1"
-                  disabled={!canEditAsRh}
-                />
-                <span className="text-gray-600">minutes</span>
+            {/* Temps d'évaluation - masqué pour le moment */}
+            {false && (
+              <div className="bg-white border border-slate-200 rounded-xl p-5">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Clock size={18} className="text-gray-400" />
+                  Temps d'évaluation
+                </h3>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={tempsEvaluation}
+                    onChange={(e) => setTempsEvaluation(parseInt(e.target.value) || 0)}
+                    className="w-20 px-3 py-2 border border-slate-200 rounded-lg text-center"
+                    min="1"
+                    disabled={!canEditAsRh}
+                  />
+                  <span className="text-gray-600">minutes</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Actions RH */}
             {canEditAsRh && (
@@ -762,12 +764,19 @@ export default function EvaluationDemande() {
         onClose={() => setShowRejetModal(false)}
         onConfirm={(motif) => { setShowRejetModal(false); handleRejetWithMotif(motif); }}
         title="Rejeter la demande"
-        description="Cette action est définitive"
+        description="Action définitive"
         label="Motif du rejet"
-        placeholder="Expliquez les raisons du rejet..."
+        placeholder="Détaillez les raisons..."
         confirmText="Rejeter"
         maxLength={500}
         variante="danger"
+        raisonsPredefinis={[
+          { label: "Niveau insuffisant", value: "Le niveau de maîtrise démontré ne correspond pas aux critères requis." },
+          { label: "Preuves manquantes", value: "Les pièces justificatives fournies sont insuffisantes ou non conformes." },
+          { label: "Expérience limitée", value: "L'expérience professionnelle ne justifie pas le niveau demandé." },
+          { label: "Hors périmètre", value: "La compétence ne correspond pas au référentiel de certification." }
+        ]}
+        conseil="Soyez précis et constructif"
       />
 
       <ModalInput
@@ -775,12 +784,19 @@ export default function EvaluationDemande() {
         onClose={() => setShowComplementModal(false)}
         onConfirm={(msg) => { setShowComplementModal(false); handleComplementWithMessage(msg); }}
         title="Demander un complément"
-        description="L'expert sera notifié"
+        description="Expert notifié"
         label="Informations requises"
-        placeholder="Précisez les documents ou informations manquants..."
+        placeholder="Précisez ce qui manque..."
         confirmText="Envoyer"
         maxLength={500}
         variante="info"
+        raisonsPredefinis={[
+          { label: "Certificat", value: "Merci de fournir un certificat ou attestation de formation." },
+          { label: "Références", value: "Veuillez ajouter des références de projets réalisés." },
+          { label: "Portfolio", value: "Un portfolio ou des exemples de travaux seraient appréciés." },
+          { label: "Durée", value: "Précisez la durée d'expérience dans ce domaine." }
+        ]}
+        conseil="L'expert pourra compléter sa demande"
       />
 
       <ModalSelectionRh isOpen={modalReassignationOuvert} onClose={() => setModalReassignationOuvert(false)} onConfirm={handleReassigner} />

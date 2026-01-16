@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search, Users, MapPin, X,
-  LayoutList, LayoutGrid, GitBranch, Award
+  LayoutList, LayoutGrid, GitBranch
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useHeaderConfig } from '@/hooks/useHeaderConfig';
@@ -51,30 +51,24 @@ const AvatarExpert: React.FC<AvatarExpertProps> = ({ utilisateurId, titre, taill
     lg: 'w-12 h-12 text-base'
   };
 
-  // URL de la photo via le service profil
   const photoUrl = `/api/profil/public/${utilisateurId}/photo`;
 
   if (!photoError) {
     return (
-      <div className="avatar">
-        <div className={`${tailleClasses[taille]} rounded-full ring ring-primary ring-offset-base-100 ring-offset-1`}>
-          <img
-            src={photoUrl}
-            alt={titre}
-            className="object-cover"
-            onError={() => setPhotoError(true)}
-          />
-        </div>
+      <div className={`${tailleClasses[taille]} rounded-full overflow-hidden ring-2 ring-base-200 flex-shrink-0`}>
+        <img
+          src={photoUrl}
+          alt={titre}
+          className="w-full h-full object-cover"
+          onError={() => setPhotoError(true)}
+        />
       </div>
     );
   }
 
-  // Afficher les initiales si la photo n'est pas disponible
   return (
-    <div className="avatar placeholder">
-      <div className={`${getCouleurAvatar(titre)} text-white rounded-full ${tailleClasses[taille]} flex items-center justify-center font-semibold`}>
-        <span>{getInitiales(titre)}</span>
-      </div>
+    <div className={`${getCouleurAvatar(titre)} text-white rounded-full ${tailleClasses[taille]} flex items-center justify-center font-semibold flex-shrink-0`}>
+      <span>{getInitiales(titre)}</span>
     </div>
   );
 };
@@ -216,33 +210,37 @@ const RechercherExpertises: React.FC = () => {
   // Rendu de l'arborescence par compétence
   const renderArborescence = () => {
     const groupes = grouperParCompetence(expertises);
-    
+
     return Object.entries(groupes).map(([competence, exps]) => (
-      <div key={competence} className="mb-4">
-        <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg font-semibold text-primary-900 mb-2">
-          <GitBranch className="w-5 h-5" />
-          <span>{competence}</span>
-          <span className="badge badge-primary badge-sm ml-auto">{exps.length}</span>
+      <div key={competence} className="bg-base-100 rounded-xl border border-base-200 overflow-hidden">
+        {/* En-tête du groupe */}
+        <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border-b border-base-200">
+          <GitBranch className="w-4 h-4 text-primary" />
+          <span className="font-medium text-sm text-base-content">{competence}</span>
+          <span className="ml-auto text-xs text-base-content/50">{exps.length} expert{exps.length > 1 ? 's' : ''}</span>
         </div>
-        <div className="ml-6 space-y-2">
+        {/* Liste des experts */}
+        <div className="divide-y divide-base-200">
           {exps.map((exp, index) => (
             <Link
               key={`${exp.utilisateurId}-${index}`}
               to={`/expertise-profil/${exp.utilisateurId}`}
-              className="flex items-center gap-3 p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 hover:bg-base-50 transition-colors"
             >
               <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="sm" />
               <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">{exp.titre}</div>
+                <div className="font-medium text-sm truncate">{exp.titre}</div>
                 {exp.localisation && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-1 text-xs text-base-content/50">
                     <MapPin className="w-3 h-3" />
                     <span className="truncate">{exp.localisation}</span>
                   </div>
                 )}
               </div>
-              {exp.disponible && (
-                <span className="badge badge-success badge-sm flex-shrink-0">Disponible</span>
+              {exp.disponible ? (
+                <span className="badge badge-success badge-xs flex-shrink-0">Dispo</span>
+              ) : (
+                <span className="badge badge-ghost badge-xs flex-shrink-0">Indispo</span>
               )}
             </Link>
           ))}
@@ -252,278 +250,217 @@ const RechercherExpertises: React.FC = () => {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-3 sm:p-4">
       <div className="max-w-7xl mx-auto">
         {/* Message de feedback */}
         {message && (
-          <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'} mb-4`}>
-            <span>{message.text}</span>
-            <button onClick={() => setMessage(null)} className="btn btn-ghost btn-sm">
-              <X className="w-4 h-4" />
+          <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'} mb-3 py-2`}>
+            <span className="text-sm">{message.text}</span>
+            <button onClick={() => setMessage(null)} className="btn btn-ghost btn-xs">
+              <X className="w-3 h-3" />
             </button>
           </div>
         )}
 
-        {/* Barre de recherche et filtres */}
-        <div className="card bg-base-100 shadow-xl mb-6">
-          <div className="card-body">
-              <div className="flex flex-col md:flex-row gap-4">
-              {/* Recherche */}
-              <div className="flex-1">
-                <div className="form-control">
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Rechercher par titre, compétence, certification, localisation..."
-                      className="input input-bordered w-full pl-10"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
+        {/* Barre de recherche compacte */}
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-3 mb-4">
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Recherche */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+              <input
+                type="text"
+                placeholder="Rechercher un expert, compétence, localisation..."
+                className="input input-sm input-bordered w-full pl-9 h-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
 
-              {/* Filtre Disponibilité */}
-              <div className="form-control w-full md:w-48">
-                <select
-                  className="select select-bordered"
-                  value={selectedDisponibilite}
-                  onChange={(e) => setSelectedDisponibilite(e.target.value)}
-                >
-                  <option value="">Toutes</option>
-                  <option value="true">Disponibles</option>
-                  <option value="false">Non disponibles</option>
-                </select>
-              </div>
+            {/* Filtre Disponibilité */}
+            <select
+              className="select select-sm select-bordered h-9 w-full sm:w-40"
+              value={selectedDisponibilite}
+              onChange={(e) => setSelectedDisponibilite(e.target.value)}
+            >
+              <option value="">Disponibilité</option>
+              <option value="true">Disponibles</option>
+              <option value="false">Indisponibles</option>
+            </select>
 
-              {/* Boutons de vue */}
-              <div className="btn-group">
-                <button
-                  className={`btn ${vueAffichage === 'liste' ? 'btn-active' : ''}`}
-                  onClick={() => setVueAffichage('liste')}
-                  title="Vue liste"
-                >
-                  <LayoutList className="w-5 h-5" />
-                </button>
-                <button
-                  className={`btn ${vueAffichage === 'cartes' ? 'btn-active' : ''}`}
-                  onClick={() => setVueAffichage('cartes')}
-                  title="Vue cartes"
-                >
-                  <LayoutGrid className="w-5 h-5" />
-                </button>
-                <button
-                  className={`btn ${vueAffichage === 'arbre' ? 'btn-active' : ''}`}
-                  onClick={() => setVueAffichage('arbre')}
-                  title="Vue par domaine"
-                >
-                  <GitBranch className="w-5 h-5" />
-                </button>
-              </div>
+            {/* Boutons de vue */}
+            <div className="join">
+              <button
+                className={`join-item btn btn-sm h-9 ${vueAffichage === 'liste' ? 'btn-active' : 'btn-ghost'}`}
+                onClick={() => setVueAffichage('liste')}
+                title="Vue liste"
+              >
+                <LayoutList className="w-4 h-4" />
+              </button>
+              <button
+                className={`join-item btn btn-sm h-9 ${vueAffichage === 'cartes' ? 'btn-active' : 'btn-ghost'}`}
+                onClick={() => setVueAffichage('cartes')}
+                title="Vue cartes"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                className={`join-item btn btn-sm h-9 ${vueAffichage === 'arbre' ? 'btn-active' : 'btn-ghost'}`}
+                onClick={() => setVueAffichage('arbre')}
+                title="Vue par compétence"
+              >
+                <GitBranch className="w-4 h-4" />
+              </button>
             </div>
           </div>
+
+          {/* Compteur de résultats */}
+          {!loading && (
+            <div className="mt-2 text-xs text-base-content/50">
+              {expertises.length} résultat{expertises.length > 1 ? 's' : ''}
+              {searchTerm && <span> pour "<span className="font-medium text-base-content/70">{searchTerm}</span>"</span>}
+            </div>
+          )}
         </div>
 
         {/* Affichage des expertises */}
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <span className="loading loading-spinner loading-lg"></span>
+          <div className="flex justify-center items-center h-48">
+            <span className="loading loading-spinner loading-md text-primary"></span>
           </div>
         ) : (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              {vueAffichage === 'liste' && (
-                <div className="overflow-x-auto">
-                  <table className="table table-zebra">
-                    <thead>
-                      <tr>
-                        <th>Expertise</th>
-                        <th>Localisation</th>
-                        <th>Compétences</th>
-                        <th>Disponibilité</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {expertises.map((exp, index) => (
-                        <tr key={`${exp.utilisateurId}-${index}`}>
-                          <td>
-                            <Link to={`/expertise-profil/${exp.utilisateurId}`} className="hover:text-primary">
-                              <div className="flex items-center gap-3">
-                                <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="md" />
-                                <div>
-                                  <div className="font-bold">{exp.titre}</div>
-                                  <div className="text-sm text-gray-500">{exp.typePersonne || 'Expert'}</div>
-                                </div>
-                              </div>
-                            </Link>
-                          </td>
-                          <td>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4 text-gray-500" />
-                              <span>{exp.localisation || 'Non spécifiée'}</span>
-                            </div>
-                          </td>
-                          <td>
-                            <div className="flex flex-wrap gap-1">
-                              {exp.competences?.slice(0, 2).map((comp, idx) => (
-                                <span 
-                                  key={`${comp.nom}-${idx}`} 
-                                  className="badge badge-primary badge-sm gap-1 whitespace-nowrap max-w-[200px]"
-                                  title={comp.nom + (comp.anneesExperience ? ` (Exp.: ${comp.anneesExperience} ans)` : '')}
-                                >
-                                  <span className="truncate">{comp.nom}</span>
-                                  {comp.anneesExperience && (
-                                    <span className="opacity-75 flex-shrink-0">(Exp.: {comp.anneesExperience} ans)</span>
-                                  )}
-                                </span>
-                              ))}
-                              {(exp.competences?.length || 0) > 2 && (
-                                <span className="badge badge-ghost badge-sm">
-                                  +{(exp.competences?.length || 0) - 2}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td>
-                            {exp.disponible ? (
-                              <span className="badge badge-success">Disponible</span>
-                            ) : (
-                              <span className="badge badge-ghost">Non disponible</span>
-                            )}
-                          </td>
-                          <td>
-                            <Link to={`/expertise-profil/${exp.utilisateurId}`} className="btn btn-primary btn-sm">
-                              Voir profil
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {vueAffichage === 'cartes' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <>
+            {/* Vue Liste */}
+            {vueAffichage === 'liste' && expertises.length > 0 && (
+              <div className="bg-base-100 rounded-xl border border-base-200 overflow-hidden">
+                <div className="divide-y divide-base-200">
                   {expertises.map((exp, index) => (
-                    <div
+                    <Link
                       key={`${exp.utilisateurId}-${index}`}
-                      className="card bg-base-100 shadow-lg hover:shadow-xl transition-all border border-base-300"
+                      to={`/expertise-profil/${exp.utilisateurId}`}
+                      className="flex items-center gap-3 p-3 hover:bg-base-50 transition-colors"
                     >
-                      <div className="card-body p-4">
-                        {/* En-tête avec avatar, titre et localisation */}
-                        <div className="flex items-start gap-3 mb-3 pb-3 border-b border-base-300">
-                          <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="lg" />
-                          <div className="flex-1 min-w-0">
-                            <Link
-                              to={`/expertise-profil/${exp.utilisateurId}`}
-                              className="card-title text-base font-bold hover:text-primary transition-colors truncate block"
-                            >
-                              {exp.titre}
-                            </Link>
-                            {exp.localisation && (
-                              <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                                <MapPin className="w-3 h-3 flex-shrink-0" />
-                                <span className="truncate">{exp.localisation}</span>
-                              </div>
-                            )}
+                      <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">{exp.titre}</div>
+                        {exp.localisation && (
+                          <div className="flex items-center gap-1 text-xs text-base-content/50">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate">{exp.localisation}</span>
                           </div>
-                          {exp.disponible && (
-                            <span className="badge badge-success badge-sm flex-shrink-0">
-                              Disponible
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Liste des compétences avec détails */}
-                        <div className="space-y-3">
-                          <div className="text-xs font-semibold text-gray-600 uppercase">Compétences</div>
-                          {exp.competences && exp.competences.length > 0 ? (
-                            <div className="space-y-2">
-                              {exp.competences.slice(0, 3).map((comp, idx) => (
-                                <div 
-                                  key={`${comp.nom}-${idx}`}
-                                  className="bg-base-200 p-3 rounded-lg border-2 border-primary/20 hover:border-primary/40 transition-colors"
-                                >
-                                  <div className="font-medium text-sm text-primary mb-2">{comp.nom}</div>
-                                  <div className="grid grid-cols-3 gap-2 text-xs">
-                                    {comp.anneesExperience && (
-                                      <div className="flex flex-col">
-                                        <span className="text-gray-500">Expérience</span>
-                                        <span className="font-semibold">{comp.anneesExperience} ans</span>
-                                      </div>
-                                    )}
-                                    {comp.thm && (
-                                      <div className="flex flex-col">
-                                        <span className="text-gray-500">THM</span>
-                                        <span className="font-semibold">{comp.thm} FCFA/h</span>
-                                      </div>
-                                    )}
-                                    {comp.nombreProjets && (
-                                      <div className="flex flex-col">
-                                        <span className="text-gray-500">Projets</span>
-                                        <span className="font-semibold">{comp.nombreProjets}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  {comp.certifications && (
-                                    <div className="mt-2 pt-2 border-t border-primary/20">
-                                      <div className="flex items-center gap-1">
-                                        <Award className="w-3 h-3 text-accent" />
-                                        <span className="text-xs text-gray-600">{comp.certifications}</span>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                              {exp.competences.length > 3 && (
-                                <Link
-                                  to={`/expertise-profil/${exp.utilisateurId}`}
-                                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                                >
-                                  Voir {exp.competences.length - 3} compétence(s) supplémentaire(s)
-                                </Link>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-gray-400 italic">Aucune compétence renseignée</p>
-                          )}
-                        </div>
-
-                        {/* Footer avec bouton */}
-                        <div className="mt-4 pt-3 border-t border-base-300">
-                          <Link
-                            to={`/expertise-profil/${exp.utilisateurId}`}
-                            className="btn btn-primary btn-sm w-full"
-                          >
-                            Voir le profil complet
-                          </Link>
-                        </div>
+                        )}
                       </div>
-                    </div>
+                      <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
+                        {exp.competences?.slice(0, 2).map((comp, idx) => (
+                          <span key={idx} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full truncate max-w-[80px]">
+                            {comp.nom}
+                          </span>
+                        ))}
+                        {(exp.competences?.length || 0) > 2 && (
+                          <span className="text-xs text-base-content/40">+{(exp.competences?.length || 0) - 2}</span>
+                        )}
+                      </div>
+                      {exp.disponible ? (
+                        <span className="badge badge-success badge-xs flex-shrink-0">Dispo</span>
+                      ) : (
+                        <span className="badge badge-ghost badge-xs flex-shrink-0">Indispo</span>
+                      )}
+                    </Link>
                   ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {vueAffichage === 'arbre' && (
-                <div className="space-y-4">
-                  {renderArborescence()}
-                </div>
-              )}
+            {/* Vue Cartes */}
+            {vueAffichage === 'cartes' && expertises.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {expertises.map((exp, index) => (
+                  <Link
+                    key={`${exp.utilisateurId}-${index}`}
+                    to={`/expertise-profil/${exp.utilisateurId}`}
+                    className="group bg-primary/5 rounded-xl border border-primary/20 shadow-sm hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+                  >
+                    <div className="p-4">
+                      {/* En-tête */}
+                      <div className="flex gap-3 mb-3">
+                        <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="md" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm text-base-content truncate group-hover:text-primary transition-colors">
+                            {exp.titre}
+                          </div>
+                          {exp.localisation && (
+                            <div className="flex items-center gap-1 text-xs text-base-content/70 mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate">{exp.localisation}</span>
+                            </div>
+                          )}
+                          <div className="mt-1">
+                            {exp.disponible ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-success font-medium">
+                                <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
+                                Disponible
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-xs text-base-content/60">
+                                <span className="w-1.5 h-1.5 bg-base-content/40 rounded-full"></span>
+                                Indisponible
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-              {expertises.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
-                  <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">Aucune expertise trouvée</p>
-                  <p className="text-sm">Essayez de modifier vos critères de recherche</p>
+                      {/* Description courte */}
+                      {exp.description && (
+                        <p className="text-xs text-base-content/70 line-clamp-2 mb-3">{exp.description}</p>
+                      )}
+
+                      {/* Compétences */}
+                      {exp.competences && exp.competences.length > 0 && (
+                        <div className="space-y-1.5">
+                          {exp.competences.slice(0, 2).map((comp, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between bg-base-100/80 border border-base-300 rounded-lg px-2.5 py-1.5"
+                            >
+                              <span className="text-xs font-medium text-base-content truncate">{comp.nom}</span>
+                              <div className="flex items-center gap-2 text-xs text-base-content/70 flex-shrink-0 ml-2">
+                                {comp.anneesExperience && <span>{comp.anneesExperience}a</span>}
+                                {comp.thm && <span className="text-success font-semibold">{comp.thm.toLocaleString()}F/h</span>}
+                              </div>
+                            </div>
+                          ))}
+                          {exp.competences.length > 2 && (
+                            <div className="text-xs text-primary font-medium pl-1">
+                              +{exp.competences.length - 2} autre{exp.competences.length > 3 ? 's' : ''}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Vue Arborescence */}
+            {vueAffichage === 'arbre' && expertises.length > 0 && (
+              <div className="space-y-3">
+                {renderArborescence()}
+              </div>
+            )}
+
+            {/* État vide */}
+            {expertises.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-base-200 rounded-full flex items-center justify-center">
+                  <Users className="w-8 h-8 text-base-content/30" />
                 </div>
-              )}
-            </div>
-          </div>
+                <p className="font-medium text-base-content/70 mb-1">Aucun expert trouvé</p>
+                <p className="text-sm text-base-content/50">Essayez de modifier vos critères de recherche</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
