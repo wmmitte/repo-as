@@ -53,6 +53,7 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
   const [competenceSelectionnee, setCompetenceSelectionnee] = useState<Competence | null>(null);
   const [badgesCertifies, setBadgesCertifies] = useState<BadgeCompetenceDTO[]>([]);
   const [demandesEnCours, setDemandesEnCours] = useState<DemandeReconnaissanceDTO[]>([]);
+  const [toutesMesDemandes, setToutesMesDemandes] = useState<DemandeReconnaissanceDTO[]>([]); // Inclut REJETEE
 
   // Fonction pour ouvrir le modal de reconnaissance avec validation
   const ouvrirModalReconnaissance = (competence: Competence) => {
@@ -515,8 +516,12 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
       const badges = await reconnaissanceService.getMesBadges(true);
       setBadgesCertifies(badges);
 
-      // Charger les demandes en cours (tous les statuts sauf APPROUVEE, REJETEE, ANNULEE)
+      // Charger toutes les demandes
       const demandes = await reconnaissanceService.getMesDemandes();
+      // Stocker TOUTES les demandes (y compris REJETEE) pour pouvoir vérifier l'historique
+      setToutesMesDemandes(demandes);
+
+      // Filtrer les demandes "en cours" (tous les statuts sauf APPROUVEE, REJETEE, ANNULEE)
       const enCours = demandes.filter(d =>
         d.statut === StatutDemande.EN_ATTENTE ||
         d.statut === StatutDemande.ASSIGNEE_RH ||
@@ -545,8 +550,8 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
   };
 
   const aDerniereDemandeRejetee = (competenceNom: string) => {
-    // Trouver toutes les demandes pour cette compétence
-    const demandesPourCompetence = demandesEnCours.filter(d =>
+    // Trouver toutes les demandes pour cette compétence (y compris REJETEE)
+    const demandesPourCompetence = toutesMesDemandes.filter(d =>
       d.competenceNom.toLowerCase() === competenceNom.toLowerCase()
     );
 
@@ -828,7 +833,27 @@ const EditerExpertise: React.FC<EditerExpertiseProps> = ({ onSave, onDemandeSubm
                             );
                           }
 
-                          if (demandeRejetee || (!demandeEnCours && !badge)) {
+                          // Demande rejetée - permettre de resoumettre
+                          if (demandeRejetee) {
+                            return (
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="badge badge-error badge-xs gap-0.5 opacity-70">
+                                  Rejetée
+                                </span>
+                                <button
+                                  className="btn btn-outline btn-primary btn-xs h-5 min-h-0 gap-0.5 text-[10px]"
+                                  onClick={() => ouvrirModalReconnaissance(competence)}
+                                  title="Soumettre une nouvelle demande"
+                                >
+                                  <Award className="w-2.5 h-2.5" />
+                                  Resoumettre
+                                </button>
+                              </div>
+                            );
+                          }
+
+                          // Pas de demande - permettre de certifier
+                          if (!demandeEnCours && !badge) {
                             return (
                               <button
                                 className="btn btn-primary btn-xs h-5 min-h-0 gap-0.5 text-[10px]"
