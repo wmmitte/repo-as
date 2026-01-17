@@ -181,6 +181,7 @@ const RechercherExpertises: React.FC = () => {
 
   // Critères de recherche
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermDebounced, setSearchTermDebounced] = useState('');
   const [selectedPays, setSelectedPays] = useState<number | undefined>();
   const [selectedVille, setSelectedVille] = useState<number | undefined>();
   const [disponible, setDisponible] = useState<boolean | undefined>();
@@ -205,12 +206,14 @@ const RechercherExpertises: React.FC = () => {
   useHeaderConfig({});
 
   // Fonction de recherche
-  const rechercherExperts = useCallback(async (nouvellePage = 0) => {
+  const rechercherExperts = useCallback(async (nouvellePage = 0, termeOverride?: string) => {
     try {
       setLoading(true);
 
+      const termeRecherche = termeOverride !== undefined ? termeOverride : searchTermDebounced;
+
       const request: RechercheRequest = {
-        terme: searchTerm || undefined,
+        terme: termeRecherche || undefined,
         paysId: selectedPays,
         villeId: selectedVille,
         disponible: disponible,
@@ -259,24 +262,35 @@ const RechercherExpertises: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, selectedPays, selectedVille, disponible, experienceMin, niveauMin, thmMin, thmMax, certifieUniquement, niveauBadgeMin, tri]);
+  }, [searchTermDebounced, selectedPays, selectedVille, disponible, experienceMin, niveauMin, thmMin, thmMax, certifieUniquement, niveauBadgeMin, tri]);
 
   // Recherche initiale
   useEffect(() => {
     rechercherExperts(0);
   }, []);
 
-  // Recherche avec debounce sur le terme
+  // Debounce sur le terme de recherche (1000ms)
   useEffect(() => {
     const timer = setTimeout(() => {
-      rechercherExperts(0);
-    }, 400);
+      setSearchTermDebounced(searchTerm);
+    }, 1000);
     return () => clearTimeout(timer);
-  }, [searchTerm, selectedPays, selectedVille, disponible, experienceMin, niveauMin, thmMin, thmMax, certifieUniquement, niveauBadgeMin, tri]);
+  }, [searchTerm]);
+
+  // Recherche quand le terme debounced ou les filtres changent
+  useEffect(() => {
+    rechercherExperts(0);
+  }, [searchTermDebounced, selectedPays, selectedVille, disponible, experienceMin, niveauMin, thmMin, thmMax, certifieUniquement, niveauBadgeMin, tri]);
+
+  // Lancer la recherche immédiatement (touche Entrée)
+  const lancerRechercheImmediate = () => {
+    setSearchTermDebounced(searchTerm);
+  };
 
   // Réinitialiser les filtres
   const reinitialiserFiltres = () => {
     setSearchTerm('');
+    setSearchTermDebounced('');
     setSelectedPays(undefined);
     setSelectedVille(undefined);
     setDisponible(undefined);
@@ -341,7 +355,16 @@ const RechercherExpertises: React.FC = () => {
                   className="input input-sm input-bordered w-full pl-9 h-9"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      lancerRechercheImmediate();
+                    }
+                  }}
                 />
+                {loading && searchTerm !== searchTermDebounced && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 loading loading-spinner loading-xs text-primary"></span>
+                )}
               </div>
 
               {/* Bouton filtres avancés */}
@@ -554,15 +577,23 @@ const RechercherExpertises: React.FC = () => {
           </div>
         </div>
 
+        {/* Container loader - hauteur fixe pour ne pas pousser la liste */}
+        <div className="relative h-1">
+          {loading && (
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 z-10">
+              <div className="bg-base-100 rounded-full px-5 py-2 shadow-md border border-base-200 flex items-center gap-2">
+                <span className="loading loading-spinner loading-sm text-primary"></span>
+                <span className="text-sm text-base-content/70">Recherche en cours...</span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Résultats */}
-        {loading ? (
-          <div className="flex justify-center items-center h-48">
-            <span className="loading loading-spinner loading-md text-primary"></span>
-          </div>
-        ) : (
-          <>
-            {/* Vue Liste */}
-            {vueAffichage === 'liste' && resultats.length > 0 && (
+        <div>
+
+          {/* Vue Liste */}
+          {vueAffichage === 'liste' && resultats.length > 0 && (
               <div className="bg-base-100 rounded-xl border border-base-200 overflow-hidden">
                 <div className="divide-y divide-base-200">
                   {resultats.map((expert) => (
@@ -834,8 +865,7 @@ const RechercherExpertises: React.FC = () => {
                 </div>
               </div>
             )}
-          </>
-        )}
+        </div>
       </div>
     </div>
   );
