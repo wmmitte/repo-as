@@ -1,6 +1,9 @@
 package com.intermediation.expertise.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -49,6 +52,7 @@ public class Expertise {
     private BigDecimal scoreGlobal = BigDecimal.ZERO;
 
     @Column(name = "score_details", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String scoreDetails; // JSON avec le détail des scores
 
     @Column(name = "date_calcul_score")

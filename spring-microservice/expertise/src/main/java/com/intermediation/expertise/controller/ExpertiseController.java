@@ -4,8 +4,11 @@ import com.intermediation.expertise.dto.CompetenceDTO;
 import com.intermediation.expertise.dto.ExpertiseCompletDTO;
 import com.intermediation.expertise.dto.ExpertiseDTO;
 import com.intermediation.expertise.dto.ExpertPublicDTO;
+import com.intermediation.expertise.dto.RechercheExpertRequest;
+import com.intermediation.expertise.dto.RechercheExpertResponse;
 import com.intermediation.expertise.security.SecurityService;
 import com.intermediation.expertise.service.ExpertiseService;
+import com.intermediation.expertise.service.RechercheExpertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +23,7 @@ public class ExpertiseController {
 
     private final ExpertiseService expertiseService;
     private final SecurityService securityService;
+    private final RechercheExpertService rechercheExpertService;
 
     /**
      * Récupère l'expertise complète d'un utilisateur (compétences + langues)
@@ -360,9 +364,27 @@ public class ExpertiseController {
             @RequestParam(required = false) Long villeId,
             @RequestParam(required = false) Long paysId,
             @RequestParam(required = false) Boolean disponible) {
-        
+
         List<ExpertiseDTO> expertises = expertiseService.rechercherExpertises(terme, villeId, paysId, disponible);
         return ResponseEntity.ok(expertises);
+    }
+
+    /**
+     * Recherche avancée d'experts avec Full-Text Search et filtres multiples (endpoint public)
+     *
+     * Fonctionnalités:
+     * - Recherche textuelle (titre, description, compétences, certifications)
+     * - Filtres: localisation, disponibilité, expérience, tarif, badges
+     * - Tri: score, expérience, tarif, popularité
+     * - Pagination
+     * - Facettes pour affiner la recherche
+     */
+    @PostMapping("/public/recherche-avancee")
+    public ResponseEntity<RechercheExpertResponse> rechercheAvancee(
+            @RequestBody RechercheExpertRequest request) {
+
+        RechercheExpertResponse response = rechercheExpertService.rechercherExperts(request);
+        return ResponseEntity.ok(response);
     }
 
     /**

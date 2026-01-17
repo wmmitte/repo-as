@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Search, Users, MapPin, X,
-  LayoutList, LayoutGrid, GitBranch
+  Search, Users, MapPin, X, Filter, ChevronDown, ChevronUp,
+  LayoutList, LayoutGrid, GitBranch, Award, Clock, DollarSign,
+  Star, TrendingUp, Briefcase
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useHeaderConfig } from '@/hooks/useHeaderConfig';
@@ -33,9 +34,85 @@ const getCouleurAvatar = (titre: string): string => {
   return couleurs[Math.abs(hash) % couleurs.length];
 };
 
-/**
- * Composant Avatar pour afficher la photo ou les initiales
- */
+// === TYPES ===
+
+interface RechercheRequest {
+  terme?: string;
+  paysId?: number;
+  villeId?: number;
+  disponible?: boolean;
+  anneesExperienceMin?: number;
+  niveauMaitriseMin?: number;
+  thmMin?: number;
+  thmMax?: number;
+  niveauBadgeMin?: string;
+  nombreBadgesMin?: number;
+  certifieUniquement?: boolean;
+  nombreFollowersMin?: number;
+  tri?: string;
+  page?: number;
+  taille?: number;
+}
+
+interface CompetenceResume {
+  nom: string;
+  niveauMaitrise?: number;
+  anneesExperience?: number;
+  thm?: number;
+  estCertifiee: boolean;
+  niveauBadge?: string;
+}
+
+interface ExpertResultat {
+  utilisateurId: string;
+  titre: string;
+  description?: string;
+  photoUrl?: string;
+  villeNom?: string;
+  paysNom?: string;
+  disponible: boolean;
+  scoreGlobal: number;
+  nombreCompetences: number;
+  niveauMaitriseMax: number;
+  anneesExperienceMax: number;
+  thmMin?: number;
+  thmMax?: number;
+  nombreProjets: number;
+  nombreBadges: number;
+  niveauBadgeMax?: string;
+  nombreFollowers: number;
+  competencesPrincipales?: CompetenceResume[];
+  scoreRecherche?: number;
+}
+
+interface FacetteItem {
+  code: string;
+  libelle: string;
+  count: number;
+}
+
+interface StatistiquesRecherche {
+  totalExpertsDisponibles: number;
+  totalExpertsCertifies: number;
+  thmMoyen: number;
+  experienceMoyenne: number;
+  scoreMoyen: number;
+}
+
+interface RechercheResponse {
+  resultats: ExpertResultat[];
+  totalResultats: number;
+  page: number;
+  taille: number;
+  totalPages: number;
+  facettesPays?: FacetteItem[];
+  facettesVilles?: FacetteItem[];
+  facettesBadges?: FacetteItem[];
+  statistiques?: StatistiquesRecherche;
+}
+
+// === COMPOSANTS ===
+
 interface AvatarExpertProps {
   utilisateurId: string;
   titre: string;
@@ -73,180 +150,168 @@ const AvatarExpert: React.FC<AvatarExpertProps> = ({ utilisateurId, titre, taill
   );
 };
 
-interface Expertise {
-  utilisateurId: string;
-  titre: string;
-  description: string;
-  photoUrl?: string;
-  localisation?: string; // "Paris, France"
-  disponible: boolean;
-  typePersonne?: string;
-  competences?: Array<{
-    nom: string;
-    description?: string;
-    niveauMaitrise?: number;
-    anneesExperience?: number;
-    thm?: number;
-    nombreProjets?: number;
-    certifications?: string;
-    estFavorite?: boolean;
-  }>;
-}
+const BadgeNiveau: React.FC<{ niveau?: string }> = ({ niveau }) => {
+  if (!niveau) return null;
+
+  const couleurs: Record<string, string> = {
+    'PLATINE': 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white',
+    'OR': 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white',
+    'ARGENT': 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800',
+    'BRONZE': 'bg-gradient-to-r from-orange-400 to-orange-600 text-white'
+  };
+
+  return (
+    <span className={`badge badge-sm ${couleurs[niveau] || 'badge-ghost'}`}>
+      <Award className="w-3 h-3 mr-1" />
+      {niveau}
+    </span>
+  );
+};
 
 type VueAffichage = 'liste' | 'cartes' | 'arbre';
+type TriOption = 'SCORE' | 'PERTINENCE' | 'EXPERIENCE' | 'THM_ASC' | 'THM_DESC' | 'POPULARITE' | 'RECENT';
 
 const RechercherExpertises: React.FC = () => {
-  const [toutesLesExpertises, setToutesLesExpertises] = useState<Expertise[]>([]);
-  const [expertises, setExpertises] = useState<Expertise[]>([]);
-  const [loading, setLoading] = useState(true);
+  // États de recherche
+  const [resultats, setResultats] = useState<ExpertResultat[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalResultats, setTotalResultats] = useState(0);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Critères de recherche
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDisponibilite, setSelectedDisponibilite] = useState<string>('');
+  const [selectedPays, setSelectedPays] = useState<number | undefined>();
+  const [selectedVille, setSelectedVille] = useState<number | undefined>();
+  const [disponible, setDisponible] = useState<boolean | undefined>();
+  const [experienceMin, setExperienceMin] = useState<number | undefined>();
+  const [niveauMin, setNiveauMin] = useState<number | undefined>();
+  const [thmMin, setThmMin] = useState<number | undefined>();
+  const [thmMax, setThmMax] = useState<number | undefined>();
+  const [certifieUniquement, setCertifieUniquement] = useState(false);
+  const [niveauBadgeMin, setNiveauBadgeMin] = useState<string | undefined>();
+  const [tri, setTri] = useState<TriOption>('SCORE');
+
+  // Facettes et stats
+  const [facettesPays, setFacettesPays] = useState<FacetteItem[]>([]);
+  const [facettesVilles, setFacettesVilles] = useState<FacetteItem[]>([]);
+  const [statistiques, setStatistiques] = useState<StatistiquesRecherche | null>(null);
+
+  // UI
   const [vueAffichage, setVueAffichage] = useState<VueAffichage>('cartes');
+  const [filtresOuverts, setFiltresOuverts] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Configurer le Header pour cette page
   useHeaderConfig({});
 
-  // Charger les données initiales
-  useEffect(() => {
-    chargerDonnees();
-  }, []);
-
-  const chargerDonnees = async () => {
+  // Fonction de recherche
+  const rechercherExperts = useCallback(async (nouvellePage = 0) => {
     try {
       setLoading(true);
-      
-      // Charger toutes les expertises publiées avec le endpoint public/experts
-      const expertisesResponse = await fetch('/api/expertise/public/experts');
-      const expertisesData = await expertisesResponse.json();
-      
-      const data = Array.isArray(expertisesData) ? expertisesData : [];
-      setToutesLesExpertises(data);
-      setExpertises(data);
+
+      const request: RechercheRequest = {
+        terme: searchTerm || undefined,
+        paysId: selectedPays,
+        villeId: selectedVille,
+        disponible: disponible,
+        anneesExperienceMin: experienceMin,
+        niveauMaitriseMin: niveauMin,
+        thmMin: thmMin,
+        thmMax: thmMax,
+        certifieUniquement: certifieUniquement || undefined,
+        niveauBadgeMin: niveauBadgeMin,
+        tri: tri,
+        page: nouvellePage,
+        taille: 20
+      };
+
+      // Nettoyer les undefined
+      Object.keys(request).forEach(key => {
+        if (request[key as keyof RechercheRequest] === undefined) {
+          delete request[key as keyof RechercheRequest];
+        }
+      });
+
+      const response = await fetch('/api/expertise/public/recherche-avancee', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request)
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la recherche');
+      }
+
+      const data: RechercheResponse = await response.json();
+
+      setResultats(data.resultats || []);
+      setTotalResultats(data.totalResultats);
+      setPage(data.page);
+      setTotalPages(data.totalPages);
+
+      if (data.facettesPays) setFacettesPays(data.facettesPays);
+      if (data.facettesVilles) setFacettesVilles(data.facettesVilles);
+      if (data.statistiques) setStatistiques(data.statistiques);
+
     } catch (error) {
-      console.error('Erreur lors du chargement:', error);
-      setToutesLesExpertises([]);
-      setExpertises([]);
+      console.error('Erreur recherche:', error);
+      setMessage({ type: 'error', text: 'Erreur lors de la recherche' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, selectedPays, selectedVille, disponible, experienceMin, niveauMin, thmMin, thmMax, certifieUniquement, niveauBadgeMin, tri]);
 
-  // Recherche et filtrage côté client
-  const rechercherExpertises = () => {
-    try {
-      // Filtrer côté client car on a déjà toutes les données
-      let resultats = [...toutesLesExpertises];
-      
-      // Filtre par terme de recherche
-      if (searchTerm && searchTerm.trim()) {
-        const terme = searchTerm.toLowerCase();
-        resultats = resultats.filter(exp => {
-          // Recherche dans titre, description, localisation
-          const matchBasicFields = 
-            exp.titre?.toLowerCase().includes(terme) ||
-            exp.description?.toLowerCase().includes(terme) ||
-            exp.localisation?.toLowerCase().includes(terme);
-          
-          // Recherche dans les compétences
-          const matchCompetences = exp.competences?.some(comp => 
-            comp.nom?.toLowerCase().includes(terme)
-          );
-          
-          // Recherche dans les certifications
-          const matchCertifications = exp.competences?.some(comp => 
-            comp.certifications?.toLowerCase().includes(terme)
-          );
-          
-          return matchBasicFields || matchCompetences || matchCertifications;
-        });
-      }
-      
-      // Filtre par disponibilité
-      if (selectedDisponibilite) {
-        const disponible = selectedDisponibilite === 'true';
-        resultats = resultats.filter(exp => exp.disponible === disponible);
-      }
-      
-      setExpertises(resultats);
-    } catch (error) {
-      console.error('Erreur lors de la recherche:', error);
-    }
-  };
-
+  // Recherche initiale
   useEffect(() => {
-    // Ne filtrer que si un filtre est actif (searchTerm ou selectedDisponibilite)
-    if (searchTerm || selectedDisponibilite) {
-      const timer = setTimeout(() => {
-        rechercherExpertises();
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    } else {
-      // Si aucun filtre n'est actif, afficher toutes les expertises
-      setExpertises(toutesLesExpertises);
-    }
-  }, [searchTerm, selectedDisponibilite, toutesLesExpertises]);
+    rechercherExperts(0);
+  }, []);
 
-  // Grouper par compétence pour la vue arbre
-  const grouperParCompetence = (expertises: Expertise[]) => {
-    const groupes: Record<string, Expertise[]> = {};
-    
-    expertises.forEach(expertise => {
-      const competences = expertise.competences?.map(c => c.nom) || ['Sans compétence'];
+  // Recherche avec debounce sur le terme
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      rechercherExperts(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm, selectedPays, selectedVille, disponible, experienceMin, niveauMin, thmMin, thmMax, certifieUniquement, niveauBadgeMin, tri]);
+
+  // Réinitialiser les filtres
+  const reinitialiserFiltres = () => {
+    setSearchTerm('');
+    setSelectedPays(undefined);
+    setSelectedVille(undefined);
+    setDisponible(undefined);
+    setExperienceMin(undefined);
+    setNiveauMin(undefined);
+    setThmMin(undefined);
+    setThmMax(undefined);
+    setCertifieUniquement(false);
+    setNiveauBadgeMin(undefined);
+    setTri('SCORE');
+  };
+
+  // Compter les filtres actifs
+  const nombreFiltresActifs = [
+    selectedPays, selectedVille, disponible, experienceMin,
+    niveauMin, thmMin, thmMax, certifieUniquement, niveauBadgeMin
+  ].filter(v => v !== undefined && v !== false).length;
+
+  // Grouper par compétence pour vue arbre
+  const grouperParCompetence = (experts: ExpertResultat[]) => {
+    const groupes: Record<string, ExpertResultat[]> = {};
+
+    experts.forEach(expert => {
+      const competences = expert.competencesPrincipales?.map(c => c.nom) || ['Sans compétence'];
       competences.forEach(competence => {
         if (!groupes[competence]) {
           groupes[competence] = [];
         }
-        if (!groupes[competence].some(e => e.utilisateurId === expertise.utilisateurId)) {
-          groupes[competence].push(expertise);
+        if (!groupes[competence].some(e => e.utilisateurId === expert.utilisateurId)) {
+          groupes[competence].push(expert);
         }
       });
     });
-    
+
     return groupes;
-  };
-
-  // Rendu de l'arborescence par compétence
-  const renderArborescence = () => {
-    const groupes = grouperParCompetence(expertises);
-
-    return Object.entries(groupes).map(([competence, exps]) => (
-      <div key={competence} className="bg-base-100 rounded-xl border border-base-200 overflow-hidden">
-        {/* En-tête du groupe */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border-b border-base-200">
-          <GitBranch className="w-4 h-4 text-primary" />
-          <span className="font-medium text-sm text-base-content">{competence}</span>
-          <span className="ml-auto text-xs text-base-content/50">{exps.length} expert{exps.length > 1 ? 's' : ''}</span>
-        </div>
-        {/* Liste des experts */}
-        <div className="divide-y divide-base-200">
-          {exps.map((exp, index) => (
-            <Link
-              key={`${exp.utilisateurId}-${index}`}
-              to={`/expertise-profil/${exp.utilisateurId}`}
-              className="flex items-center gap-3 px-3 py-2.5 hover:bg-base-50 transition-colors"
-            >
-              <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="sm" />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{exp.titre}</div>
-                {exp.localisation && (
-                  <div className="flex items-center gap-1 text-xs text-base-content/50">
-                    <MapPin className="w-3 h-3" />
-                    <span className="truncate">{exp.localisation}</span>
-                  </div>
-                )}
-              </div>
-              {exp.disponible ? (
-                <span className="badge badge-success badge-xs flex-shrink-0">Dispo</span>
-              ) : (
-                <span className="badge badge-ghost badge-xs flex-shrink-0">Indispo</span>
-              )}
-            </Link>
-          ))}
-        </div>
-      </div>
-    ));
   };
 
   return (
@@ -262,68 +327,234 @@ const RechercherExpertises: React.FC = () => {
           </div>
         )}
 
-        {/* Barre de recherche compacte */}
+        {/* Barre de recherche principale */}
         <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-3 mb-4">
-          <div className="flex flex-col sm:flex-row gap-2">
-            {/* Recherche */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
-              <input
-                type="text"
-                placeholder="Rechercher un expert, compétence, localisation..."
-                className="input input-sm input-bordered w-full pl-9 h-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <div className="flex flex-col gap-3">
+            {/* Ligne 1: Recherche + Filtres + Vue */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* Recherche textuelle */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                <input
+                  type="text"
+                  placeholder="Rechercher un expert, compétence, certification..."
+                  className="input input-sm input-bordered w-full pl-9 h-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              {/* Bouton filtres avancés */}
+              <button
+                className={`btn btn-sm h-9 gap-1 ${filtresOuverts ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setFiltresOuverts(!filtresOuverts)}
+              >
+                <Filter className="w-4 h-4" />
+                <span className="hidden sm:inline">Filtres</span>
+                {nombreFiltresActifs > 0 && (
+                  <span className="badge badge-sm badge-secondary">{nombreFiltresActifs}</span>
+                )}
+                {filtresOuverts ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+
+              {/* Tri */}
+              <select
+                className="select select-sm select-bordered h-9 w-full sm:w-44"
+                value={tri}
+                onChange={(e) => setTri(e.target.value as TriOption)}
+              >
+                <option value="SCORE">Meilleur score</option>
+                <option value="PERTINENCE">Pertinence</option>
+                <option value="EXPERIENCE">Expérience</option>
+                <option value="THM_ASC">Tarif croissant</option>
+                <option value="THM_DESC">Tarif décroissant</option>
+                <option value="POPULARITE">Popularité</option>
+                <option value="RECENT">Plus récents</option>
+              </select>
+
+              {/* Boutons de vue */}
+              <div className="join hidden sm:flex">
+                <button
+                  className={`join-item btn btn-sm h-9 ${vueAffichage === 'liste' ? 'btn-active' : 'btn-ghost'}`}
+                  onClick={() => setVueAffichage('liste')}
+                  title="Vue liste"
+                >
+                  <LayoutList className="w-4 h-4" />
+                </button>
+                <button
+                  className={`join-item btn btn-sm h-9 ${vueAffichage === 'cartes' ? 'btn-active' : 'btn-ghost'}`}
+                  onClick={() => setVueAffichage('cartes')}
+                  title="Vue cartes"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  className={`join-item btn btn-sm h-9 ${vueAffichage === 'arbre' ? 'btn-active' : 'btn-ghost'}`}
+                  onClick={() => setVueAffichage('arbre')}
+                  title="Vue par compétence"
+                >
+                  <GitBranch className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {/* Filtre Disponibilité */}
-            <select
-              className="select select-sm select-bordered h-9 w-full sm:w-40"
-              value={selectedDisponibilite}
-              onChange={(e) => setSelectedDisponibilite(e.target.value)}
-            >
-              <option value="">Disponibilité</option>
-              <option value="true">Disponibles</option>
-              <option value="false">Indisponibles</option>
-            </select>
+            {/* Filtres avancés (dépliables) */}
+            {filtresOuverts && (
+              <div className="border-t border-base-200 pt-3 space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                  {/* Pays */}
+                  <select
+                    className="select select-sm select-bordered w-full"
+                    value={selectedPays || ''}
+                    onChange={(e) => {
+                      setSelectedPays(e.target.value ? Number(e.target.value) : undefined);
+                      setSelectedVille(undefined);
+                    }}
+                  >
+                    <option value="">Tous les pays</option>
+                    {facettesPays.map(p => (
+                      <option key={p.code} value={p.code}>
+                        {p.libelle} ({p.count})
+                      </option>
+                    ))}
+                  </select>
 
-            {/* Boutons de vue */}
-            <div className="join">
-              <button
-                className={`join-item btn btn-sm h-9 ${vueAffichage === 'liste' ? 'btn-active' : 'btn-ghost'}`}
-                onClick={() => setVueAffichage('liste')}
-                title="Vue liste"
-              >
-                <LayoutList className="w-4 h-4" />
-              </button>
-              <button
-                className={`join-item btn btn-sm h-9 ${vueAffichage === 'cartes' ? 'btn-active' : 'btn-ghost'}`}
-                onClick={() => setVueAffichage('cartes')}
-                title="Vue cartes"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button
-                className={`join-item btn btn-sm h-9 ${vueAffichage === 'arbre' ? 'btn-active' : 'btn-ghost'}`}
-                onClick={() => setVueAffichage('arbre')}
-                title="Vue par compétence"
-              >
-                <GitBranch className="w-4 h-4" />
-              </button>
+                  {/* Ville */}
+                  <select
+                    className="select select-sm select-bordered w-full"
+                    value={selectedVille || ''}
+                    onChange={(e) => setSelectedVille(e.target.value ? Number(e.target.value) : undefined)}
+                  >
+                    <option value="">Toutes les villes</option>
+                    {facettesVilles.map(v => (
+                      <option key={v.code} value={v.code}>
+                        {v.libelle} ({v.count})
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Disponibilité */}
+                  <select
+                    className="select select-sm select-bordered w-full"
+                    value={disponible === undefined ? '' : String(disponible)}
+                    onChange={(e) => setDisponible(e.target.value === '' ? undefined : e.target.value === 'true')}
+                  >
+                    <option value="">Disponibilité</option>
+                    <option value="true">Disponibles</option>
+                    <option value="false">Indisponibles</option>
+                  </select>
+
+                  {/* Expérience min */}
+                  <select
+                    className="select select-sm select-bordered w-full"
+                    value={experienceMin || ''}
+                    onChange={(e) => setExperienceMin(e.target.value ? Number(e.target.value) : undefined)}
+                  >
+                    <option value="">Expérience</option>
+                    <option value="1">1+ an</option>
+                    <option value="3">3+ ans</option>
+                    <option value="5">5+ ans</option>
+                    <option value="10">10+ ans</option>
+                  </select>
+
+                  {/* Niveau maîtrise */}
+                  <select
+                    className="select select-sm select-bordered w-full"
+                    value={niveauMin || ''}
+                    onChange={(e) => setNiveauMin(e.target.value ? Number(e.target.value) : undefined)}
+                  >
+                    <option value="">Niveau</option>
+                    <option value="3">Intermédiaire+</option>
+                    <option value="4">Avancé+</option>
+                    <option value="5">Expert</option>
+                  </select>
+
+                  {/* Badge minimum */}
+                  <select
+                    className="select select-sm select-bordered w-full"
+                    value={niveauBadgeMin || ''}
+                    onChange={(e) => setNiveauBadgeMin(e.target.value || undefined)}
+                  >
+                    <option value="">Certification</option>
+                    <option value="BRONZE">Bronze+</option>
+                    <option value="ARGENT">Argent+</option>
+                    <option value="OR">Or+</option>
+                    <option value="PLATINE">Platine</option>
+                  </select>
+                </div>
+
+                {/* Ligne 2: Tarifs + Certifié uniquement + Reset */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="w-4 h-4 text-base-content/50" />
+                    <input
+                      type="number"
+                      placeholder="THM min"
+                      className="input input-sm input-bordered w-24"
+                      value={thmMin || ''}
+                      onChange={(e) => setThmMin(e.target.value ? Number(e.target.value) : undefined)}
+                    />
+                    <span className="text-xs text-base-content/50">-</span>
+                    <input
+                      type="number"
+                      placeholder="THM max"
+                      className="input input-sm input-bordered w-24"
+                      value={thmMax || ''}
+                      onChange={(e) => setThmMax(e.target.value ? Number(e.target.value) : undefined)}
+                    />
+                    <span className="text-xs text-base-content/50">FCFA/h</span>
+                  </div>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-sm checkbox-primary"
+                      checked={certifieUniquement}
+                      onChange={(e) => setCertifieUniquement(e.target.checked)}
+                    />
+                    <span className="text-sm">Certifiés uniquement</span>
+                  </label>
+
+                  <button
+                    className="btn btn-ghost btn-sm ml-auto"
+                    onClick={reinitialiserFiltres}
+                  >
+                    <X className="w-3 h-3" />
+                    Réinitialiser
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Stats et compteur */}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-base-content/60 border-t border-base-200 pt-2">
+              <span className="font-medium text-base-content">
+                {totalResultats} résultat{totalResultats > 1 ? 's' : ''}
+              </span>
+              {statistiques && (
+                <>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="hidden sm:flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    {statistiques.totalExpertsDisponibles} disponibles
+                  </span>
+                  <span className="hidden sm:inline">•</span>
+                  <span className="hidden sm:flex items-center gap-1">
+                    <Award className="w-3 h-3" />
+                    {statistiques.totalExpertsCertifies} certifiés
+                  </span>
+                  <span className="hidden lg:inline">•</span>
+                  <span className="hidden lg:flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    THM moyen: {statistiques.thmMoyen.toLocaleString()} FCFA
+                  </span>
+                </>
+              )}
             </div>
           </div>
-
-          {/* Compteur de résultats */}
-          {!loading && (
-            <div className="mt-2 text-xs text-base-content/50">
-              {expertises.length} résultat{expertises.length > 1 ? 's' : ''}
-              {searchTerm && <span> pour "<span className="font-medium text-base-content/70">{searchTerm}</span>"</span>}
-            </div>
-          )}
         </div>
 
-        {/* Affichage des expertises */}
+        {/* Résultats */}
         {loading ? (
           <div className="flex justify-center items-center h-48">
             <span className="loading loading-spinner loading-md text-primary"></span>
@@ -331,36 +562,56 @@ const RechercherExpertises: React.FC = () => {
         ) : (
           <>
             {/* Vue Liste */}
-            {vueAffichage === 'liste' && expertises.length > 0 && (
+            {vueAffichage === 'liste' && resultats.length > 0 && (
               <div className="bg-base-100 rounded-xl border border-base-200 overflow-hidden">
                 <div className="divide-y divide-base-200">
-                  {expertises.map((exp, index) => (
+                  {resultats.map((expert) => (
                     <Link
-                      key={`${exp.utilisateurId}-${index}`}
-                      to={`/expertise-profil/${exp.utilisateurId}`}
+                      key={expert.utilisateurId}
+                      to={`/expertise-profil/${expert.utilisateurId}`}
                       className="flex items-center gap-3 p-3 hover:bg-base-50 transition-colors"
                     >
-                      <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="sm" />
+                      <AvatarExpert utilisateurId={expert.utilisateurId} titre={expert.titre} taille="md" />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">{exp.titre}</div>
-                        {exp.localisation && (
-                          <div className="flex items-center gap-1 text-xs text-base-content/50">
-                            <MapPin className="w-3 h-3" />
-                            <span className="truncate">{exp.localisation}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm truncate">{expert.titre}</span>
+                          {expert.nombreBadges > 0 && (
+                            <BadgeNiveau niveau={expert.niveauBadgeMax} />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-base-content/60 mt-0.5">
+                          {expert.villeNom && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {expert.villeNom}
+                            </span>
+                          )}
+                          {expert.anneesExperienceMax > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {expert.anneesExperienceMax} ans
+                            </span>
+                          )}
+                          {expert.nombreFollowers > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              {expert.nombreFollowers}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0">
-                        {exp.competences?.slice(0, 2).map((comp, idx) => (
-                          <span key={idx} className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full truncate max-w-[80px]">
-                            {comp.nom}
+                      <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+                        {expert.thmMin && (
+                          <span className="text-xs font-medium text-success">
+                            {expert.thmMin.toLocaleString()}F/h
                           </span>
-                        ))}
-                        {(exp.competences?.length || 0) > 2 && (
-                          <span className="text-xs text-base-content/40">+{(exp.competences?.length || 0) - 2}</span>
                         )}
+                        <div className="flex items-center gap-1 text-xs text-base-content/50">
+                          <Star className="w-3 h-3 text-warning" />
+                          {expert.scoreGlobal?.toFixed(0) || 0}
+                        </div>
                       </div>
-                      {exp.disponible ? (
+                      {expert.disponible ? (
                         <span className="badge badge-success badge-xs flex-shrink-0">Dispo</span>
                       ) : (
                         <span className="badge badge-ghost badge-xs flex-shrink-0">Indispo</span>
@@ -371,8 +622,8 @@ const RechercherExpertises: React.FC = () => {
               </div>
             )}
 
-            {/* Vue Cartes avec Subgrid */}
-            {vueAffichage === 'cartes' && expertises.length > 0 && (
+            {/* Vue Cartes */}
+            {vueAffichage === 'cartes' && resultats.length > 0 && (
               <div
                 className="gap-4"
                 style={{
@@ -381,10 +632,10 @@ const RechercherExpertises: React.FC = () => {
                   gridAutoRows: 'auto auto auto',
                 }}
               >
-                {expertises.map((exp, index) => (
+                {resultats.map((expert) => (
                   <Link
-                    key={`${exp.utilisateurId}-${index}`}
-                    to={`/expertise-profil/${exp.utilisateurId}`}
+                    key={expert.utilisateurId}
+                    to={`/expertise-profil/${expert.utilisateurId}`}
                     className="group bg-primary/5 rounded-xl border border-primary/20 shadow-sm hover:shadow-lg hover:border-primary/40 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden p-4"
                     style={{
                       display: 'grid',
@@ -393,21 +644,32 @@ const RechercherExpertises: React.FC = () => {
                       gap: '12px',
                     }}
                   >
-                    {/* Ligne 1: En-tête (avatar, nom, localisation, disponibilité) */}
+                    {/* Ligne 1: En-tête */}
                     <div className="flex gap-3 overflow-hidden">
-                      <AvatarExpert utilisateurId={exp.utilisateurId} titre={exp.titre} taille="md" />
+                      <AvatarExpert utilisateurId={expert.utilisateurId} titre={expert.titre} taille="md" />
                       <div className="flex-1 min-w-0 overflow-hidden">
-                        <div className="font-semibold text-sm text-base-content line-clamp-2 group-hover:text-primary transition-colors">
-                          {exp.titre}
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-base-content line-clamp-1 group-hover:text-primary transition-colors">
+                            {expert.titre}
+                          </span>
+                          {expert.nombreBadges > 0 && (
+                            <BadgeNiveau niveau={expert.niveauBadgeMax} />
+                          )}
                         </div>
-                        {exp.localisation && (
-                          <div className="flex items-center gap-1 text-xs text-base-content/70 mt-0.5 overflow-hidden">
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{exp.localisation}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 text-xs text-base-content/70 mt-0.5">
+                          {expert.villeNom && (
+                            <span className="flex items-center gap-1 truncate">
+                              <MapPin className="w-3 h-3 flex-shrink-0" />
+                              {expert.villeNom}
+                            </span>
+                          )}
+                          <span className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-warning flex-shrink-0" />
+                            {expert.scoreGlobal?.toFixed(0) || 0}
+                          </span>
+                        </div>
                         <div className="mt-1">
-                          {exp.disponible ? (
+                          {expert.disponible ? (
                             <span className="inline-flex items-center gap-1 text-xs text-success font-medium">
                               <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
                               Disponible
@@ -422,34 +684,57 @@ const RechercherExpertises: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Ligne 2: Description */}
-                    <div className="min-h-[40px]">
-                      {exp.description ? (
-                        <p className="text-xs text-base-content/70 line-clamp-2">{exp.description}</p>
-                      ) : (
-                        <p className="text-xs text-base-content/40 italic">Aucune description</p>
+                    {/* Ligne 2: Stats */}
+                    <div className="flex items-center gap-3 text-xs text-base-content/70">
+                      {expert.anneesExperienceMax > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Briefcase className="w-3 h-3" />
+                          {expert.anneesExperienceMax} ans
+                        </span>
+                      )}
+                      {expert.nombreProjets > 0 && (
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          {expert.nombreProjets} projets
+                        </span>
+                      )}
+                      {expert.nombreFollowers > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {expert.nombreFollowers}
+                        </span>
+                      )}
+                      {expert.thmMin && (
+                        <span className="ml-auto text-success font-semibold">
+                          {expert.thmMin.toLocaleString()}F/h
+                        </span>
                       )}
                     </div>
 
                     {/* Ligne 3: Compétences */}
                     <div className="space-y-1.5 overflow-hidden">
-                      {exp.competences && exp.competences.length > 0 ? (
+                      {expert.competencesPrincipales && expert.competencesPrincipales.length > 0 ? (
                         <>
-                          {exp.competences.slice(0, 2).map((comp, idx) => (
+                          {expert.competencesPrincipales.slice(0, 2).map((comp, idx) => (
                             <div
                               key={idx}
                               className="flex items-center justify-between bg-base-100/80 border border-base-300 rounded-lg px-2.5 py-1.5 min-w-0 overflow-hidden"
                             >
-                              <span className="text-xs font-medium text-base-content truncate min-w-0 flex-1">{comp.nom}</span>
+                              <div className="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+                                {comp.estCertifiee && (
+                                  <Award className="w-3 h-3 text-warning flex-shrink-0" />
+                                )}
+                                <span className="text-xs font-medium text-base-content truncate">{comp.nom}</span>
+                              </div>
                               <div className="flex items-center gap-2 text-xs text-base-content/70 flex-shrink-0 ml-2">
                                 {comp.anneesExperience && <span>{comp.anneesExperience}a</span>}
                                 {comp.thm && <span className="text-success font-semibold">{comp.thm.toLocaleString()}F/h</span>}
                               </div>
                             </div>
                           ))}
-                          {exp.competences.length > 2 && (
+                          {expert.nombreCompetences > 2 && (
                             <div className="text-xs text-primary font-medium pl-1">
-                              +{exp.competences.length - 2} autre{exp.competences.length > 3 ? 's' : ''}
+                              +{expert.nombreCompetences - 2} autre{expert.nombreCompetences > 3 ? 's' : ''}
                             </div>
                           )}
                         </>
@@ -464,21 +749,89 @@ const RechercherExpertises: React.FC = () => {
               </div>
             )}
 
-            {/* Vue Arborescence */}
-            {vueAffichage === 'arbre' && expertises.length > 0 && (
+            {/* Vue Arbre */}
+            {vueAffichage === 'arbre' && resultats.length > 0 && (
               <div className="space-y-3">
-                {renderArborescence()}
+                {Object.entries(grouperParCompetence(resultats)).map(([competence, experts]) => (
+                  <div key={competence} className="bg-base-100 rounded-xl border border-base-200 overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 border-b border-base-200">
+                      <GitBranch className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-sm text-base-content">{competence}</span>
+                      <span className="ml-auto text-xs text-base-content/50">
+                        {experts.length} expert{experts.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-base-200">
+                      {experts.map((expert) => (
+                        <Link
+                          key={expert.utilisateurId}
+                          to={`/expertise-profil/${expert.utilisateurId}`}
+                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-base-50 transition-colors"
+                        >
+                          <AvatarExpert utilisateurId={expert.utilisateurId} titre={expert.titre} taille="sm" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{expert.titre}</div>
+                            {expert.villeNom && (
+                              <div className="flex items-center gap-1 text-xs text-base-content/50">
+                                <MapPin className="w-3 h-3" />
+                                <span className="truncate">{expert.villeNom}</span>
+                              </div>
+                            )}
+                          </div>
+                          {expert.disponible ? (
+                            <span className="badge badge-success badge-xs flex-shrink-0">Dispo</span>
+                          ) : (
+                            <span className="badge badge-ghost badge-xs flex-shrink-0">Indispo</span>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
             {/* État vide */}
-            {expertises.length === 0 && (
+            {resultats.length === 0 && !loading && (
               <div className="text-center py-12">
                 <div className="w-16 h-16 mx-auto mb-4 bg-base-200 rounded-full flex items-center justify-center">
                   <Users className="w-8 h-8 text-base-content/30" />
                 </div>
                 <p className="font-medium text-base-content/70 mb-1">Aucun expert trouvé</p>
                 <p className="text-sm text-base-content/50">Essayez de modifier vos critères de recherche</p>
+                {nombreFiltresActifs > 0 && (
+                  <button
+                    className="btn btn-primary btn-sm mt-4"
+                    onClick={reinitialiserFiltres}
+                  >
+                    Réinitialiser les filtres
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <div className="join">
+                  <button
+                    className="join-item btn btn-sm"
+                    disabled={page === 0}
+                    onClick={() => rechercherExperts(page - 1)}
+                  >
+                    «
+                  </button>
+                  <button className="join-item btn btn-sm">
+                    Page {page + 1} / {totalPages}
+                  </button>
+                  <button
+                    className="join-item btn btn-sm"
+                    disabled={page >= totalPages - 1}
+                    onClick={() => rechercherExperts(page + 1)}
+                  >
+                    »
+                  </button>
+                </div>
               </div>
             )}
           </>

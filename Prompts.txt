@@ -506,3 +506,96 @@ Pour exécuter le script PowerShell que j'ai créé, voici les étapes :
   http://localhost:8090/api/scores/initialiser
 
   Ça va recalculer les scores de tous les experts existants.
+
+===== RECHERCHE AVANCEE
+
+● Excellente question ! Laissez-moi analyser les données et relations disponibles pour concevoir un moteur de recherche puissant.
+
+● Explore(Analyze search data model)
+  ⎿  Done (16 tool uses · 57.0k tokens · 2m 4s)
+
+
+● Excellent ! Voici une analyse complète. Maintenant, je vais concevoir un moteur de recherche puissant. Voici ma proposition :
+
+  🔍 Architecture du Moteur de Recherche Avancé
+
+  Critères de recherche proposés :
+  ┌─────────────────────┬──────────────┬────────────────────────────────────────────────────────────────┐
+  │       Critère       │     Type     │                          Description                           │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Texte libre         │ Full-text    │ Recherche dans titre, description, compétences, certifications │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Localisation        │ Hiérarchique │ Pays → Ville                                                   │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Disponibilité       │ Boolean      │ Disponible / Indisponible                                      │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Niveau d'expérience │ Range        │ Années min/max                                                 │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Niveau de maîtrise  │ Range        │ 1-5 (Débutant → Expert)                                        │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Budget (THM)        │ Range        │ Tarif horaire min/max                                          │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Certifications      │ Enum         │ Minimum BRONZE/ARGENT/OR/PLATINE                               │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Nombre de badges    │ Range        │ Experts certifiés uniquement                                   │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Domaine métier      │ Select       │ Technique, Management, etc.                                    │
+  ├─────────────────────┼──────────────┼────────────────────────────────────────────────────────────────┤
+  │ Tri                 │ Select       │ Score, Popularité, Expérience, Tarif                           │
+  └─────────────────────┴──────────────┴────────────────────────────────────────────────────────────────┘
+  Scoring de pertinence :
+
+  scoreRecherche = (relevanceTexte × 0.30) +
+                   (scoreGlobal × 0.40) +
+                   (correspondanceFiltres × 0.30)
+
+● Write(spring-microservice\expertise\src\main\resources\db\migration\V29__add_fulltext_search_indexes.sql)
+  ⎿  Wrote 1 lines to
+     spring-microservice\expertise\src\main\resources\db\migration\V29__add_fulltext_search_indexes.sql
+      1 -- Migration V29: Ajout des index Full-Text Search pour recherche avancée
+      2 -- PostgreSQL utilise tsvector/tsquery pour la recherche textuelle
+      3 -- 1. Ajouter une colonne tsvector pour la recherche sur expertises
+      4 ALTER TABLE expertises ADD COLUMN IF NOT EXISTS recherche_texte tsvector;
+      5 -- 2. Créer une fonction pour générer le vecteur de recherche d'une expertise
+      6 CREATE OR REPLACE FUNCTION generer_recherche_expertise()
+      7 RETURNS TRIGGER AS $$
+      8 BEGIN
+
+      ==
+      ● La compilation TypeScript est réussie. Voici le récapitulatif de ce qui a été implémenté :
+
+  🔍 Moteur de Recherche Avancé - Résumé
+
+  Backend créé :
+
+  1. Migration V29 - Index Full-Text Search PostgreSQL
+    - Colonnes recherche_texte (tsvector) sur expertises et competences
+    - Triggers automatiques pour mise à jour
+    - Index GIN pour recherche rapide
+    - Vue matérialisée vue_stats_experts pour performance
+  2. DTOs :
+    - RechercheExpertRequest - 15+ critères de filtrage
+    - RechercheExpertResponse - Résultats + facettes + statistiques
+  3. RechercheExpertService - Requêtes SQL natives avec :
+    - Full-Text Search PostgreSQL (tsvector/tsquery)
+    - Recherche pondérée (titre > description > compétences)
+    - Filtres combinables
+    - Tri multi-critères
+    - Pagination
+  4. Endpoint : POST /api/expertise/public/recherche-avancee
+
+  Frontend mis à jour :
+
+  - Recherche en temps réel côté serveur (debounce 400ms)
+  - Panel de filtres avancés dépliable
+  - Filtres : pays, ville, disponibilité, expérience, niveau, THM, certifications
+  - Options de tri : Score, Pertinence, Expérience, Tarif, Popularité, Récents
+  - Statistiques en temps réel
+  - Pagination
+  - 3 modes d'affichage conservés (liste, cartes, arbre)
+
+  Pour tester :
+
+  1. Redémarrez le service expertise (la migration V29 créera les index)
+  2. Allez sur http://localhost:3000/rechercher
+  3. Testez la recherche textuelle et les filtres avancés

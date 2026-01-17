@@ -2,6 +2,7 @@ com\intermediation\expertise\controller\DemandeReconnaissanceController.class
 com\intermediation\expertise\dto\MethodeEvaluationDTO.class
 com\intermediation\expertise\model\DemandeReconnaissanceCompetence$NiveauCertification.class
 com\intermediation\expertise\dto\CreerDemandeContactRequest.class
+com\intermediation\expertise\dto\RechercheExpertResponse$ExpertResultat.class
 com\intermediation\expertise\dto\StatistiquesTraitementDTO.class
 com\intermediation\expertise\model\Pays.class
 com\intermediation\expertise\repository\CritereEvaluationRepository.class
@@ -13,15 +14,18 @@ com\intermediation\expertise\dto\CompetenceDTO.class
 com\intermediation\expertise\service\DemandeContactService.class
 com\intermediation\expertise\controller\ScoreController.class
 com\intermediation\expertise\dto\VilleDTO.class
+com\intermediation\expertise\dto\RechercheExpertResponse.class
 com\intermediation\expertise\model\CritereEvaluation.class
 com\intermediation\expertise\model\ReseauExpertise.class
 com\intermediation\expertise\config\RestTemplateConfig.class
 com\intermediation\expertise\dto\ExpertPublicDTO.class
 com\intermediation\expertise\model\CompetenceReference.class
 com\intermediation\expertise\security\SecurityService.class
+com\intermediation\expertise\service\RechercheExpertService.class
 com\intermediation\expertise\repository\CertificationRepository.class
 com\intermediation\expertise\service\ReferentielService.class
 com\intermediation\expertise\workers\ReconnaissanceCompetenceWorkers.class
+com\intermediation\expertise\dto\RechercheExpertResponse$CompetenceResume.class
 com\intermediation\expertise\model\SousDomaineMetier.class
 com\intermediation\expertise\service\ScoreExpertService.class
 com\intermediation\expertise\scheduler\BadgeExpirationScheduler.class
@@ -76,6 +80,8 @@ com\intermediation\expertise\controller\CertificationController.class
 com\intermediation\expertise\service\ReseauExpertiseService.class
 com\intermediation\expertise\model\DemandeReconnaissanceCompetence$StatutDemande.class
 com\intermediation\expertise\config\HeaderBasedAuthenticationFilter.class
+com\intermediation\expertise\dto\RechercheExpertRequest.class
+com\intermediation\expertise\dto\RechercheExpertResponse$FacetteItem.class
 com\intermediation\expertise\exception\GlobalExceptionHandler.class
 com\intermediation\expertise\controller\ExpertiseController.class
 com\intermediation\expertise\model\EvaluationCompetence$Recommandation.class
@@ -97,6 +103,8 @@ com\intermediation\expertise\dto\DemandeContactDTO.class
 com\intermediation\expertise\controller\TraitementDemandeController.class
 com\intermediation\expertise\dto\CritereEvaluationDTO.class
 com\intermediation\expertise\model\Ville.class
+com\intermediation\expertise\dto\RechercheExpertResponse$StatistiquesRecherche.class
+com\intermediation\expertise\config\ScoreInitializer.class
 com\intermediation\expertise\controller\DomaineMetierController.class
 com\intermediation\expertise\dto\AssignationRhRequest.class
 com\intermediation\expertise\service\UtilisateurRhService$1.class

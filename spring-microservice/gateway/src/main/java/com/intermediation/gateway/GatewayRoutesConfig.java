@@ -82,6 +82,11 @@ public class GatewayRoutesConfig {
                 .path("/api/contact/**")
                 .uri("lb://EXPERTISE"))
 
+            // Route API Scores (gestion des scores des experts) vers le service Expertise
+            .route("scores-api", r -> r
+                .path("/api/scores/**")
+                .uri("lb://EXPERTISE"))
+
             .build();
     }
 }

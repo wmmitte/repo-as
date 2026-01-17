@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/expertise/**", "/api/competences-reference/**", "/api/certifications/**", "/api/localisations/**").authenticated()
                 .requestMatchers("/api/reconnaissance-competences/**", "/api/files/**").authenticated()
                 .requestMatchers("/api/referentiels/**").authenticated()
+                .requestMatchers("/api/scores/**").authenticated()
 
                 // File traitant - uniquement Manager et RH (la vérification se fait via @PreAuthorize dans le controller)
                 .requestMatchers("/api/traitement-demandes/**").authenticated()

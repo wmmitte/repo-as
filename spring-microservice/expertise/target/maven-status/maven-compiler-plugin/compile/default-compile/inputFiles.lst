@@ -1,6 +1,7 @@
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\config\DeploymentConfig.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\config\HeaderBasedAuthenticationFilter.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\config\RestTemplateConfig.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\config\ScoreInitializer.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\config\SecurityConfig.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\BadgeController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\CertificationController.java
@@ -38,6 +39,8 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\MethodeEvaluationDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\PaysDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\PieceJustificativeDTO.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\RechercheExpertRequest.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\RechercheExpertResponse.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\SousDomaineAvecDomaineDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\SousDomaineMetierDTO.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\StatistiquesTraitementDTO.java
@@ -94,6 +97,7 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\LocalisationService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\PaysInitService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ProcessInstanceRegistry.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\RechercheExpertService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ReconnaissanceCompetenceService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ReferentielService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ReseauExpertiseService.java
