@@ -1,6 +1,7 @@
 package com.intermediation.expertise.model;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -42,6 +43,16 @@ public class Expertise {
 
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
+
+    // Système de scoring
+    @Column(name = "score_global", precision = 10, scale = 2)
+    private BigDecimal scoreGlobal = BigDecimal.ZERO;
+
+    @Column(name = "score_details", columnDefinition = "jsonb")
+    private String scoreDetails; // JSON avec le détail des scores
+
+    @Column(name = "date_calcul_score")
+    private LocalDateTime dateCalculScore;
 
     // Constructeurs
     public Expertise() {
@@ -147,5 +158,30 @@ public class Expertise {
     @PreUpdate
     public void preUpdate() {
         this.dateModification = LocalDateTime.now();
+    }
+
+    // Getters et Setters pour le scoring
+    public BigDecimal getScoreGlobal() {
+        return scoreGlobal;
+    }
+
+    public void setScoreGlobal(BigDecimal scoreGlobal) {
+        this.scoreGlobal = scoreGlobal;
+    }
+
+    public String getScoreDetails() {
+        return scoreDetails;
+    }
+
+    public void setScoreDetails(String scoreDetails) {
+        this.scoreDetails = scoreDetails;
+    }
+
+    public LocalDateTime getDateCalculScore() {
+        return dateCalculScore;
+    }
+
+    public void setDateCalculScore(LocalDateTime dateCalculScore) {
+        this.dateCalculScore = dateCalculScore;
     }
 }

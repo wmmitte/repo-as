@@ -11,6 +11,7 @@ com\intermediation\expertise\dto\DomaineMetierDTO.class
 com\intermediation\expertise\dto\EvaluationCompetenceDTO.class
 com\intermediation\expertise\dto\CompetenceDTO.class
 com\intermediation\expertise\service\DemandeContactService.class
+com\intermediation\expertise\controller\ScoreController.class
 com\intermediation\expertise\dto\VilleDTO.class
 com\intermediation\expertise\model\CritereEvaluation.class
 com\intermediation\expertise\model\ReseauExpertise.class
@@ -22,6 +23,7 @@ com\intermediation\expertise\repository\CertificationRepository.class
 com\intermediation\expertise\service\ReferentielService.class
 com\intermediation\expertise\workers\ReconnaissanceCompetenceWorkers.class
 com\intermediation\expertise\model\SousDomaineMetier.class
+com\intermediation\expertise\service\ScoreExpertService.class
 com\intermediation\expertise\scheduler\BadgeExpirationScheduler.class
 com\intermediation\expertise\dto\SousDomaineAvecDomaineDTO.class
 com\intermediation\expertise\controller\ReseauExpertiseController.class
@@ -63,6 +65,7 @@ com\intermediation\expertise\controller\CompetenceReferenceController.class
 com\intermediation\expertise\repository\ExpertiseRepository.class
 com\intermediation\expertise\controller\ProcessController.class
 com\intermediation\expertise\model\Expertise.class
+com\intermediation\expertise\service\ScoreExpertService$1.class
 com\intermediation\expertise\dto\CompetenceReferenceDTO.class
 com\intermediation\expertise\model\BadgeCompetence$NiveauCertification.class
 com\intermediation\expertise\model\CompetenceReference$TypeCompetence.class

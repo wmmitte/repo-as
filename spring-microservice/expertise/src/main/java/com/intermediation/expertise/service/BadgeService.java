@@ -44,6 +44,9 @@ public class BadgeService {
     @Autowired
     private DemandeReconnaissanceRepository demandeRepository;
 
+    @Autowired
+    private ScoreExpertService scoreExpertService;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -160,6 +163,9 @@ public class BadgeService {
         competenceRepository.findById(badge.getCompetenceId())
                 .ifPresent(c -> dto.setCompetenceNom(c.getNom()));
 
+        // Recalculer le score de l'expert de manière asynchrone
+        scoreExpertService.calculerScoreAsync(badge.getUtilisateurId());
+
         return dto;
     }
 
@@ -252,6 +258,9 @@ public class BadgeService {
 
         badge.revoquer(motif, revoquePar);
         badgeRepository.save(badge);
+
+        // Recalculer le score de l'expert de manière asynchrone
+        scoreExpertService.calculerScoreAsync(badge.getUtilisateurId());
 
         logger.info("Badge {} révoqué par {} : {}", badgeId, revoquePar, motif);
     }

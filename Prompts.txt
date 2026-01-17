@@ -290,3 +290,219 @@ Pour exécuter le script PowerShell que j'ai créé, voici les étapes :
   Est-ce que ça répond à votre question ? 😊
 
 ✻ Cogitated for 39s
+
+
+==== SCORE RANKING
+
+ maintenant je veux qu'on reflechisse à comment, en fonction de la structure actuelle des données, comment on peut
+  mettre en avant des experts ? Un expert à plusieurs caractéristiques à savoir les badges, les compétences, les
+  années d'experiences, le nombre de projet..etc.. Or la plateforme a pour ambition de permettre à des clients qui
+  ont de projet de trouver des experts compétent à qui confié leur projet.. Pour cela il faut que le moteur de
+  recommandation des experts soit puissante et vrai et juste et qéuitable.. Cela passe par les suggestions et les
+  recherches. Et un système de rank ou scrore peut être construit pour chaque expert de sorte à les faire apparaite
+  ren premier lors des recherches etc... Qu'est ce qui est faisable dabs ce cas ?
+  ___________________________
+ Excellente question ! Analysons la structure actuelle et proposons un système de scoring équitable.
+
+  Données disponibles pour le scoring
+
+  Par Expert (table expertises):
+  - Disponibilité
+  - Profil complet (titre, description, photo, localisation)
+  - Date de création du profil
+
+  Par Compétence (table competences):
+  - niveauMaitrise (1-5)
+  - anneesExperience
+  - nombreProjets
+  - thm (taux horaire)
+  - certifications
+
+  Badges certifiés (table badges_competence):
+  - niveauCertification (BRONZE, ARGENT, OR, PLATINE)
+  - Nombre de badges actifs
+
+  Réseau (table reseau_expertise):
+  - Nombre de followers
+
+  ---
+  Proposition de système de scoring
+
+  1. Score de Certification (40% du score total)
+
+  scoreCertification = Σ (poidsBadge × multiplicateur)
+
+  Poids par niveau:
+  - BRONZE   = 10 points
+  - ARGENT   = 25 points
+  - OR       = 50 points
+  - PLATINE  = 100 points
+  Justification: Les badges sont validés par des évaluateurs RH, donc fiables.
+
+  2. Score d'Expérience (25% du score total)
+
+  scoreExperience = (
+    (Σ anneesExperience × 2) +
+    (Σ nombreProjets × 1.5) +
+    (moyenneNiveauMaitrise × 10)
+  ) / nombreCompetences
+  Justification: L'expérience déclarée compte, mais moins que les badges certifiés.
+
+  3. Score de Profil Complet (15% du score total)
+
+  scoreProfil =
+    + 20 si photo présente
+    + 20 si description > 100 caractères
+    + 15 si localisation renseignée
+    + 10 si disponible = true
+    + 5 × min(nombreCompetences, 6)
+  Justification: Un profil complet inspire confiance aux clients.
+
+  4. Score de Popularité (10% du score total)
+
+  scorePopularite = min(nombreFollowers × 2, 100)
+  Justification: La validation sociale, mais plafonnée pour éviter les abus.
+
+  5. Score d'Activité (10% du score total)
+
+  scoreActivite =
+    + 50 si dernière modification < 30 jours
+    + 30 si dernière modification < 90 jours
+    + 10 si dernière modification < 180 jours
+  Justification: Favoriser les profils actifs et à jour.
+
+  ---
+  Formule finale
+
+  scoreGlobal = (
+    scoreCertification × 0.40 +
+    scoreExperience × 0.25 +
+    scoreProfil × 0.15 +
+    scorePopularite × 0.10 +
+    scoreActivite × 0.10
+  )
+
+  ---
+  Implémentation technique proposée
+
+  Option A: Score calculé à la volée
+
+  - Avantage: Toujours à jour
+  - Inconvénient: Performance sur grandes listes
+
+  Option B: Score pré-calculé (recommandé)
+
+  - Ajouter colonne score_global dans table expertises
+  - Recalculer à chaque modification (badge, compétence, profil)
+  - Index sur score_global pour tri rapide
+
+  ---
+  Ce qui est faisable maintenant
+  ┌──────────────────────────────────────┬────────────┬────────┐
+  │            Fonctionnalité            │ Complexité │ Impact │
+  ├──────────────────────────────────────┼────────────┼────────┤
+  │ Ajout colonne score_global           │ Facile     │ Fort   │
+  ├──────────────────────────────────────┼────────────┼────────┤
+  │ Service de calcul du score           │ Moyen      │ Fort   │
+  ├──────────────────────────────────────┼────────────┼────────┤
+  │ Tri par score dans recherche         │ Facile     │ Fort   │
+  ├──────────────────────────────────────┼────────────┼────────┤
+  │ Filtres avancés (badges, expérience) │ Moyen      │ Moyen  │
+  ├──────────────────────────────────────┼────────────┼────────┤
+  │ Affichage du "rang" ou score         │ Facile     │ Moyen  │
+  └──────────────────────────────────────┴────────────┴────────┘
+  ---
+  Qu'est-ce qui t'intéresse le plus ? Je peux:
+  1. Implémenter le système de score (migration DB + service backend + intégration frontend)
+  2. Améliorer la recherche avec filtres avancés et tri par score
+  3. Afficher un indicateur de confiance sur les profils experts
+
+  Quelle direction veux-tu prendre ?
+  ===
+  ● Le système de scoring des experts a été implémenté avec succès. Voici le résumé:
+
+  Implémentation terminée
+
+  1. Migration Flyway (V28)
+
+  - Colonne score_global (DECIMAL 0-100)
+  - Colonne score_details (JSON pour transparence)
+  - Colonne date_calcul_score
+  - Index optimisés pour le tri
+
+  2. Formule de calcul du score
+  ┌───────────────┬───────┬──────────────────────────────────────────────────────────────┐
+  │  Composante   │ Poids │                         Description                          │
+  ├───────────────┼───────┼──────────────────────────────────────────────────────────────┤
+  │ Certification │ 40%   │ Badges: BRONZE=10pts, ARGENT=25pts, OR=50pts, PLATINE=100pts │
+  ├───────────────┼───────┼──────────────────────────────────────────────────────────────┤
+  │ Expérience    │ 25%   │ Niveau maîtrise (40%) + années (35%) + projets (25%)         │
+  ├───────────────┼───────┼──────────────────────────────────────────────────────────────┤
+  │ Profil        │ 15%   │ Photo, description, titre, localisation, compétences         │
+  ├───────────────┼───────┼──────────────────────────────────────────────────────────────┤
+  │ Popularité    │ 10%   │ Nombre de followers (plafonné à 50)                          │
+  ├───────────────┼───────┼──────────────────────────────────────────────────────────────┤
+  │ Activité      │ 10%   │ Fraîcheur du profil (<30j=100, <90j=70, etc.)                │
+  └───────────────┴───────┴──────────────────────────────────────────────────────────────┘
+  3. Recalcul automatique déclenché après:
+
+  - Modification de l'expertise ou du profil
+  - Ajout/modification/suppression de compétence
+  - Attribution ou révocation de badge
+  - Nouvel abonné ou désabonnement
+
+  4. API disponibles
+
+  - POST /api/scores/recalculer/{utilisateurId} - Recalculer un expert
+  - POST /api/scores/recalculer-tous - Recalculer tous les experts
+
+  5. Recherche triée par score
+
+  Les experts publiés sont maintenant triés par scoreGlobal décroissant dans:
+  - Le feed d'accueil (getExpertsPublies)
+  - Les recherches (rechercherExpertises)
+
+  Note importante: Après le démarrage, appelle POST /api/scores/recalculer-tous pour initialiser les scores de tous les experts existants.
+
+==
+
+● Non, c'est un endpoint POST donc tu ne peux pas l'appeler directement dans l'URL du navigateur (qui fait des GET).
+
+  Voici les options:
+
+  Option 1: Avec curl (terminal)
+
+  curl -X POST http://localhost:8090/api/scores/recalculer-tous
+
+  Option 2: Avec Postman
+
+  - Méthode: POST
+  - URL: http://localhost:8090/api/scores/recalculer-tous
+
+  Option 3: Je peux ajouter un endpoint GET pour faciliter (recommandé)
+
+● Update(spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\ScoreController.java)
+  ⎿  Added 13 lines
+      49              "message", "Recalcul de tous les scores lancé"
+      50          ));
+      51      }
+      52 +
+      53 +    /**
+      54 +     * Recalculer tous les scores (admin) - Version GET pour appel facile depuis navigateur
+      55 +     * GET /api/scores/initialiser
+      56 +     */
+      57 +    @GetMapping("/initialiser")
+      58 +    public ResponseEntity<Map<String, String>> initialiserTousLesScores() {
+      59 +        log.info("Initialisation de tous les scores demandée via GET");
+      60 +        scoreExpertService.recalculerTousLesScores();
+      61 +        return ResponseEntity.ok(Map.of(
+      62 +            "message", "Initialisation de tous les scores terminée"
+      63 +        ));
+      64 +    }
+      65  }
+
+● Maintenant tu peux simplement ouvrir cette URL dans ton navigateur:
+
+  http://localhost:8090/api/scores/initialiser
+
+  Ça va recalculer les scores de tous les experts existants.

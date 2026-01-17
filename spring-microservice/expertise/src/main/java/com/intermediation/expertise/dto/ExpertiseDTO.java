@@ -2,13 +2,14 @@ package com.intermediation.expertise.dto;
 
 import com.intermediation.expertise.model.Expertise;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * DTO pour le transfert des données d'expertise
  */
 public class ExpertiseDTO {
-    
+
     private Long id;
     private String utilisateurId;
     private String titre;
@@ -20,6 +21,7 @@ public class ExpertiseDTO {
     private Boolean publiee;
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
+    private BigDecimal scoreGlobal; // Score de classement (0-100)
 
     // Constructeurs
     public ExpertiseDTO() {}
@@ -38,6 +40,7 @@ public class ExpertiseDTO {
         this.publiee = expertise.getPubliee();
         this.dateCreation = expertise.getDateCreation();
         this.dateModification = expertise.getDateModification();
+        this.scoreGlobal = expertise.getScoreGlobal();
     }
 
 
@@ -128,5 +131,13 @@ public class ExpertiseDTO {
 
     public void setDateModification(LocalDateTime dateModification) {
         this.dateModification = dateModification;
+    }
+
+    public BigDecimal getScoreGlobal() {
+        return scoreGlobal;
+    }
+
+    public void setScoreGlobal(BigDecimal scoreGlobal) {
+        this.scoreGlobal = scoreGlobal;
     }
 }

@@ -9,10 +9,16 @@ import java.util.Optional;
 
 @Repository
 public interface ExpertiseRepository extends JpaRepository<Expertise, Long> {
-    
+
     Optional<Expertise> findByUtilisateurId(String utilisateurId);
-    
+
     boolean existsByUtilisateurId(String utilisateurId);
-    
+
     List<Expertise> findByPublieeTrue();
+
+    // Expertises publiées triées par score global décroissant (les meilleurs en premier)
+    List<Expertise> findByPublieeTrueOrderByScoreGlobalDesc();
+
+    // Expertises publiées et disponibles triées par score
+    List<Expertise> findByPublieeTrueAndDisponibleTrueOrderByScoreGlobalDesc();
 }

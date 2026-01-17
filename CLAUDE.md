@@ -921,7 +921,195 @@ UNIQUE (utilisateur_id, expert_suivi_id)
 - `obtenirUtilisateursParRole(role)` - Liste RH, managers
 - `obtenirUtilisateurParId(id)` - Détails utilisateur
 
-#### Migrations Flyway (26 versions!)
+**ScoreExpertService** ⭐ NOUVEAU
+- `calculerEtMettreAJourScore(utilisateurId)` - Calcul synchrone du score
+- `calculerScoreAsync(utilisateurId)` - Calcul asynchrone (non-bloquant)
+- `recalculerTousLesScores()` - Recalcul batch de tous les experts
+
+---
+
+## SYSTÈME DE SCORING DES EXPERTS
+
+### Vue d'ensemble
+
+Le système de scoring permet de classer les experts par pertinence pour faciliter la découverte par les clients. Le score global (0-100) est stocké dans la table `expertises` et utilisé pour trier les résultats de recherche.
+
+### Schéma de la base de données (Migration V28)
+
+```sql
+ALTER TABLE expertises ADD COLUMN score_global DECIMAL(10, 2) DEFAULT 0;
+ALTER TABLE expertises ADD COLUMN score_details JSONB DEFAULT '{}';
+ALTER TABLE expertises ADD COLUMN date_calcul_score TIMESTAMP;
+
+-- Index pour optimiser le tri
+CREATE INDEX idx_expertises_score_global ON expertises(score_global DESC);
+CREATE INDEX idx_expertises_publiee_score ON expertises(publiee, score_global DESC) WHERE publiee = true;
+```
+
+### Formule de calcul du score global
+
+```
+scoreGlobal = (scoreCertification × 0.40) +
+              (scoreExperience × 0.25) +
+              (scoreProfil × 0.15) +
+              (scorePopularite × 0.10) +
+              (scoreActivite × 0.10)
+```
+
+### Détail des composantes
+
+#### 1. Score de Certification (40% du total)
+
+Basé sur les badges certifiés obtenus par l'expert.
+
+| Niveau Badge | Points |
+|--------------|--------|
+| BRONZE       | 10     |
+| ARGENT       | 25     |
+| OR           | 50     |
+| PLATINE      | 100    |
+
+```
+scoreCertification = min(100, (totalPointsBadges × 100) / 300)
+```
+
+**Justification**: Les badges sont validés par des évaluateurs RH, donc fiables et objectifs.
+
+#### 2. Score d'Expérience (25% du total)
+
+Basé sur les compétences déclarées par l'expert.
+
+```
+scoreExperience = (scoreNiveau × 0.40) + (scoreAnnees × 0.35) + (scoreProjets × 0.25)
+
+où:
+- scoreNiveau = (moyenneNiveauMaitrise / 5) × 100
+- scoreAnnees = min(100, (totalAnneesExperience × 100) / 50)
+- scoreProjets = min(100, (totalProjets × 100) / 100)
+```
+
+**Justification**: L'expérience déclarée compte, mais moins que les certifications.
+
+#### 3. Score de Profil Complet (15% du total)
+
+Basé sur la complétude des informations du profil.
+
+| Critère                          | Points |
+|----------------------------------|--------|
+| Photo de profil présente         | 20     |
+| Description > 100 caractères     | 25     |
+| Description courte (< 100 car.)  | 10     |
+| Titre professionnel renseigné    | 15     |
+| Localisation renseignée          | 15     |
+| Disponibilité = true             | 5      |
+| Compétences (max 6)              | jusqu'à 20 |
+
+```
+scoreProfil = min(100, sommePoints)
+```
+
+**Justification**: Un profil complet inspire confiance aux clients.
+
+#### 4. Score de Popularité (10% du total)
+
+Basé sur le nombre de followers (réseau).
+
+```
+scorePopularite = min(100, (nombreFollowers × 100) / 50)
+```
+
+**Justification**: Validation sociale, mais plafonnée pour éviter les abus.
+
+#### 5. Score d'Activité (10% du total)
+
+Basé sur la fraîcheur du profil (dernière modification).
+
+| Dernière modification | Score |
+|-----------------------|-------|
+| < 30 jours            | 100   |
+| < 90 jours            | 70    |
+| < 180 jours           | 40    |
+| < 365 jours           | 20    |
+| > 365 jours           | 5     |
+
+**Justification**: Favoriser les profils actifs et à jour.
+
+### Déclenchement du recalcul
+
+Le score est recalculé **automatiquement** (de manière asynchrone) après:
+
+| Action                              | Service concerné          |
+|-------------------------------------|---------------------------|
+| Modification de l'expertise/profil  | ExpertiseService          |
+| Ajout/modification de compétence    | ExpertiseService          |
+| Suppression de compétence           | ExpertiseService          |
+| Attribution de badge                | BadgeService              |
+| Révocation de badge                 | BadgeService              |
+| Nouvel abonné (follow)              | ReseauExpertiseService    |
+| Désabonnement (unfollow)            | ReseauExpertiseService    |
+
+### API REST (ScoreController)
+
+| Méthode | Endpoint                              | Description                    |
+|---------|---------------------------------------|--------------------------------|
+| GET     | `/api/scores/initialiser`             | Recalculer tous les scores     |
+| POST    | `/api/scores/recalculer/{userId}`     | Recalculer un expert           |
+| POST    | `/api/scores/recalculer-tous`         | Recalculer tous (POST version) |
+
+### Utilisation dans les recherches
+
+Les experts sont triés par `score_global DESC` dans:
+- `ExpertiseService.getExpertsPublies()` - Feed d'accueil
+- `ExpertiseService.rechercherExpertises()` - Recherche avec filtres
+
+### Exemple de score_details (JSON)
+
+```json
+{
+  "certification": {
+    "score": 50.0,
+    "poids": 0.4,
+    "contribution": 20.0,
+    "nombreBadges": 2
+  },
+  "experience": {
+    "score": 72.5,
+    "poids": 0.25,
+    "contribution": 18.13,
+    "nombreCompetences": 4
+  },
+  "profil": {
+    "score": 85.0,
+    "poids": 0.15,
+    "contribution": 12.75
+  },
+  "popularite": {
+    "score": 30.0,
+    "poids": 0.1,
+    "contribution": 3.0,
+    "nombreFollowers": 15
+  },
+  "activite": {
+    "score": 100.0,
+    "poids": 0.1,
+    "contribution": 10.0
+  },
+  "scoreGlobal": 63.88,
+  "dateCalcul": "2026-01-16T14:30:00"
+}
+```
+
+### Initialisation des scores
+
+Après déploiement, exécuter une fois pour initialiser tous les scores:
+
+```
+GET http://localhost:8090/api/scores/initialiser
+```
+
+---
+
+#### Migrations Flyway (28 versions)
 
 - **V1-V5**: Schéma initial expertises + compétences
 - **V6-V9**: Référentiel compétences + reconnaissance
@@ -940,6 +1128,8 @@ UNIQUE (utilisateur_id, expert_suivi_id)
 - **V24**: `remove_ordre_affichage_and_est_recommande_from_methodes_evaluation.sql`
 - **V25**: `remove_domaine_id_from_methodes_evaluation.sql` - Découplage
 - **V26**: `create_criteres_methodes_junction_table.sql` - Many-to-Many
+- **V27**: `create_demandes_contact_table.sql` - Table demandes de contact
+- **V28**: `add_score_global_to_expertises.sql` - ⭐ Système de scoring des experts
 
 #### Configuration Sécurité
 

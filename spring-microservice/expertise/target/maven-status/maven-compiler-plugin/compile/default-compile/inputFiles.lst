@@ -15,6 +15,7 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\ReconnaissanceCompetenceController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\ReferentielController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\ReseauExpertiseController.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\ScoreController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\controller\TraitementDemandeController.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\ApprobationRequest.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\dto\AssignationRhRequest.java
@@ -96,6 +97,7 @@ D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediati
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ReconnaissanceCompetenceService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ReferentielService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ReseauExpertiseService.java
+D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\ScoreExpertService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\TraitementDemandeService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\UtilisateurRhService.java
 D:\Binaries\repo-as\spring-microservice\expertise\src\main\java\com\intermediation\expertise\service\VilleInitService.java

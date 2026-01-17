@@ -27,12 +27,18 @@ public class ExpertiseService {
     private final ExpertiseRepository expertiseRepository;
     private final VilleRepository villeRepository;
     private final PaysRepository paysRepository;
+    private final ScoreExpertService scoreExpertService;
 
-    public ExpertiseService(CompetenceRepository competenceRepository, ExpertiseRepository expertiseRepository, VilleRepository villeRepository, PaysRepository paysRepository) {
+    public ExpertiseService(CompetenceRepository competenceRepository,
+                           ExpertiseRepository expertiseRepository,
+                           VilleRepository villeRepository,
+                           PaysRepository paysRepository,
+                           ScoreExpertService scoreExpertService) {
         this.competenceRepository = competenceRepository;
         this.expertiseRepository = expertiseRepository;
         this.villeRepository = villeRepository;
         this.paysRepository = paysRepository;
+        this.scoreExpertService = scoreExpertService;
     }
 
     /**
@@ -148,6 +154,10 @@ public class ExpertiseService {
         expertise.setPubliee(expertiseDTO.getPubliee()); // Mettre à jour l'état de publication
 
         Expertise saved = expertiseRepository.save(expertise);
+
+        // Recalculer le score de l'expert de manière asynchrone
+        scoreExpertService.calculerScoreAsync(utilisateurId);
+
         return new ExpertiseDTO(saved);
     }
 
@@ -287,6 +297,10 @@ public class ExpertiseService {
         competence.setCompetenceReferenceId(competenceDTO.getCompetenceReferenceId()); // Lier à la compétence de référence
 
         Competence saved = competenceRepository.save(competence);
+
+        // Recalculer le score de l'expert de manière asynchrone
+        scoreExpertService.calculerScoreAsync(utilisateurId);
+
         return new CompetenceDTO(saved);
     }
 
@@ -313,6 +327,10 @@ public class ExpertiseService {
         competence.setCompetenceReferenceId(competenceDTO.getCompetenceReferenceId()); // Mettre à jour la référence
 
         Competence updated = competenceRepository.save(competence);
+
+        // Recalculer le score de l'expert de manière asynchrone
+        scoreExpertService.calculerScoreAsync(utilisateurId);
+
         return new CompetenceDTO(updated);
     }
 
@@ -329,15 +347,20 @@ public class ExpertiseService {
         }
 
         competenceRepository.deleteById(competenceId);
+
+        // Recalculer le score de l'expert de manière asynchrone
+        scoreExpertService.calculerScoreAsync(utilisateurId);
     }
 
     /**
      * Récupère tous les experts publiés avec leurs compétences (pour le feed d'accueil)
+     * Triés par score global décroissant (les meilleurs experts en premier)
      */
     @Transactional(readOnly = true)
     public List<ExpertPublicDTO> getExpertsPublies() {
-        List<Expertise> expertisesPubliees = expertiseRepository.findByPublieeTrue();
-        
+        // Utiliser le tri par score global décroissant
+        List<Expertise> expertisesPubliees = expertiseRepository.findByPublieeTrueOrderByScoreGlobalDesc();
+
         return expertisesPubliees.stream()
                 .map(expertise -> {
                     ExpertPublicDTO dto = new ExpertPublicDTO();
@@ -347,7 +370,8 @@ public class ExpertiseService {
                     dto.setPhotoUrl(expertise.getPhotoUrl());
                     dto.setLocalisation(expertise.getLocalisation());
                     dto.setDisponible(expertise.getDisponible());
-                    
+                    dto.setScoreGlobal(expertise.getScoreGlobal()); // Inclure le score
+
                     // Récupérer les compétences de l'expert
                     List<CompetencePublicDTO> competences = competenceRepository
                             .findByUtilisateurId(expertise.getUtilisateurId())
@@ -365,7 +389,7 @@ public class ExpertiseService {
                                 return compDto;
                             })
                             .collect(Collectors.toList());
-                    
+
                     dto.setCompetences(competences);
                     return dto;
                 })
@@ -375,10 +399,12 @@ public class ExpertiseService {
     /**
      * Recherche d'expertises avec critères multiples
      * Retourne des ExpertiseDTO enrichis avec les compétences
+     * Triés par score global décroissant
      */
     @Transactional(readOnly = true)
     public List<ExpertiseDTO> rechercherExpertises(String terme, Long villeId, Long paysId, Boolean disponible) {
-        List<Expertise> expertises = expertiseRepository.findByPublieeTrue();
+        // Utiliser le tri par score global décroissant
+        List<Expertise> expertises = expertiseRepository.findByPublieeTrueOrderByScoreGlobalDesc();
         
         // Filtrer par terme de recherche (titre, description)
         if (terme != null && !terme.trim().isEmpty()) {

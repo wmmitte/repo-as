@@ -15,9 +15,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ReseauExpertiseService {
-    
+
     private final ReseauExpertiseRepository reseauRepository;
     private final ExpertiseService expertiseService;
+    private final ScoreExpertService scoreExpertService;
     
     /**
      * Ajouter un expert au réseau
@@ -36,6 +37,9 @@ public class ReseauExpertiseService {
         
         reseauRepository.save(reseau);
         log.info("L'expert {} a été ajouté au réseau de l'utilisateur {}", expertId, utilisateurId);
+
+        // Recalculer le score de l'expert suivi (il gagne en popularité)
+        scoreExpertService.calculerScoreAsync(expertId);
     }
     
     /**
@@ -45,6 +49,9 @@ public class ReseauExpertiseService {
     public void retirerDuReseau(String utilisateurId, String expertId) {
         reseauRepository.deleteByUtilisateurIdAndExpertId(utilisateurId, expertId);
         log.info("L'expert {} a été retiré du réseau de l'utilisateur {}", expertId, utilisateurId);
+
+        // Recalculer le score de l'expert (il perd en popularité)
+        scoreExpertService.calculerScoreAsync(expertId);
     }
     
     /**

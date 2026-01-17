@@ -9,12 +9,15 @@ import java.util.Optional;
 
 @Repository
 public interface ReseauExpertiseRepository extends JpaRepository<ReseauExpertise, Long> {
-    
+
     List<ReseauExpertise> findByUtilisateurId(String utilisateurId);
-    
+
     Optional<ReseauExpertise> findByUtilisateurIdAndExpertId(String utilisateurId, String expertId);
-    
+
     boolean existsByUtilisateurIdAndExpertId(String utilisateurId, String expertId);
-    
+
     void deleteByUtilisateurIdAndExpertId(String utilisateurId, String expertId);
+
+    // Compter le nombre de followers d'un expert
+    long countByExpertId(String expertId);
 }

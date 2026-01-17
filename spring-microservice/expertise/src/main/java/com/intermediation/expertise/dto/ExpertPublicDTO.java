@@ -1,12 +1,13 @@
 package com.intermediation.expertise.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
  * DTO pour exposer les données publiques d'un expert (pour le feed d'accueil)
  */
 public class ExpertPublicDTO {
-    
+
     private String utilisateurId;
     private String titre;
     private String description;
@@ -15,7 +16,8 @@ public class ExpertPublicDTO {
     private Boolean disponible;
     private String typePersonne; // PHYSIQUE ou MORALE
     private List<CompetencePublicDTO> competences;
-    
+    private BigDecimal scoreGlobal; // Score de classement (0-100)
+
     // Constructeurs
     public ExpertPublicDTO() {}
     
@@ -83,7 +85,15 @@ public class ExpertPublicDTO {
     public void setCompetences(List<CompetencePublicDTO> competences) {
         this.competences = competences;
     }
-    
+
+    public BigDecimal getScoreGlobal() {
+        return scoreGlobal;
+    }
+
+    public void setScoreGlobal(BigDecimal scoreGlobal) {
+        this.scoreGlobal = scoreGlobal;
+    }
+
     /**
      * DTO pour les compétences publiques
      */
