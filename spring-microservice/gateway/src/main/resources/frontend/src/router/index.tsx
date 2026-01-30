@@ -11,6 +11,8 @@ import CompetenceDetailPage from '@/pages/CompetenceDetailPage';
 import ProjetsPage from '@/pages/ProjetsPage';
 import CreerProjetPage from '@/pages/CreerProjetPage';
 import ProjetDetailPage from '@/pages/ProjetDetailPage';
+import MesCandidaturesPage from '@/pages/MesCandidaturesPage';
+import MesTachesPage from '@/pages/MesTachesPage';
 import PlusPage from '@/pages/PlusPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import RequireAuth from '@/components/auth/RequireAuth';
@@ -131,11 +133,31 @@ export const router = createBrowserRouter([
       },
       {
         path: 'projets/creer',
-        element: <CreerProjetPage />,
+        element: (
+          <RequireAuth>
+            <CreerProjetPage />
+          </RequireAuth>
+        ),
       },
       {
         path: 'projets/:id',
         element: <ProjetDetailPage />,
+      },
+      {
+        path: 'mes-candidatures',
+        element: (
+          <RequireAuth>
+            <MesCandidaturesPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: 'mes-taches',
+        element: (
+          <RequireAuth>
+            <MesTachesPage />
+          </RequireAuth>
+        ),
       },
       {
         path: 'plus',

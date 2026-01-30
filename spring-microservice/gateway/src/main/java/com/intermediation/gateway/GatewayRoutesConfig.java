@@ -87,6 +87,26 @@ public class GatewayRoutesConfig {
                 .path("/api/scores/**")
                 .uri("lb://EXPERTISE"))
 
+            // Route API Projets vers le service Expertise
+            .route("projets-api", r -> r
+                .path("/api/projets/**")
+                .uri("lb://EXPERTISE"))
+
+            // Route API Tâches vers le service Expertise
+            .route("taches-api", r -> r
+                .path("/api/taches/**")
+                .uri("lb://EXPERTISE"))
+
+            // Route API Candidatures vers le service Expertise
+            .route("candidatures-api", r -> r
+                .path("/api/candidatures/**")
+                .uri("lb://EXPERTISE"))
+
+            // Route API Livrables vers le service Expertise
+            .route("livrables-api", r -> r
+                .path("/api/livrables/**")
+                .uri("lb://EXPERTISE"))
+
             .build();
     }
 }
