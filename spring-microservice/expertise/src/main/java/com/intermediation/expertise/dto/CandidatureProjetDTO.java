@@ -37,7 +37,7 @@ public class CandidatureProjetDTO {
         this.projetNom = candidature.getProjet() != null ? candidature.getProjet().getNom() : null;
         this.tacheId = candidature.getTache() != null ? candidature.getTache().getId() : null;
         this.tacheNom = candidature.getTache() != null ? candidature.getTache().getNom() : null;
-        this.expertId = candidature.getExpertId();
+        this.expertId = candidature.getExpertId() != null ? candidature.getExpertId().toString() : null;
         this.message = candidature.getMessage();
         this.tarifPropose = candidature.getTarifPropose();
         this.delaiProposeJours = candidature.getDelaiProposeJours();

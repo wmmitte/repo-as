@@ -30,7 +30,7 @@ public class CommentaireTacheDTO {
         this.id = commentaire.getId();
         this.tacheId = commentaire.getTache() != null ? commentaire.getTache().getId() : null;
         this.parentId = commentaire.getParent() != null ? commentaire.getParent().getId() : null;
-        this.auteurId = commentaire.getAuteurId();
+        this.auteurId = commentaire.getAuteurId() != null ? commentaire.getAuteurId().toString() : null;
         this.contenu = commentaire.getContenu();
         this.dateCreation = commentaire.getDateCreation();
         this.dateModification = commentaire.getDateModification();

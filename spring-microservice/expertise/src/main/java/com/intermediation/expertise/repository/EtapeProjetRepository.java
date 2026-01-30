@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface EtapeProjetRepository extends JpaRepository<EtapeProjet, Long> {
@@ -24,5 +25,5 @@ public interface EtapeProjetRepository extends JpaRepository<EtapeProjet, Long> 
 
     long countByProjetId(Long projetId);
 
-    boolean existsByIdAndProjet_ProprietaireId(Long id, String proprietaireId);
+    boolean existsByIdAndProjet_ProprietaireId(Long id, UUID proprietaireId);
 }

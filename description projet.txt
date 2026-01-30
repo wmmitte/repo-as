@@ -1,0 +1,20 @@
+Maintenant je veux qu'on travaille sur la gestion des projet.. Il y a déjà un draft qui existe que je veux tu analyse, mais déjà globalement, pour la gestion des projets, il s'agira :
+
+D'avoir un espace pour les clients ou il peut peut définir ses projets, chercher des experts qu vont realiser les taches du projet ou les experts eux meme pourront voir les projet sur la plateforme et contacter le client pour voir dans quel mesure il peuvent realiser le projet. 
+Il s'agira donc de de définir des taches ou un ensemble de taches avec tout ce qu'il faut tels que les ressources financières, le délai, etc.. ..sil le peut rechercher des compétences pour associer à ce projet à la création de la tache et lui soumettre une demande
+
+Dans l'utilisation il faudrait lui permettre de designer complétement le projet et ses taches et le publier sur l'espace public et les gens vont chercher et demander à réaliser.. C'est lui qui decide de publier ou pas le projet ou la tache..
+
+Lors de la création, la plateforme doit permettre de regrouper l'ensemble des taches en une étape. Une étape est comme plusieurs taches et on peut voir l'étape comme étant un mini projet qui se loge à l'intérieur d'un grand projet un peu à l'image de l'organisation des taches dans ms Project.. 
+Un projet va regrouper plusieurs étapes et une étape va regrouper plusieurs taches
+
+On doit pouvoir créer une tache indépendamment d'une étape, et avec deux taches on peut regrouper en une étape ou les laisser indépendante l'une de l'autre
+
+On doit lui permettre de regrouper ou d'organiser des les projets, les étapes comme il l'entend.. 
+
+
+Donc voici décrit globalement la gestion des projets sur la plateforme. Il y a déjà une petite conception qui avait été faite mais qui doit être enrichie pour répondre complétement au besoin. voici les pages existantes que tu dois analyser et améliorer : 
+- http://localhost:8090/projets : Liste des projets
+- http://localhost:8090/projets/projet_2 : détails d'un projet avec les onglets permettant de suivre l'exécution, …
+
+Analyse et dis moi globalement ce qui existe et ce qui doit être fait pour qu'on elabore un plan pour l'implémentation.. Et pour l'implémentation, je tiens au design compact ui/ux très propre..

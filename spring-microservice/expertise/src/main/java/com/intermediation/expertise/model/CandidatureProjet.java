@@ -3,6 +3,7 @@ package com.intermediation.expertise.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Entité représentant une candidature d'un expert sur un projet ou une tâche.
@@ -24,7 +25,7 @@ public class CandidatureProjet {
     private TacheProjet tache; // Nullable - si null, candidature sur le projet entier
 
     @Column(name = "expert_id", nullable = false)
-    private String expertId;
+    private UUID expertId;
 
     @Column(columnDefinition = "TEXT")
     private String message;
@@ -61,13 +62,13 @@ public class CandidatureProjet {
         this.dateCreation = LocalDateTime.now();
     }
 
-    public CandidatureProjet(Projet projet, String expertId) {
+    public CandidatureProjet(Projet projet, UUID expertId) {
         this.projet = projet;
         this.expertId = expertId;
         this.dateCreation = LocalDateTime.now();
     }
 
-    public CandidatureProjet(Projet projet, TacheProjet tache, String expertId) {
+    public CandidatureProjet(Projet projet, TacheProjet tache, UUID expertId) {
         this.projet = projet;
         this.tache = tache;
         this.expertId = expertId;
@@ -120,11 +121,11 @@ public class CandidatureProjet {
         this.tache = tache;
     }
 
-    public String getExpertId() {
+    public UUID getExpertId() {
         return expertId;
     }
 
-    public void setExpertId(String expertId) {
+    public void setExpertId(UUID expertId) {
         this.expertId = expertId;
     }
 

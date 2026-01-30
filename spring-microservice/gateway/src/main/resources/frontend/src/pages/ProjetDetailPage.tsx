@@ -16,10 +16,13 @@ import {
   ChevronDown,
   ChevronRight,
   Send,
-  Package
+  Package,
+  X,
+  Layers
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { projetService } from '@/services/projet.service';
+import { tacheService } from '@/services/tacheService';
 import { candidatureService } from '@/services/candidatureService';
 import {
   Projet,
@@ -27,7 +30,10 @@ import {
   Candidature,
   StatutProjet,
   StatutTache,
-  StatutCandidature
+  StatutCandidature,
+  CreerEtapeRequest,
+  CreerTacheRequest,
+  PrioriteTache
 } from '@/types/projet.types';
 import Loader from '@/components/ui/Loader';
 
@@ -69,6 +75,28 @@ export default function ProjetDetailPage() {
   const [chargement, setChargement] = useState(true);
   const [ongletActif, setOngletActif] = useState<OngletActif>('apercu');
   const [etapesOuvertes, setEtapesOuvertes] = useState<Set<number>>(new Set());
+
+  // Modals
+  const [modalEtapeOuverte, setModalEtapeOuverte] = useState(false);
+  const [modalTacheOuverte, setModalTacheOuverte] = useState(false);
+  const [etapeSelectionnee, setEtapeSelectionnee] = useState<number | null>(null);
+  const [enregistrement, setEnregistrement] = useState(false);
+
+  // Formulaire étape
+  const [nouvelleEtape, setNouvelleEtape] = useState<CreerEtapeRequest>({
+    projetId: 0,
+    nom: '',
+    description: ''
+  });
+
+  // Formulaire tâche
+  const [nouvelleTache, setNouvelleTache] = useState<CreerTacheRequest>({
+    projetId: 0,
+    nom: '',
+    description: '',
+    budget: 0,
+    priorite: 'NORMALE'
+  });
 
   const estProprietaire = projet?.proprietaireId === user?.id;
 
@@ -144,6 +172,62 @@ export default function ProjetDetailPage() {
       month: 'short',
       year: 'numeric'
     });
+  };
+
+  // Ouvrir modal création étape
+  const ouvrirModalEtape = () => {
+    if (!projet) return;
+    setNouvelleEtape({
+      projetId: projet.id,
+      nom: '',
+      description: ''
+    });
+    setModalEtapeOuverte(true);
+  };
+
+  // Ouvrir modal création tâche
+  const ouvrirModalTache = (etapeId?: number) => {
+    if (!projet) return;
+    setEtapeSelectionnee(etapeId ?? null);
+    setNouvelleTache({
+      projetId: projet.id,
+      etapeId: etapeId,
+      nom: '',
+      description: '',
+      budget: 0,
+      priorite: 'NORMALE'
+    });
+    setModalTacheOuverte(true);
+  };
+
+  // Créer une étape
+  const creerEtape = async () => {
+    if (!nouvelleEtape.nom.trim()) return;
+    setEnregistrement(true);
+    try {
+      await projetService.creerEtape(nouvelleEtape);
+      setModalEtapeOuverte(false);
+      await chargerProjet();
+    } catch (error) {
+      console.error('Erreur création étape:', error);
+    } finally {
+      setEnregistrement(false);
+    }
+  };
+
+  // Créer une tâche
+  const creerTache = async () => {
+    if (!nouvelleTache.nom.trim()) return;
+    setEnregistrement(true);
+    try {
+      await tacheService.creerTache(nouvelleTache);
+      setModalTacheOuverte(false);
+      await chargerProjet();
+    } catch (error) {
+      console.error('Erreur création tâche:', error);
+    } finally {
+      setEnregistrement(false);
+    }
   };
 
   if (chargement) {
@@ -392,12 +476,14 @@ export default function ProjetDetailPage() {
             {estProprietaire && (
               <div className="flex gap-2 justify-end">
                 <button
+                  onClick={ouvrirModalEtape}
                   className="btn btn-ghost btn-sm gap-1"
                 >
-                  <Plus size={16} />
+                  <Layers size={16} />
                   Ajouter une étape
                 </button>
                 <button
+                  onClick={() => ouvrirModalTache()}
                   className="btn btn-primary btn-sm gap-1"
                 >
                   <Plus size={16} />
@@ -458,11 +544,23 @@ export default function ProjetDetailPage() {
                   )}
                 </div>
 
-                {etapesOuvertes.has(etape.id) && etape.taches.length > 0 && (
+                {etapesOuvertes.has(etape.id) && (
                   <div className="border-t border-base-200 p-4 space-y-2">
                     {etape.taches.map((tache) => (
                       <TacheCard key={tache.id} tache={tache} />
                     ))}
+                    {estProprietaire && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          ouvrirModalTache(etape.id);
+                        }}
+                        className="btn btn-ghost btn-sm btn-block gap-1 border-dashed border-2 border-base-300 hover:border-primary"
+                      >
+                        <Plus size={16} />
+                        Ajouter une tâche à cette étape
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -478,12 +576,22 @@ export default function ProjetDetailPage() {
                     Commencez par créer des étapes et des tâches pour organiser votre projet.
                   </p>
                   {estProprietaire && (
-                    <button
-                      className="btn btn-primary btn-sm mt-4"
-                    >
-                      <Plus size={16} />
-                      Créer la première tâche
-                    </button>
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={ouvrirModalEtape}
+                        className="btn btn-outline btn-sm gap-1"
+                      >
+                        <Layers size={16} />
+                        Créer une étape
+                      </button>
+                      <button
+                        onClick={() => ouvrirModalTache()}
+                        className="btn btn-primary btn-sm gap-1"
+                      >
+                        <Plus size={16} />
+                        Créer une tâche
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -553,6 +661,273 @@ export default function ProjetDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Créer Étape */}
+      {modalEtapeOuverte && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-md">
+            <button
+              onClick={() => setModalEtapeOuverte(false)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <Layers size={20} />
+              Nouvelle étape
+            </h3>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Nom de l'étape *</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Phase de conception"
+                  className="input input-bordered w-full"
+                  value={nouvelleEtape.nom}
+                  onChange={(e) => setNouvelleEtape({ ...nouvelleEtape, nom: e.target.value })}
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Description</span>
+                </label>
+                <textarea
+                  placeholder="Décrivez cette étape..."
+                  className="textarea textarea-bordered w-full h-24"
+                  value={nouvelleEtape.description || ''}
+                  onChange={(e) => setNouvelleEtape({ ...nouvelleEtape, description: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Date début</span>
+                  </label>
+                  <input
+                    type="date"
+                    className="input input-bordered w-full"
+                    value={nouvelleEtape.dateDebutPrevue || ''}
+                    onChange={(e) => setNouvelleEtape({ ...nouvelleEtape, dateDebutPrevue: e.target.value })}
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Date fin</span>
+                  </label>
+                  <input
+                    type="date"
+                    className="input input-bordered w-full"
+                    value={nouvelleEtape.dateFinPrevue || ''}
+                    onChange={(e) => setNouvelleEtape({ ...nouvelleEtape, dateFinPrevue: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button
+                onClick={() => setModalEtapeOuverte(false)}
+                className="btn btn-ghost"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={creerEtape}
+                disabled={!nouvelleEtape.nom.trim() || enregistrement}
+                className="btn btn-primary gap-1"
+              >
+                {enregistrement ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <Plus size={16} />
+                )}
+                Créer l'étape
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setModalEtapeOuverte(false)}></div>
+        </div>
+      )}
+
+      {/* Modal Créer Tâche */}
+      {modalTacheOuverte && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-lg">
+            <button
+              onClick={() => setModalTacheOuverte(false)}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <ListTodo size={20} />
+              Nouvelle tâche
+              {etapeSelectionnee && projet?.etapes && (
+                <span className="badge badge-ghost">
+                  {projet.etapes.find(e => e.id === etapeSelectionnee)?.nom || 'Étape'}
+                </span>
+              )}
+            </h3>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Nom de la tâche *</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Créer les maquettes UI"
+                  className="input input-bordered w-full"
+                  value={nouvelleTache.nom}
+                  onChange={(e) => setNouvelleTache({ ...nouvelleTache, nom: e.target.value })}
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Description</span>
+                </label>
+                <textarea
+                  placeholder="Décrivez cette tâche en détail..."
+                  className="textarea textarea-bordered w-full h-24"
+                  value={nouvelleTache.description || ''}
+                  onChange={(e) => setNouvelleTache({ ...nouvelleTache, description: e.target.value })}
+                />
+              </div>
+
+              {/* Étape (si pas déjà sélectionnée) */}
+              {!etapeSelectionnee && projet && projet.etapes.length > 0 && (
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Rattacher à une étape</span>
+                  </label>
+                  <select
+                    className="select select-bordered w-full"
+                    value={nouvelleTache.etapeId || ''}
+                    onChange={(e) => setNouvelleTache({
+                      ...nouvelleTache,
+                      etapeId: e.target.value ? parseInt(e.target.value) : undefined
+                    })}
+                  >
+                    <option value="">Tâche indépendante</option>
+                    {projet.etapes.map((etape) => (
+                      <option key={etape.id} value={etape.id}>
+                        {etape.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Budget (FCFA)</span>
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    className="input input-bordered w-full"
+                    value={nouvelleTache.budget || ''}
+                    onChange={(e) => setNouvelleTache({
+                      ...nouvelleTache,
+                      budget: parseInt(e.target.value) || 0
+                    })}
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Délai (jours)</span>
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="7"
+                    className="input input-bordered w-full"
+                    value={nouvelleTache.delaiJours || ''}
+                    onChange={(e) => setNouvelleTache({
+                      ...nouvelleTache,
+                      delaiJours: parseInt(e.target.value) || undefined
+                    })}
+                  />
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Priorité</span>
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={nouvelleTache.priorite || 'NORMALE'}
+                  onChange={(e) => setNouvelleTache({
+                    ...nouvelleTache,
+                    priorite: e.target.value as PrioriteTache
+                  })}
+                >
+                  <option value="BASSE">Basse</option>
+                  <option value="NORMALE">Normale</option>
+                  <option value="HAUTE">Haute</option>
+                  <option value="URGENTE">Urgente</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Date début</span>
+                  </label>
+                  <input
+                    type="date"
+                    className="input input-bordered w-full"
+                    value={nouvelleTache.dateDebutPrevue || ''}
+                    onChange={(e) => setNouvelleTache({ ...nouvelleTache, dateDebutPrevue: e.target.value })}
+                  />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Date fin</span>
+                  </label>
+                  <input
+                    type="date"
+                    className="input input-bordered w-full"
+                    value={nouvelleTache.dateFinPrevue || ''}
+                    onChange={(e) => setNouvelleTache({ ...nouvelleTache, dateFinPrevue: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button
+                onClick={() => setModalTacheOuverte(false)}
+                className="btn btn-ghost"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={creerTache}
+                disabled={!nouvelleTache.nom.trim() || enregistrement}
+                className="btn btn-primary gap-1"
+              >
+                {enregistrement ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <Plus size={16} />
+                )}
+                Créer la tâche
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setModalTacheOuverte(false)}></div>
+        </div>
+      )}
     </div>
   );
 }

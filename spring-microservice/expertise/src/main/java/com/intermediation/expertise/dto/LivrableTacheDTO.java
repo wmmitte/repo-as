@@ -54,7 +54,7 @@ public class LivrableTacheDTO {
         this.fichierType = livrable.getFichierType();
         this.dateSoumission = livrable.getDateSoumission();
         this.commentaireSoumission = livrable.getCommentaireSoumission();
-        this.valideParId = livrable.getValideParId();
+        this.valideParId = livrable.getValideParId() != null ? livrable.getValideParId().toString() : null;
         this.dateValidation = livrable.getDateValidation();
         this.commentaireValidation = livrable.getCommentaireValidation();
         this.dateCreation = livrable.getDateCreation();

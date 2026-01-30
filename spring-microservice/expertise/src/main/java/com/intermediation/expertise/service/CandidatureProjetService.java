@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +51,8 @@ public class CandidatureProjetService {
         }
 
         // Vérifier que l'expert n'est pas le propriétaire
-        if (projet.getProprietaireId().equals(expertId)) {
+        UUID expertUUID = UUID.fromString(expertId);
+        if (projet.getProprietaireId().equals(expertUUID)) {
             throw new IllegalStateException("Vous ne pouvez pas candidater sur votre propre projet");
         }
 
@@ -70,21 +72,21 @@ public class CandidatureProjetService {
             }
 
             // Vérifier qu'il n'y a pas déjà une candidature active sur cette tâche
-            if (candidatureRepository.existsCandidatureActiveTache(tache.getId(), expertId)) {
+            if (candidatureRepository.existsCandidatureActiveTache(tache.getId(), expertUUID)) {
                 throw new IllegalStateException("Vous avez déjà une candidature active sur cette tâche");
             }
         } else {
             // Candidature sur le projet entier
-            if (candidatureRepository.existsCandidatureActiveProjet(projet.getId(), expertId)) {
+            if (candidatureRepository.existsCandidatureActiveProjet(projet.getId(), expertUUID)) {
                 throw new IllegalStateException("Vous avez déjà une candidature active sur ce projet");
             }
         }
 
         CandidatureProjet candidature;
         if (tache != null) {
-            candidature = new CandidatureProjet(projet, tache, expertId);
+            candidature = new CandidatureProjet(projet, tache, expertUUID);
         } else {
-            candidature = new CandidatureProjet(projet, expertId);
+            candidature = new CandidatureProjet(projet, expertUUID);
         }
 
         candidature.setMessage(request.getMessage());
@@ -108,7 +110,7 @@ public class CandidatureProjetService {
                 .orElseThrow(() -> new RuntimeException("Candidature non trouvée: " + candidatureId));
 
         // Vérifier que l'utilisateur est le propriétaire du projet
-        if (!candidature.getProjet().getProprietaireId().equals(proprietaireId)) {
+        if (!candidature.getProjet().getProprietaireId().equals(UUID.fromString(proprietaireId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à répondre à cette candidature");
         }
 
@@ -157,7 +159,7 @@ public class CandidatureProjetService {
                 .orElseThrow(() -> new RuntimeException("Candidature non trouvée: " + candidatureId));
 
         // Vérifier que l'utilisateur est l'expert de la candidature
-        if (!candidature.getExpertId().equals(expertId)) {
+        if (!candidature.getExpertId().equals(UUID.fromString(expertId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à retirer cette candidature");
         }
 
@@ -188,7 +190,7 @@ public class CandidatureProjetService {
      */
     @Transactional(readOnly = true)
     public List<CandidatureProjetDTO> listerMesCandidatures(String expertId) {
-        return candidatureRepository.findByExpertIdOrderByDateCreationDesc(expertId)
+        return candidatureRepository.findByExpertIdOrderByDateCreationDesc(UUID.fromString(expertId))
                 .stream()
                 .map(CandidatureProjetDTO::new)
                 .collect(Collectors.toList());
@@ -199,7 +201,7 @@ public class CandidatureProjetService {
      */
     @Transactional(readOnly = true)
     public Page<CandidatureProjetDTO> listerMesCandidatures(String expertId, Pageable pageable) {
-        return candidatureRepository.findByExpertId(expertId, pageable)
+        return candidatureRepository.findByExpertId(UUID.fromString(expertId), pageable)
                 .map(CandidatureProjetDTO::new);
     }
 
@@ -212,7 +214,7 @@ public class CandidatureProjetService {
         Projet projet = projetRepository.findById(projetId)
                 .orElseThrow(() -> new RuntimeException("Projet non trouvé: " + projetId));
 
-        if (!projet.getProprietaireId().equals(proprietaireId)) {
+        if (!projet.getProprietaireId().equals(UUID.fromString(proprietaireId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à voir ces candidatures");
         }
 
@@ -230,7 +232,7 @@ public class CandidatureProjetService {
         TacheProjet tache = tacheRepository.findById(tacheId)
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée: " + tacheId));
 
-        if (!tache.getProjet().getProprietaireId().equals(proprietaireId)) {
+        if (!tache.getProjet().getProprietaireId().equals(UUID.fromString(proprietaireId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à voir ces candidatures");
         }
 
@@ -245,7 +247,7 @@ public class CandidatureProjetService {
      */
     @Transactional(readOnly = true)
     public List<CandidatureProjetDTO> listerCandidaturesEnAttente(String proprietaireId) {
-        return candidatureRepository.findCandidaturesEnAttenteParProprietaire(proprietaireId)
+        return candidatureRepository.findCandidaturesEnAttenteParProprietaire(UUID.fromString(proprietaireId))
                 .stream()
                 .map(CandidatureProjetDTO::new)
                 .collect(Collectors.toList());
@@ -256,7 +258,7 @@ public class CandidatureProjetService {
      */
     @Transactional(readOnly = true)
     public long compterCandidaturesEnAttente(String proprietaireId) {
-        return candidatureRepository.findCandidaturesEnAttenteParProprietaire(proprietaireId).size();
+        return candidatureRepository.findCandidaturesEnAttenteParProprietaire(UUID.fromString(proprietaireId)).size();
     }
 
     /**
@@ -265,6 +267,6 @@ public class CandidatureProjetService {
     @Transactional(readOnly = true)
     public long compterMesCandidaturesParStatut(String expertId, String statut) {
         CandidatureProjet.StatutCandidature statutEnum = CandidatureProjet.StatutCandidature.valueOf(statut);
-        return candidatureRepository.countByExpertIdAndStatut(expertId, statutEnum);
+        return candidatureRepository.countByExpertIdAndStatut(UUID.fromString(expertId), statutEnum);
     }
 }

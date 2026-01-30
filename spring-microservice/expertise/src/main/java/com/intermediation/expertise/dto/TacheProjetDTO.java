@@ -68,7 +68,7 @@ public class TacheProjetDTO {
         this.visibilite = tache.getVisibilite() != null ? tache.getVisibilite().name() : null;
         this.priorite = tache.getPriorite() != null ? tache.getPriorite().name() : null;
         this.progression = tache.getProgression();
-        this.expertAssigneId = tache.getExpertAssigneId();
+        this.expertAssigneId = tache.getExpertAssigneId() != null ? tache.getExpertAssigneId().toString() : null;
         this.dateAssignation = tache.getDateAssignation();
         this.dateDebutPrevue = tache.getDateDebutPrevue();
         this.dateFinPrevue = tache.getDateFinPrevue();

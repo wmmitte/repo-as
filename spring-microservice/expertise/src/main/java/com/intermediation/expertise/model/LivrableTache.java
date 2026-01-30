@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Entité représentant un livrable attendu pour une tâche.
@@ -51,7 +52,7 @@ public class LivrableTache {
 
     // Validation
     @Column(name = "valide_par_id")
-    private String valideParId;
+    private UUID valideParId;
 
     @Column(name = "date_validation")
     private LocalDateTime dateValidation;
@@ -102,7 +103,7 @@ public class LivrableTache {
         this.statut = StatutLivrable.SOUMIS;
     }
 
-    public void valider(String validateurId, boolean accepte, String commentaire) {
+    public void valider(UUID validateurId, boolean accepte, String commentaire) {
         this.valideParId = validateurId;
         this.dateValidation = LocalDateTime.now();
         this.commentaireValidation = commentaire;
@@ -198,11 +199,11 @@ public class LivrableTache {
         this.commentaireSoumission = commentaireSoumission;
     }
 
-    public String getValideParId() {
+    public UUID getValideParId() {
         return valideParId;
     }
 
-    public void setValideParId(String valideParId) {
+    public void setValideParId(UUID valideParId) {
         this.valideParId = valideParId;
     }
 

@@ -29,9 +29,13 @@ public class UtilisateurDTO {
     /**
      * Constructeur à partir d'un modèle Utilisateur
      * Utilisé par AuthController pour convertir l'entité en DTO
+     * IMPORTANT: On utilise keycloakId (pas l'id BDD) car c'est cet ID que le Gateway
+     * propage via X-User-Id aux services backend
      */
     public UtilisateurDTO(Utilisateur utilisateur) {
-        this.id = utilisateur.getId();
+        // Utiliser le keycloakId pour cohérence avec X-User-Id du Gateway
+        // Fallback sur l'id BDD si keycloakId n'est pas encore défini
+        this.id = utilisateur.getKeycloakId() != null ? utilisateur.getKeycloakId() : utilisateur.getId();
         this.email = utilisateur.getEmail();
         this.nom = utilisateur.getNom();
         this.prenom = utilisateur.getPrenom();

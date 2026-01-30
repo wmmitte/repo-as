@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface CommentaireTacheRepository extends JpaRepository<CommentaireTache, Long> {
@@ -29,13 +30,13 @@ public interface CommentaireTacheRepository extends JpaRepository<CommentaireTac
     List<CommentaireTache> findByTacheIdOrderByDateCreationDesc(Long tacheId);
 
     // Commentaires d'un auteur
-    List<CommentaireTache> findByAuteurIdOrderByDateCreationDesc(String auteurId);
+    List<CommentaireTache> findByAuteurIdOrderByDateCreationDesc(UUID auteurId);
 
     // Statistiques
     long countByTacheId(Long tacheId);
 
-    long countByAuteurId(String auteurId);
+    long countByAuteurId(UUID auteurId);
 
     // Vérification auteur
-    boolean existsByIdAndAuteurId(Long id, String auteurId);
+    boolean existsByIdAndAuteurId(Long id, UUID auteurId);
 }

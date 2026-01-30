@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface ExigenceProjetRepository extends JpaRepository<ExigenceProjet, Long> {
@@ -18,5 +19,5 @@ public interface ExigenceProjetRepository extends JpaRepository<ExigenceProjet, 
 
     long countByProjetId(Long projetId);
 
-    boolean existsByIdAndProjet_ProprietaireId(Long id, String proprietaireId);
+    boolean existsByIdAndProjet_ProprietaireId(Long id, UUID proprietaireId);
 }

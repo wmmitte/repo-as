@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +45,7 @@ public class ProjetService {
     public ProjetDTO creerProjet(String proprietaireId, CreerProjetRequest request) {
         log.info("Création d'un nouveau projet pour l'utilisateur {}", proprietaireId);
 
-        Projet projet = new Projet(proprietaireId, request.getNom());
+        Projet projet = new Projet(UUID.fromString(proprietaireId), request.getNom());
         projet.setDescription(request.getDescription());
         projet.setBudget(request.getBudget());
         projet.setDevise(request.getDevise() != null ? request.getDevise() : "FCFA");
@@ -214,7 +215,7 @@ public class ProjetService {
      */
     @Transactional(readOnly = true)
     public List<ProjetResumeDTO> listerMesProjets(String proprietaireId) {
-        return projetRepository.findByProprietaireIdOrderByDateCreationDesc(proprietaireId)
+        return projetRepository.findByProprietaireIdOrderByDateCreationDesc(UUID.fromString(proprietaireId))
                 .stream()
                 .map(ProjetResumeDTO::new)
                 .collect(Collectors.toList());
@@ -320,7 +321,7 @@ public class ProjetService {
         ExigenceProjet exigence = exigenceRepository.findById(exigenceId)
                 .orElseThrow(() -> new RuntimeException("Exigence non trouvée: " + exigenceId));
 
-        if (!exigenceRepository.existsByIdAndProjet_ProprietaireId(exigenceId, proprietaireId)) {
+        if (!exigenceRepository.existsByIdAndProjet_ProprietaireId(exigenceId, UUID.fromString(proprietaireId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à modifier cette exigence");
         }
 
@@ -349,7 +350,7 @@ public class ProjetService {
     }
 
     private void verifierProprietaire(Projet projet, String proprietaireId) {
-        if (!projet.getProprietaireId().equals(proprietaireId)) {
+        if (!projet.getProprietaireId().equals(UUID.fromString(proprietaireId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à modifier ce projet");
         }
     }

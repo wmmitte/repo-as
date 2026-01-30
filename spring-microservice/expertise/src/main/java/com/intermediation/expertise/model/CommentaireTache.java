@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Entité représentant un commentaire/discussion sur une tâche.
@@ -21,7 +22,7 @@ public class CommentaireTache {
     private TacheProjet tache;
 
     @Column(name = "auteur_id", nullable = false)
-    private String auteurId;
+    private UUID auteurId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String contenu;
@@ -44,7 +45,7 @@ public class CommentaireTache {
         this.dateCreation = LocalDateTime.now();
     }
 
-    public CommentaireTache(TacheProjet tache, String auteurId, String contenu) {
+    public CommentaireTache(TacheProjet tache, UUID auteurId, String contenu) {
         this.tache = tache;
         this.auteurId = auteurId;
         this.contenu = contenu;
@@ -78,11 +79,11 @@ public class CommentaireTache {
         this.tache = tache;
     }
 
-    public String getAuteurId() {
+    public UUID getAuteurId() {
         return auteurId;
     }
 
-    public void setAuteurId(String auteurId) {
+    public void setAuteurId(UUID auteurId) {
         this.auteurId = auteurId;
     }
 

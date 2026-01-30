@@ -12,14 +12,15 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface ProjetRepository extends JpaRepository<Projet, Long> {
 
     // Projets d'un propriétaire
-    List<Projet> findByProprietaireIdOrderByDateCreationDesc(String proprietaireId);
+    List<Projet> findByProprietaireIdOrderByDateCreationDesc(UUID proprietaireId);
 
-    Page<Projet> findByProprietaireId(String proprietaireId, Pageable pageable);
+    Page<Projet> findByProprietaireId(UUID proprietaireId, Pageable pageable);
 
     // Projets publics et publiés
     Page<Projet> findByVisibiliteAndStatut(Visibilite visibilite, StatutProjet statut, Pageable pageable);
@@ -34,9 +35,9 @@ public interface ProjetRepository extends JpaRepository<Projet, Long> {
     Page<Projet> rechercherProjetsPublics(@Param("terme") String terme, Pageable pageable);
 
     // Statistiques
-    long countByProprietaireId(String proprietaireId);
+    long countByProprietaireId(UUID proprietaireId);
 
-    long countByProprietaireIdAndStatut(String proprietaireId, StatutProjet statut);
+    long countByProprietaireIdAndStatut(UUID proprietaireId, StatutProjet statut);
 
     @Query("SELECT COUNT(p) FROM Projet p WHERE p.visibilite = 'PUBLIC' AND p.statut = 'PUBLIE'")
     long countProjetsPublics();
@@ -48,7 +49,7 @@ public interface ProjetRepository extends JpaRepository<Projet, Long> {
     Page<Projet> findProjetsAvecTachesDisponibles(Pageable pageable);
 
     // Vérifier si l'utilisateur est propriétaire
-    boolean existsByIdAndProprietaireId(Long id, String proprietaireId);
+    boolean existsByIdAndProprietaireId(Long id, UUID proprietaireId);
 
     // Trouver avec les relations chargées
     @Query("SELECT p FROM Projet p " +

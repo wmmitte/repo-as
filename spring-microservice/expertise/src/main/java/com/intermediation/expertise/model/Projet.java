@@ -5,7 +5,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Entité représentant un projet client.
@@ -20,7 +23,7 @@ public class Projet {
     private Long id;
 
     @Column(name = "proprietaire_id", nullable = false)
-    private String proprietaireId;
+    private UUID proprietaireId;
 
     @Column(nullable = false, length = 255)
     private String nom;
@@ -66,21 +69,21 @@ public class Projet {
     @Column(name = "nombre_vues")
     private Integer nombreVues = 0;
 
-    // Relations
+    // Relations - Utilisation de Set pour éviter MultipleBagFetchException
     @OneToMany(mappedBy = "projet", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordre ASC")
-    private List<EtapeProjet> etapes = new ArrayList<>();
+    private Set<EtapeProjet> etapes = new HashSet<>();
 
     @OneToMany(mappedBy = "projet", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordre ASC")
-    private List<TacheProjet> taches = new ArrayList<>();
+    private Set<TacheProjet> taches = new HashSet<>();
 
     @OneToMany(mappedBy = "projet", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordre ASC")
-    private List<ExigenceProjet> exigences = new ArrayList<>();
+    private Set<ExigenceProjet> exigences = new HashSet<>();
 
     @OneToMany(mappedBy = "projet", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CandidatureProjet> candidatures = new ArrayList<>();
+    private Set<CandidatureProjet> candidatures = new HashSet<>();
 
     // Enums
     public enum StatutProjet {
@@ -96,7 +99,7 @@ public class Projet {
         this.dateCreation = LocalDateTime.now();
     }
 
-    public Projet(String proprietaireId, String nom) {
+    public Projet(UUID proprietaireId, String nom) {
         this.proprietaireId = proprietaireId;
         this.nom = nom;
         this.dateCreation = LocalDateTime.now();
@@ -152,11 +155,11 @@ public class Projet {
         this.id = id;
     }
 
-    public String getProprietaireId() {
+    public UUID getProprietaireId() {
         return proprietaireId;
     }
 
-    public void setProprietaireId(String proprietaireId) {
+    public void setProprietaireId(UUID proprietaireId) {
         this.proprietaireId = proprietaireId;
     }
 
@@ -272,35 +275,35 @@ public class Projet {
         this.nombreVues = nombreVues;
     }
 
-    public List<EtapeProjet> getEtapes() {
+    public Set<EtapeProjet> getEtapes() {
         return etapes;
     }
 
-    public void setEtapes(List<EtapeProjet> etapes) {
+    public void setEtapes(Set<EtapeProjet> etapes) {
         this.etapes = etapes;
     }
 
-    public List<TacheProjet> getTaches() {
+    public Set<TacheProjet> getTaches() {
         return taches;
     }
 
-    public void setTaches(List<TacheProjet> taches) {
+    public void setTaches(Set<TacheProjet> taches) {
         this.taches = taches;
     }
 
-    public List<ExigenceProjet> getExigences() {
+    public Set<ExigenceProjet> getExigences() {
         return exigences;
     }
 
-    public void setExigences(List<ExigenceProjet> exigences) {
+    public void setExigences(Set<ExigenceProjet> exigences) {
         this.exigences = exigences;
     }
 
-    public List<CandidatureProjet> getCandidatures() {
+    public Set<CandidatureProjet> getCandidatures() {
         return candidatures;
     }
 
-    public void setCandidatures(List<CandidatureProjet> candidatures) {
+    public void setCandidatures(Set<CandidatureProjet> candidatures) {
         this.candidatures = candidatures;
     }
 }

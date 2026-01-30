@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface LivrableTacheRepository extends JpaRepository<LivrableTache, Long> {
@@ -37,7 +38,7 @@ public interface LivrableTacheRepository extends JpaRepository<LivrableTache, Lo
     long countByProjetIdAndStatut(@Param("projetId") Long projetId, @Param("statut") StatutLivrable statut);
 
     // Vérifications
-    boolean existsByIdAndTache_Projet_ProprietaireId(Long id, String proprietaireId);
+    boolean existsByIdAndTache_Projet_ProprietaireId(Long id, UUID proprietaireId);
 
-    boolean existsByIdAndTache_ExpertAssigneId(Long id, String expertId);
+    boolean existsByIdAndTache_ExpertAssigneId(Long id, UUID expertId);
 }

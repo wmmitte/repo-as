@@ -45,7 +45,7 @@ public class ProjetDTO {
 
     public ProjetDTO(Projet projet) {
         this.id = projet.getId();
-        this.proprietaireId = projet.getProprietaireId();
+        this.proprietaireId = projet.getProprietaireId() != null ? projet.getProprietaireId().toString() : null;
         this.nom = projet.getNom();
         this.description = projet.getDescription();
         this.budget = projet.getBudget();

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Entité représentant une tâche d'un projet.
@@ -58,7 +59,7 @@ public class TacheProjet {
     private Integer progression = 0;
 
     @Column(name = "expert_assigne_id")
-    private String expertAssigneId;
+    private UUID expertAssigneId;
 
     @Column(name = "date_assignation")
     private LocalDateTime dateAssignation;
@@ -149,7 +150,7 @@ public class TacheProjet {
         return projet != null && projet.estPublic();
     }
 
-    public void assignerExpert(String expertId) {
+    public void assignerExpert(UUID expertId) {
         this.expertAssigneId = expertId;
         this.dateAssignation = LocalDateTime.now();
         if (this.statut == StatutTache.A_FAIRE) {
@@ -254,11 +255,11 @@ public class TacheProjet {
         this.progression = progression;
     }
 
-    public String getExpertAssigneId() {
+    public UUID getExpertAssigneId() {
         return expertAssigneId;
     }
 
-    public void setExpertAssigneId(String expertAssigneId) {
+    public void setExpertAssigneId(UUID expertAssigneId) {
         this.expertAssigneId = expertAssigneId;
     }
 

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -193,8 +194,9 @@ public class TacheProjetService {
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée: " + tacheId));
 
         // Vérifier que l'utilisateur est le propriétaire ou l'expert assigné
-        boolean estProprietaire = tache.getProjet().getProprietaireId().equals(utilisateurId);
-        boolean estExpertAssigne = utilisateurId.equals(tache.getExpertAssigneId());
+        UUID utilisateurUUID = UUID.fromString(utilisateurId);
+        boolean estProprietaire = tache.getProjet().getProprietaireId().equals(utilisateurUUID);
+        boolean estExpertAssigne = utilisateurUUID.equals(tache.getExpertAssigneId());
 
         if (!estProprietaire && !estExpertAssigne) {
             throw new RuntimeException("Vous n'êtes pas autorisé à modifier cette tâche");
@@ -234,7 +236,7 @@ public class TacheProjetService {
             throw new IllegalStateException("Cette tâche est déjà assignée à un expert");
         }
 
-        tache.assignerExpert(expertId);
+        tache.assignerExpert(UUID.fromString(expertId));
         tache = tacheRepository.save(tache);
 
         log.info("Expert {} assigné à la tâche {} avec succès", expertId, tacheId);
@@ -312,7 +314,7 @@ public class TacheProjetService {
      */
     @Transactional(readOnly = true)
     public List<TacheProjetDTO> listerMesTaches(String expertId) {
-        return tacheRepository.findByExpertAssigneIdOrderByDateAssignationDesc(expertId)
+        return tacheRepository.findByExpertAssigneIdOrderByDateAssignationDesc(UUID.fromString(expertId))
                 .stream()
                 .map(TacheProjetDTO::new)
                 .collect(Collectors.toList());
@@ -361,7 +363,7 @@ public class TacheProjetService {
         TacheProjet tache = tacheRepository.findById(request.getTacheId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée: " + request.getTacheId()));
 
-        CommentaireTache commentaire = new CommentaireTache(tache, auteurId, request.getContenu());
+        CommentaireTache commentaire = new CommentaireTache(tache, UUID.fromString(auteurId), request.getContenu());
 
         // Si c'est une réponse à un autre commentaire
         if (request.getParentId() != null) {
@@ -397,7 +399,7 @@ public class TacheProjetService {
     }
 
     private void verifierProprietaire(Projet projet, String proprietaireId) {
-        if (!projet.getProprietaireId().equals(proprietaireId)) {
+        if (!projet.getProprietaireId().equals(UUID.fromString(proprietaireId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à modifier ce projet");
         }
     }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface TacheProjetRepository extends JpaRepository<TacheProjet, Long> {
@@ -25,9 +26,9 @@ public interface TacheProjetRepository extends JpaRepository<TacheProjet, Long> 
     List<TacheProjet> findByEtapeIdOrderByOrdreAsc(Long etapeId);
 
     // Tâches assignées à un expert
-    List<TacheProjet> findByExpertAssigneIdOrderByDateAssignationDesc(String expertId);
+    List<TacheProjet> findByExpertAssigneIdOrderByDateAssignationDesc(UUID expertId);
 
-    Page<TacheProjet> findByExpertAssigneId(String expertId, Pageable pageable);
+    Page<TacheProjet> findByExpertAssigneId(UUID expertId, Pageable pageable);
 
     // Tâches disponibles (publiques, non assignées)
     @Query("SELECT t FROM TacheProjet t " +
@@ -66,13 +67,13 @@ public interface TacheProjetRepository extends JpaRepository<TacheProjet, Long> 
 
     long countByProjetIdAndStatut(Long projetId, StatutTache statut);
 
-    long countByExpertAssigneId(String expertId);
+    long countByExpertAssigneId(UUID expertId);
 
     @Query("SELECT AVG(t.progression) FROM TacheProjet t WHERE t.projet.id = :projetId")
     Double calculerProgressionMoyenne(@Param("projetId") Long projetId);
 
     // Vérifications
-    boolean existsByIdAndProjet_ProprietaireId(Long id, String proprietaireId);
+    boolean existsByIdAndProjet_ProprietaireId(Long id, UUID proprietaireId);
 
-    boolean existsByIdAndExpertAssigneId(Long id, String expertId);
+    boolean existsByIdAndExpertAssigneId(Long id, UUID expertId);
 }

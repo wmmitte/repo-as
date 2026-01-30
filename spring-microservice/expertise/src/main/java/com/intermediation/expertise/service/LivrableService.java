@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -41,7 +42,8 @@ public class LivrableService {
                 .orElseThrow(() -> new RuntimeException("Livrable non trouvé: " + livrableId));
 
         // Vérifier que l'expert est assigné à la tâche
-        if (!expertId.equals(livrable.getTache().getExpertAssigneId())) {
+        UUID expertUUID = UUID.fromString(expertId);
+        if (!expertUUID.equals(livrable.getTache().getExpertAssigneId())) {
             throw new RuntimeException("Vous n'êtes pas autorisé à soumettre ce livrable");
         }
 
@@ -76,7 +78,8 @@ public class LivrableService {
                 .orElseThrow(() -> new RuntimeException("Livrable non trouvé: " + livrableId));
 
         // Vérifier que l'utilisateur est le propriétaire du projet
-        if (!livrable.getTache().getProjet().getProprietaireId().equals(proprietaireId)) {
+        UUID proprietaireUUID = UUID.fromString(proprietaireId);
+        if (!livrable.getTache().getProjet().getProprietaireId().equals(proprietaireUUID)) {
             throw new RuntimeException("Vous n'êtes pas autorisé à valider ce livrable");
         }
 
@@ -103,7 +106,7 @@ public class LivrableService {
         }
 
         // Valider ou refuser le livrable
-        livrable.valider(proprietaireId, request.getAccepte(), request.getCommentaire());
+        livrable.valider(proprietaireUUID, request.getAccepte(), request.getCommentaire());
         livrable.setDateModification(LocalDateTime.now());
         livrable = livrableRepository.save(livrable);
 
@@ -126,14 +129,15 @@ public class LivrableService {
                 .orElseThrow(() -> new RuntimeException("Livrable non trouvé: " + livrableId));
 
         // Vérifier les autorisations
-        if (!livrable.getTache().getProjet().getProprietaireId().equals(proprietaireId)) {
+        UUID proprietaireUUID = UUID.fromString(proprietaireId);
+        if (!livrable.getTache().getProjet().getProprietaireId().equals(proprietaireUUID)) {
             throw new RuntimeException("Vous n'êtes pas autorisé à modifier ce livrable");
         }
 
         livrable.setStatut(LivrableTache.StatutLivrable.A_REVISER);
         livrable.setCommentaireValidation(commentaire);
         livrable.setDateValidation(LocalDateTime.now());
-        livrable.setValideParId(proprietaireId);
+        livrable.setValideParId(proprietaireUUID);
         livrable.setDateModification(LocalDateTime.now());
         livrable = livrableRepository.save(livrable);
 
