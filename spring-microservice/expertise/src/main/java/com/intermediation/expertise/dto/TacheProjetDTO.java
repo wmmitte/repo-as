@@ -29,6 +29,9 @@ public class TacheProjetDTO {
     private String priorite;
     private Integer progression;
     private String expertAssigneId;
+    private String expertNom;
+    private String expertPrenom;
+    private String expertPhotoUrl;
     private LocalDateTime dateAssignation;
     private LocalDate dateDebutPrevue;
     private LocalDate dateFinPrevue;
@@ -222,6 +225,30 @@ public class TacheProjetDTO {
 
     public void setExpertAssigneId(String expertAssigneId) {
         this.expertAssigneId = expertAssigneId;
+    }
+
+    public String getExpertNom() {
+        return expertNom;
+    }
+
+    public void setExpertNom(String expertNom) {
+        this.expertNom = expertNom;
+    }
+
+    public String getExpertPrenom() {
+        return expertPrenom;
+    }
+
+    public void setExpertPrenom(String expertPrenom) {
+        this.expertPrenom = expertPrenom;
+    }
+
+    public String getExpertPhotoUrl() {
+        return expertPhotoUrl;
+    }
+
+    public void setExpertPhotoUrl(String expertPhotoUrl) {
+        this.expertPhotoUrl = expertPhotoUrl;
     }
 
     public LocalDateTime getDateAssignation() {

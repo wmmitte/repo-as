@@ -24,6 +24,14 @@ public class DemandeContact {
         ARCHIVEE        // Demande archivée
     }
 
+    public enum TypeReference {
+        PROJET,
+        TACHE,
+        LIVRABLE,
+        CANDIDATURE,
+        AUTRE
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -55,6 +63,21 @@ public class DemandeContact {
 
     @Column(name = "date_reponse")
     private LocalDateTime dateReponse;
+
+    // Référence vers un élément (projet, tâche, livrable, etc.)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_reference", length = 50)
+    private TypeReference typeReference;
+
+    @Column(name = "reference_id")
+    private Long referenceId;
+
+    @Column(name = "lien_reference", length = 500)
+    private String lienReference;
+
+    // Indique si c'est une notification système (non répondable)
+    @Column(name = "est_notification_systeme")
+    private Boolean estNotificationSysteme = false;
 
     @PrePersist
     protected void onCreate() {

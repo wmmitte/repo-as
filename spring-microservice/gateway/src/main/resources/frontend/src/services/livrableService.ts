@@ -148,6 +148,50 @@ class LivrableService {
     const data = await response.json();
     return data.count;
   }
+
+  /**
+   * Uploader un fichier pour un livrable
+   * @returns Les informations du fichier uploadé (URL, nom, taille, type)
+   */
+  async uploaderFichier(livrableId: number, fichier: File): Promise<{
+    fichierUrl: string;
+    fichierNom: string;
+    fichierTaille: number;
+    fichierType: string;
+  }> {
+    const formData = new FormData();
+    formData.append('fichier', fichier);
+
+    const response = await fetchWithAuthHandler(`${this.BASE_URL}/${livrableId}/upload`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+      // Ne pas définir Content-Type - le navigateur le fera automatiquement avec le boundary
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.erreur || `Erreur lors de l'upload du fichier: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Obtenir l'URL de prévisualisation d'un fichier de livrable
+   */
+  getUrlPrevisualisation(fichierUrl: string): string {
+    // fichierUrl est au format: livrables/{tacheId}/{livrableId}/{filename}
+    return `/api/files/${fichierUrl.replace('livrables/', 'livrables/view/')}`;
+  }
+
+  /**
+   * Obtenir l'URL de téléchargement d'un fichier de livrable
+   */
+  getUrlTelechargement(fichierUrl: string): string {
+    // fichierUrl est au format: livrables/{tacheId}/{livrableId}/{filename}
+    return `/api/files/${fichierUrl.replace('livrables/', 'livrables/download/')}`;
+  }
 }
 
 export const livrableService = new LivrableService();

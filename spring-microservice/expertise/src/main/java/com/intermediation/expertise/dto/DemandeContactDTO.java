@@ -2,6 +2,7 @@ package com.intermediation.expertise.dto;
 
 import com.intermediation.expertise.model.DemandeContact;
 import com.intermediation.expertise.model.DemandeContact.StatutDemande;
+import com.intermediation.expertise.model.DemandeContact.TypeReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,12 @@ public class DemandeContactDTO {
     private LocalDateTime dateLecture;
     private LocalDateTime dateReponse;
 
+    // Référence vers un élément
+    private TypeReference typeReference;
+    private Long referenceId;
+    private String lienReference;
+    private Boolean estNotificationSysteme;
+
     // Informations enrichies (optionnel, rempli par le service)
     private String expediteurNom;
     private String expediteurPrenom;
@@ -46,6 +53,10 @@ public class DemandeContactDTO {
         this.dateCreation = entity.getDateCreation();
         this.dateLecture = entity.getDateLecture();
         this.dateReponse = entity.getDateReponse();
+        this.typeReference = entity.getTypeReference();
+        this.referenceId = entity.getReferenceId();
+        this.lienReference = entity.getLienReference();
+        this.estNotificationSysteme = entity.getEstNotificationSysteme();
     }
 
     public DemandeContact toEntity() {
@@ -57,6 +68,10 @@ public class DemandeContactDTO {
         entity.setMessage(this.message);
         entity.setEmailReponse(this.emailReponse);
         entity.setStatut(this.statut != null ? this.statut : StatutDemande.EN_ATTENTE);
+        entity.setTypeReference(this.typeReference);
+        entity.setReferenceId(this.referenceId);
+        entity.setLienReference(this.lienReference);
+        entity.setEstNotificationSysteme(this.estNotificationSysteme);
         return entity;
     }
 }

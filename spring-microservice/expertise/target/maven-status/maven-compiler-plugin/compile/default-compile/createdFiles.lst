@@ -48,6 +48,7 @@ com\intermediation\expertise\repository\LivrableTacheRepository.class
 com\intermediation\expertise\service\CompetenceReferenceService.class
 com\intermediation\expertise\repository\EvaluationCompetenceRepository.class
 com\intermediation\expertise\service\DemandeContactService$1.class
+com\intermediation\expertise\service\NotificationService.class
 com\intermediation\expertise\controller\CompetenceReferenceController.class
 com\intermediation\expertise\repository\ExpertiseRepository.class
 com\intermediation\expertise\controller\ProcessController.class
@@ -72,6 +73,7 @@ com\intermediation\expertise\repository\ExigenceProjetRepository.class
 com\intermediation\expertise\controller\DemandeContactController.class
 com\intermediation\expertise\model\MethodeEvaluation.class
 com\intermediation\expertise\service\CompetenceReferenceInitService$1.class
+com\intermediation\expertise\model\DemandeContact$TypeReference.class
 com\intermediation\expertise\dto\ValiderLivrableRequest$CritereValidation.class
 com\intermediation\expertise\dto\ModifierProjetRequest.class
 com\intermediation\expertise\repository\MethodeEvaluationRepository.class

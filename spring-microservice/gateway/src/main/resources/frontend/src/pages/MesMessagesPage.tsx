@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   Mail, Send, Inbox, Archive, Clock, CheckCheck, Eye,
   ArrowLeft, MessageCircle, RefreshCw, ChevronRight, X,
-  Trash2, MailOpen, Reply, FolderOpen
+  Trash2, MailOpen, Reply, FolderOpen, ExternalLink, Bell
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useHeaderConfig } from '@/hooks/useHeaderConfig';
 import { contactService, DemandeContactDTO } from '@/services/contactService';
 import { useToast } from '@/contexts/ToastContext';
@@ -28,6 +29,7 @@ const STATUT_CONFIG: Record<StatutDemande, { label: string; color: string; icon:
 
 export default function MesMessagesPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const [dossierActif, setDossierActif] = useState<DossierType>('recus');
   const [messagesRecus, setMessagesRecus] = useState<DemandeContactDTO[]>([]);
   const [messagesEnvoyes, setMessagesEnvoyes] = useState<DemandeContactDTO[]>([]);
@@ -379,7 +381,7 @@ export default function MesMessagesPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1">
-                  {dossierActif === 'recus' && (
+                  {dossierActif === 'recus' && !messageSelectionne.estNotificationSysteme && (
                     <button
                       onClick={() => setAfficherFormReponse(!afficherFormReponse)}
                       className="btn btn-ghost btn-sm gap-1"
@@ -403,31 +405,53 @@ export default function MesMessagesPage() {
 
             {/* Corps du message */}
             <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+              {/* Notification système - indicateur */}
+              {messageSelectionne.estNotificationSysteme && (
+                <div className="flex items-center gap-2 mb-4 p-3 bg-info/10 rounded-lg border border-info/20">
+                  <Bell size={16} className="text-info flex-shrink-0" />
+                  <span className="text-sm text-info">Notification système</span>
+                </div>
+              )}
+
               {/* Info expéditeur/destinataire */}
               <div className="flex items-center gap-4 mb-6 p-4 bg-base-200/50 rounded-xl">
-                <AvatarUtilisateur
-                  utilisateurId={dossierActif === 'recus' ? messageSelectionne.expediteurId : messageSelectionne.destinataireId}
-                  nom={dossierActif === 'recus' ? messageSelectionne.expediteurNom : messageSelectionne.destinataireNom}
-                  prenom={dossierActif === 'recus' ? messageSelectionne.expediteurPrenom : messageSelectionne.destinatairePrenom}
-                  hasPhoto={dossierActif === 'recus' ? messageSelectionne.expediteurHasPhoto : messageSelectionne.destinataireHasPhoto}
-                  size="lg"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900">
-                    {dossierActif === 'recus'
-                      ? `${messageSelectionne.expediteurPrenom} ${messageSelectionne.expediteurNom}`
-                      : `${messageSelectionne.destinatairePrenom} ${messageSelectionne.destinataireNom}`
-                    }
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {dossierActif === 'recus' ? 'Expéditeur' : 'Destinataire'}
-                  </p>
-                </div>
-                {dossierActif === 'recus' && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <MailOpen size={14} />
-                    <span>À moi</span>
-                  </div>
+                {messageSelectionne.estNotificationSysteme ? (
+                  <>
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Bell size={24} className="text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900">Système</p>
+                      <p className="text-sm text-gray-500">Notification automatique</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <AvatarUtilisateur
+                      utilisateurId={dossierActif === 'recus' ? messageSelectionne.expediteurId : messageSelectionne.destinataireId}
+                      nom={dossierActif === 'recus' ? messageSelectionne.expediteurNom : messageSelectionne.destinataireNom}
+                      prenom={dossierActif === 'recus' ? messageSelectionne.expediteurPrenom : messageSelectionne.destinatairePrenom}
+                      hasPhoto={dossierActif === 'recus' ? messageSelectionne.expediteurHasPhoto : messageSelectionne.destinataireHasPhoto}
+                      size="lg"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900">
+                        {dossierActif === 'recus'
+                          ? `${messageSelectionne.expediteurPrenom} ${messageSelectionne.expediteurNom}`
+                          : `${messageSelectionne.destinatairePrenom} ${messageSelectionne.destinataireNom}`
+                        }
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {dossierActif === 'recus' ? 'Expéditeur' : 'Destinataire'}
+                      </p>
+                    </div>
+                    {dossierActif === 'recus' && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <MailOpen size={14} />
+                        <span>À moi</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -437,6 +461,23 @@ export default function MesMessagesPage() {
                   {messageSelectionne.message}
                 </p>
               </div>
+
+              {/* Lien vers l'élément référencé (pour les notifications système) */}
+              {messageSelectionne.lienReference && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => navigate(messageSelectionne.lienReference!)}
+                    className="btn btn-primary btn-sm gap-2"
+                  >
+                    <ExternalLink size={16} />
+                    {messageSelectionne.typeReference === 'PROJET' && 'Voir le projet'}
+                    {messageSelectionne.typeReference === 'TACHE' && 'Voir la tâche'}
+                    {messageSelectionne.typeReference === 'LIVRABLE' && 'Voir le livrable'}
+                    {messageSelectionne.typeReference === 'CANDIDATURE' && 'Voir la candidature'}
+                    {!messageSelectionne.typeReference && 'Voir les détails'}
+                  </button>
+                </div>
+              )}
 
               {/* Email de réponse si présent */}
               {messageSelectionne.emailReponse && (
@@ -449,8 +490,8 @@ export default function MesMessagesPage() {
               )}
             </div>
 
-            {/* Zone de réponse - uniquement pour les messages reçus */}
-            {dossierActif === 'recus' && afficherFormReponse && (
+            {/* Zone de réponse - uniquement pour les messages reçus non-système */}
+            {dossierActif === 'recus' && afficherFormReponse && !messageSelectionne.estNotificationSysteme && (
               <div className="border-t border-base-200 p-4 bg-base-50 flex-shrink-0">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">

@@ -4,6 +4,8 @@ export interface CreerDemandeContactRequest {
   emailReponse?: string;
 }
 
+export type TypeReference = 'PROJET' | 'TACHE' | 'LIVRABLE' | 'CANDIDATURE' | 'AUTRE';
+
 export interface DemandeContactDTO {
   id: number;
   expediteurId: string;
@@ -15,6 +17,12 @@ export interface DemandeContactDTO {
   dateCreation: string;
   dateLecture?: string;
   dateReponse?: string;
+  // Référence vers un élément (pour les notifications système)
+  typeReference?: TypeReference;
+  referenceId?: number;
+  lienReference?: string;
+  estNotificationSysteme?: boolean;
+  // Informations expéditeur/destinataire
   expediteurNom?: string;
   expediteurPrenom?: string;
   expediteurHasPhoto?: boolean;

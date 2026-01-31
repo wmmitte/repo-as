@@ -1,13 +1,16 @@
 package com.intermediation.expertise.controller;
 
 import com.intermediation.expertise.dto.*;
+import com.intermediation.expertise.service.FileStorageService;
 import com.intermediation.expertise.service.LivrableService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -22,9 +25,11 @@ public class LivrableController {
     private static final Logger log = LoggerFactory.getLogger(LivrableController.class);
 
     private final LivrableService livrableService;
+    private final FileStorageService fileStorageService;
 
-    public LivrableController(LivrableService livrableService) {
+    public LivrableController(LivrableService livrableService, FileStorageService fileStorageService) {
         this.livrableService = livrableService;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -56,6 +61,40 @@ public class LivrableController {
         log.info("GET /api/livrables/projet/{}/en-attente", projetId);
         List<LivrableTacheDTO> livrables = livrableService.listerLivrablesEnAttenteValidation(projetId);
         return ResponseEntity.ok(livrables);
+    }
+
+    /**
+     * Uploader un fichier pour un livrable (par l'expert).
+     * Retourne l'URL du fichier uploadé.
+     */
+    @PostMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploaderFichierLivrable(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") String utilisateurId,
+            @RequestParam("fichier") MultipartFile fichier) {
+        log.info("POST /api/livrables/{}/upload - Par {}", id, utilisateurId);
+
+        try {
+            // Récupérer le livrable pour vérifier les autorisations et obtenir la tâche ID
+            LivrableTacheDTO livrable = livrableService.obtenirLivrable(id);
+
+            // Stocker le fichier
+            String cheminFichier = fileStorageService.storeLivrableFile(fichier, livrable.getTacheId(), id);
+
+            // Retourner les infos du fichier uploadé
+            Map<String, Object> response = new java.util.HashMap<>();
+            response.put("fichierUrl", cheminFichier);
+            response.put("fichierNom", fichier.getOriginalFilename());
+            response.put("fichierTaille", fichier.getSize());
+            response.put("fichierType", fichier.getContentType());
+
+            log.info("Fichier uploadé pour le livrable {}: {}", id, cheminFichier);
+            return ResponseEntity.ok(response);
+
+        } catch (java.io.IOException e) {
+            log.error("Erreur lors de l'upload du fichier pour le livrable {}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("erreur", e.getMessage()));
+        }
     }
 
     /**

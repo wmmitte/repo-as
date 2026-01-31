@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.intermediation.expertise.dto.UtilisateurRhDTO;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,19 +33,25 @@ public class TacheProjetService {
     private final LivrableTacheRepository livrableRepository;
     private final CompetenceReferenceRepository competenceReferenceRepository;
     private final CommentaireTacheRepository commentaireRepository;
+    private final NotificationService notificationService;
+    private final UtilisateurRhService utilisateurService;
 
     public TacheProjetService(TacheProjetRepository tacheRepository,
                               ProjetRepository projetRepository,
                               EtapeProjetRepository etapeRepository,
                               LivrableTacheRepository livrableRepository,
                               CompetenceReferenceRepository competenceReferenceRepository,
-                              CommentaireTacheRepository commentaireRepository) {
+                              CommentaireTacheRepository commentaireRepository,
+                              NotificationService notificationService,
+                              UtilisateurRhService utilisateurService) {
         this.tacheRepository = tacheRepository;
         this.projetRepository = projetRepository;
         this.etapeRepository = etapeRepository;
         this.livrableRepository = livrableRepository;
         this.competenceReferenceRepository = competenceReferenceRepository;
         this.commentaireRepository = commentaireRepository;
+        this.notificationService = notificationService;
+        this.utilisateurService = utilisateurService;
     }
 
     /**
@@ -239,26 +247,118 @@ public class TacheProjetService {
         tache.assignerExpert(UUID.fromString(expertId));
         tache = tacheRepository.save(tache);
 
+        // Envoyer une notification à l'expert
+        notificationService.notifierAssignationTaches(
+            UUID.fromString(expertId),
+            tache.getProjet(),
+            List.of(tache)
+        );
+
         log.info("Expert {} assigné à la tâche {} avec succès", expertId, tacheId);
         return new TacheProjetDTO(tache);
     }
 
     /**
-     * Désassigner un expert d'une tâche.
+     * Assigner un expert à plusieurs tâches en lot.
+     * Envoie une seule notification pour toutes les tâches.
      */
-    public TacheProjetDTO desassignerExpert(Long tacheId, String proprietaireId) {
+    public List<TacheProjetDTO> assignerExpertEnLot(List<Long> tacheIds, String proprietaireId, String expertId) {
+        log.info("Assignation de l'expert {} à {} tâche(s)", expertId, tacheIds.size());
+
+        if (tacheIds.isEmpty()) {
+            return List.of();
+        }
+
+        UUID expertUuid = UUID.fromString(expertId);
+        Projet projet = null;
+        List<TacheProjet> tachesAssignees = new java.util.ArrayList<>();
+
+        for (Long tacheId : tacheIds) {
+            TacheProjet tache = obtenirTacheVerifieeProprietaire(tacheId, proprietaireId);
+
+            if (tache.getExpertAssigneId() != null) {
+                log.warn("Tâche {} déjà assignée, ignorée", tacheId);
+                continue;
+            }
+
+            tache.assignerExpert(expertUuid);
+            tache = tacheRepository.save(tache);
+            tachesAssignees.add(tache);
+
+            if (projet == null) {
+                projet = tache.getProjet();
+            }
+        }
+
+        // Envoyer une seule notification pour toutes les tâches
+        if (!tachesAssignees.isEmpty() && projet != null) {
+            notificationService.notifierAssignationTaches(expertUuid, projet, tachesAssignees);
+        }
+
+        log.info("Expert {} assigné à {} tâche(s) avec succès", expertId, tachesAssignees.size());
+        return tachesAssignees.stream()
+                .map(TacheProjetDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Désassigner un expert d'une tâche.
+     * Réinitialise les livrables non-acceptés et notifie l'expert.
+     */
+    public TacheProjetDTO desassignerExpert(Long tacheId, String proprietaireId, String motif) {
         log.info("Désassignation de l'expert de la tâche {}", tacheId);
 
         TacheProjet tache = obtenirTacheVerifieeProprietaire(tacheId, proprietaireId);
 
+        UUID ancienExpertId = tache.getExpertAssigneId();
+
+        // Réinitialiser les livrables non-acceptés à A_FOURNIR
+        if (tache.getLivrables() != null) {
+            for (LivrableTache livrable : tache.getLivrables()) {
+                if (livrable.getStatut() != LivrableTache.StatutLivrable.ACCEPTE) {
+                    livrable.setStatut(LivrableTache.StatutLivrable.A_FOURNIR);
+                    livrable.setFichierUrl(null);
+                    livrable.setFichierNom(null);
+                    livrable.setFichierTaille(null);
+                    livrable.setFichierType(null);
+                    livrable.setDateSoumission(null);
+                    livrable.setCommentaireSoumission(null);
+                    livrable.setValideParId(null);
+                    livrable.setDateValidation(null);
+                    livrable.setCommentaireValidation(null);
+                }
+            }
+        }
+
+        // Réinitialiser la tâche
         tache.setExpertAssigneId(null);
         tache.setDateAssignation(null);
         tache.setStatut(TacheProjet.StatutTache.A_FAIRE);
+        tache.setProgression(0);
         tache.setDateModification(LocalDateTime.now());
         tache = tacheRepository.save(tache);
 
+        // Recalculer la progression du projet
+        Projet projet = tache.getProjet();
+        if (projet != null) {
+            projet.calculerProgression();
+            log.info("Progression du projet {} mise à jour: {}%", projet.getId(), projet.getProgression());
+        }
+
+        // Notifier l'ancien expert qu'il a été retiré
+        if (ancienExpertId != null) {
+            notificationService.notifierRetraitTache(ancienExpertId, tache, motif);
+        }
+
         log.info("Expert désassigné de la tâche {} avec succès", tacheId);
         return new TacheProjetDTO(tache);
+    }
+
+    /**
+     * Désassigner un expert d'une tâche (sans motif).
+     */
+    public TacheProjetDTO desassignerExpert(Long tacheId, String proprietaireId) {
+        return desassignerExpert(tacheId, proprietaireId, null);
     }
 
     /**
@@ -285,7 +385,7 @@ public class TacheProjetService {
     public TacheProjetDTO obtenirTache(Long tacheId) {
         TacheProjet tache = tacheRepository.findById(tacheId)
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée: " + tacheId));
-        return new TacheProjetDTO(tache);
+        return enrichirAvecInfosExpert(new TacheProjetDTO(tache));
     }
 
     /**
@@ -295,7 +395,7 @@ public class TacheProjetService {
     public TacheProjetDTO obtenirTacheComplete(Long tacheId) {
         TacheProjet tache = tacheRepository.findByIdAvecDetails(tacheId)
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée: " + tacheId));
-        return new TacheProjetDTO(tache);
+        return enrichirAvecInfosExpert(new TacheProjetDTO(tache));
     }
 
     /**
@@ -303,10 +403,11 @@ public class TacheProjetService {
      */
     @Transactional(readOnly = true)
     public List<TacheProjetDTO> listerTachesProjet(Long projetId) {
-        return tacheRepository.findByProjetIdOrderByOrdreAsc(projetId)
+        List<TacheProjetDTO> dtos = tacheRepository.findByProjetIdOrderByOrdreAsc(projetId)
                 .stream()
                 .map(TacheProjetDTO::new)
                 .collect(Collectors.toList());
+        return enrichirListeAvecInfosExperts(dtos);
     }
 
     /**
@@ -314,10 +415,11 @@ public class TacheProjetService {
      */
     @Transactional(readOnly = true)
     public List<TacheProjetDTO> listerMesTaches(String expertId) {
-        return tacheRepository.findByExpertAssigneIdOrderByDateAssignationDesc(UUID.fromString(expertId))
+        List<TacheProjetDTO> dtos = tacheRepository.findByExpertAssigneIdOrderByDateAssignationDesc(UUID.fromString(expertId))
                 .stream()
                 .map(TacheProjetDTO::new)
                 .collect(Collectors.toList());
+        return enrichirListeAvecInfosExperts(dtos);
     }
 
     /**
@@ -402,5 +504,46 @@ public class TacheProjetService {
         if (!projet.getProprietaireId().equals(UUID.fromString(proprietaireId))) {
             throw new RuntimeException("Vous n'êtes pas autorisé à modifier ce projet");
         }
+    }
+
+    /**
+     * Enrichit un DTO de tâche avec les informations de l'expert assigné.
+     */
+    private TacheProjetDTO enrichirAvecInfosExpert(TacheProjetDTO dto) {
+        if (dto.getExpertAssigneId() != null) {
+            try {
+                UtilisateurRhDTO expert = utilisateurService.getUtilisateurRhParId(dto.getExpertAssigneId());
+                if (expert != null) {
+                    // Extraire nom et prénom du nom complet si nécessaire
+                    String nomComplet = expert.getNom();
+                    if (nomComplet != null && nomComplet.contains(" ")) {
+                        String[] parts = nomComplet.split(" ", 2);
+                        dto.setExpertPrenom(parts[0]);
+                        dto.setExpertNom(parts.length > 1 ? parts[1] : null);
+                    } else {
+                        dto.setExpertNom(nomComplet);
+                    }
+
+                    // Utiliser prenom et photoUrl directement si disponibles
+                    if (expert.getPrenom() != null) {
+                        dto.setExpertPrenom(expert.getPrenom());
+                    }
+                    dto.setExpertPhotoUrl(expert.getPhotoUrl());
+                }
+            } catch (Exception e) {
+                log.warn("Impossible de récupérer les infos de l'expert {}: {}", dto.getExpertAssigneId(), e.getMessage());
+            }
+        }
+        return dto;
+    }
+
+    /**
+     * Enrichit une liste de DTOs de tâches avec les informations des experts assignés.
+     */
+    private List<TacheProjetDTO> enrichirListeAvecInfosExperts(List<TacheProjetDTO> dtos) {
+        for (TacheProjetDTO dto : dtos) {
+            enrichirAvecInfosExpert(dto);
+        }
+        return dtos;
     }
 }

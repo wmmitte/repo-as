@@ -14,12 +14,10 @@ On doit lui permettre de regrouper ou d'organiser des les projets, les étapes c
 
 
 
-il faut faire en sorte que les acceptations et les validations soit des echanges de messages dans le système
-
-
-
 Donc voici décrit globalement la gestion des projets sur la plateforme. Il y a déjà une petite conception qui avait été faite mais qui doit être enrichie pour répondre complétement au besoin. voici les pages existantes que tu dois analyser et améliorer : 
 - http://localhost:8090/projets : Liste des projets
 - http://localhost:8090/projets/projet_2 : détails d'un projet avec les onglets permettant de suivre l'exécution, …
 
 Analyse et dis moi globalement ce qui existe et ce qui doit être fait pour qu'on elabore un plan pour l'implémentation.. Et pour l'implémentation, je tiens au design compact ui/ux très propre..
+
+il faut faire en sorte que les acceptations et les validations soit des echanges de messages dans le système

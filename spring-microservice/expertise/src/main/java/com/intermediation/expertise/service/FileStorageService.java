@@ -31,8 +31,8 @@ public class FileStorageService {
     };
 
     /**
-     * Stocker un fichier
-     * 
+     * Stocker un fichier pour une demande de reconnaissance
+     *
      * @param file Fichier à stocker
      * @param utilisateurId ID de l'utilisateur
      * @param demandeId ID de la demande
@@ -40,6 +40,31 @@ public class FileStorageService {
      * @throws IOException Si erreur de stockage
      */
     public String storeFile(MultipartFile file, String utilisateurId, Long demandeId) throws IOException {
+        return storeFileInternal(file, utilisateurId + "/" + demandeId);
+    }
+
+    /**
+     * Stocker un fichier pour un livrable
+     *
+     * @param file Fichier à stocker
+     * @param tacheId ID de la tâche
+     * @param livrableId ID du livrable
+     * @return Chemin relatif du fichier stocké
+     * @throws IOException Si erreur de stockage
+     */
+    public String storeLivrableFile(MultipartFile file, Long tacheId, Long livrableId) throws IOException {
+        return storeFileInternal(file, "livrables/" + tacheId + "/" + livrableId);
+    }
+
+    /**
+     * Méthode interne pour stocker un fichier
+     *
+     * @param file Fichier à stocker
+     * @param subPath Sous-chemin relatif
+     * @return Chemin relatif complet du fichier stocké
+     * @throws IOException Si erreur de stockage
+     */
+    private String storeFileInternal(MultipartFile file, String subPath) throws IOException {
         // Validation
         if (file.isEmpty()) {
             throw new IOException("Le fichier est vide");
@@ -61,7 +86,7 @@ public class FileStorageService {
         }
 
         // Créer le répertoire si nécessaire
-        Path uploadPath = Paths.get(uploadDirectory, utilisateurId, demandeId.toString());
+        Path uploadPath = Paths.get(uploadDirectory, subPath);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
@@ -73,9 +98,8 @@ public class FileStorageService {
         // Copier le fichier
         Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Retourner le chemin relatif complet (utilisateurId/demandeId/filename)
-        // pour correspondre au format attendu par le endpoint /download/{utilisateurId}/{demandeId}/{filename}
-        String relativePath = utilisateurId + "/" + demandeId + "/" + uniqueFilename;
+        // Retourner le chemin relatif complet
+        String relativePath = subPath + "/" + uniqueFilename;
         logger.info("Fichier stocké : {}", relativePath);
 
         return relativePath;

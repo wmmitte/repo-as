@@ -7,7 +7,9 @@ public class UtilisateurRhDTO {
 
     private String userId;
     private String nom;
+    private String prenom;
     private String email;
+    private String photoUrl;
     private Long nombreDemandesEnCours;
     private Long nombreDemandesTraitees;
     private Double tauxApprobation;
@@ -56,6 +58,22 @@ public class UtilisateurRhDTO {
 
     public void setNom(String nom) {
         this.nom = nom;
+    }
+
+    public String getPrenom() {
+        return prenom;
+    }
+
+    public void setPrenom(String prenom) {
+        this.prenom = prenom;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
     }
 
     public String getEmail() {

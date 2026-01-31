@@ -119,9 +119,10 @@ public class TacheProjetController {
     @PutMapping("/{id}/desassigner")
     public ResponseEntity<TacheProjetDTO> desassignerExpert(
             @PathVariable Long id,
-            @RequestHeader("X-User-Id") String utilisateurId) {
-        log.info("PUT /api/taches/{}/desassigner - Par {}", id, utilisateurId);
-        TacheProjetDTO tache = tacheService.desassignerExpert(id, utilisateurId);
+            @RequestHeader("X-User-Id") String utilisateurId,
+            @RequestParam(required = false) String motif) {
+        log.info("PUT /api/taches/{}/desassigner - Par {} - Motif: {}", id, utilisateurId, motif);
+        TacheProjetDTO tache = tacheService.desassignerExpert(id, utilisateurId, motif);
         return ResponseEntity.ok(tache);
     }
 

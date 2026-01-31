@@ -1,0 +1,52 @@
+
+● Toutes les modifications sont terminées. Voici le résumé :
+
+  Résumé des modifications pour le workflow de rejet
+
+  1. Nouveau workflow de validation des livrables (Frontend)
+
+  - 3 options pour le propriétaire :
+    - Accepter : le livrable est validé
+    - Révision : l'expert peut corriger et resoumettre (statut A_REVISER)
+    - Refuser : définitif, l'expert ne peut pas resoumettre (statut REFUSE)
+
+  2. Action "Retirer l'expert" d'une tâche
+
+  - Backend (TacheProjetService.java:302-340) :
+    - Réinitialise tous les livrables non-acceptés à A_FOURNIR
+    - Remet la tâche en statut A_FAIRE
+    - Remet la progression à 0%
+    - Notifie l'expert avec le motif du retrait
+  - Frontend (TacheDetailPage.tsx) :
+    - Section "Expert assigné" visible quand un expert est assigné
+    - Bouton "Retirer l'expert" avec confirmation
+    - Modal avec champ pour saisir le motif
+
+  3. Notification de retrait
+
+  - NotificationService.java : nouvelle méthode notifierRetraitTache()
+  - L'expert reçoit un message dans /messages lui indiquant qu'il a été retiré avec le motif
+
+  Workflow complet maintenant :
+
+  Expert soumet livrable
+          ↓
+  Propriétaire examine
+          ↓
+      ┌───┴───┐───────┐
+      ↓       ↓       ↓
+  Accepter  Révision  Refuser
+      ↓       ↓       ↓
+    ✓OK   Expert     Si expert
+          resoumet   ne peut pas
+              ↓      traiter
+          Nouvelle   ↓
+          soumission Retirer l'expert
+                     ↓
+                  Tâche disponible
+                  pour réassignation
+
+  Services à redémarrer
+
+  1. expertise - pour le backend
+  2. gateway - pour le frontend (si pas en mode dev)

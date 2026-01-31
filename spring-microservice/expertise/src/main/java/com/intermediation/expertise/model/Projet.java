@@ -141,7 +141,13 @@ public class Projet {
             return;
         }
         int total = taches.stream()
-                .mapToInt(t -> t.getProgression() != null ? t.getProgression() : 0)
+                .mapToInt(t -> {
+                    // Une tâche TERMINEE compte pour 100% même si sa progression interne est différente
+                    if (t.getStatut() == TacheProjet.StatutTache.TERMINEE) {
+                        return 100;
+                    }
+                    return t.getProgression() != null ? t.getProgression() : 0;
+                })
                 .sum();
         this.progression = total / taches.size();
     }

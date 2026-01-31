@@ -14,11 +14,19 @@ import {
   CheckCircle,
   Package,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Link as LinkIcon,
+  Upload,
+  FileText,
+  UserMinus,
+  AlertTriangle,
+  Eye,
+  Download
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { tacheService } from '@/services/tacheService';
 import { projetService } from '@/services/projet.service';
+import { livrableService } from '@/services/livrableService';
 import {
   Tache,
   ModifierTacheRequest,
@@ -66,8 +74,12 @@ export default function TacheDetailPage() {
 
   // Soumission livrable (expert)
   const [soumissionLivrableId, setSoumissionLivrableId] = useState<number | null>(null);
+  const [typeSoumission, setTypeSoumission] = useState<'url' | 'fichier'>('url');
+  const [fichierSelectionne, setFichierSelectionne] = useState<File | null>(null);
+  const [uploadEnCours, setUploadEnCours] = useState(false);
   const [formSoumission, setFormSoumission] = useState({
     fichierUrl: '',
+    fichierNom: '',
     commentaire: ''
   });
 
@@ -89,6 +101,10 @@ export default function TacheDetailPage() {
 
   // Critères
   const [nouveauCritere, setNouveauCritere] = useState<Record<number, string>>({});
+
+  // Retrait expert
+  const [afficherModalRetrait, setAfficherModalRetrait] = useState(false);
+  const [motifRetrait, setMotifRetrait] = useState('');
 
   const estProprietaire = proprietaireId === user?.id;
   const estExpertAssigne = tache?.expertAssigneId === user?.id;
@@ -249,10 +265,36 @@ export default function TacheDetailPage() {
 
   // Soumettre un livrable (expert)
   const soumettreLivrable = async (livrableId: number) => {
-    if (!formSoumission.fichierUrl.trim()) return;
+    // Vérifier qu'on a soit une URL soit un fichier
+    if (typeSoumission === 'url' && !formSoumission.fichierUrl.trim()) return;
+    if (typeSoumission === 'fichier' && !fichierSelectionne) return;
 
     setEnregistrement(true);
     try {
+      let fichierUrl = formSoumission.fichierUrl;
+      let fichierNom = '';
+      let fichierTaille: number | undefined;
+      let fichierType: string | undefined;
+
+      // Si c'est un fichier, uploader d'abord
+      if (typeSoumission === 'fichier' && fichierSelectionne) {
+        setUploadEnCours(true);
+        try {
+          const uploadResult = await livrableService.uploaderFichier(livrableId, fichierSelectionne);
+          fichierUrl = uploadResult.fichierUrl;
+          fichierNom = uploadResult.fichierNom;
+          fichierTaille = uploadResult.fichierTaille;
+          fichierType = uploadResult.fichierType;
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'upload';
+          alert(`Erreur upload: ${errorMessage}`);
+          return;
+        } finally {
+          setUploadEnCours(false);
+        }
+      }
+
+      // Soumettre le livrable
       const response = await fetch(`/api/livrables/${livrableId}/soumettre`, {
         method: 'PUT',
         credentials: 'include',
@@ -261,7 +303,10 @@ export default function TacheDetailPage() {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          fichierUrl: formSoumission.fichierUrl,
+          fichierUrl: fichierUrl || undefined,
+          fichierNom: fichierNom || undefined,
+          fichierTaille: fichierTaille,
+          fichierType: fichierType,
           commentaire: formSoumission.commentaire || undefined
         }),
       });
@@ -271,7 +316,9 @@ export default function TacheDetailPage() {
       }
 
       setSoumissionLivrableId(null);
-      setFormSoumission({ fichierUrl: '', commentaire: '' });
+      setTypeSoumission('url');
+      setFichierSelectionne(null);
+      setFormSoumission({ fichierUrl: '', fichierNom: '', commentaire: '' });
       await chargerTache();
     } catch (error) {
       console.error('Erreur soumission livrable:', error);
@@ -306,6 +353,65 @@ export default function TacheDetailPage() {
       await chargerTache();
     } catch (error) {
       console.error('Erreur validation livrable:', error);
+    } finally {
+      setEnregistrement(false);
+    }
+  };
+
+  // Demander une révision d'un livrable (l'expert pourra resoumettre)
+  const demanderRevisionLivrable = async (livrableId: number) => {
+    setEnregistrement(true);
+    try {
+      const response = await fetch(`/api/livrables/${livrableId}/revision`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          commentaire: formValidation.commentaire || undefined
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la demande de révision');
+      }
+
+      setValidationLivrableId(null);
+      setFormValidation({ accepte: true, commentaire: '' });
+      await chargerTache();
+    } catch (error) {
+      console.error('Erreur demande révision:', error);
+    } finally {
+      setEnregistrement(false);
+    }
+  };
+
+  // Retirer l'expert de la tâche
+  const retirerExpert = async () => {
+    if (!tache) return;
+
+    setEnregistrement(true);
+    try {
+      const params = motifRetrait ? `?motif=${encodeURIComponent(motifRetrait)}` : '';
+      const response = await fetch(`/api/taches/${tache.id}/desassigner${params}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors du retrait de l\'expert');
+      }
+
+      setAfficherModalRetrait(false);
+      setMotifRetrait('');
+      await chargerTache();
+    } catch (error) {
+      console.error('Erreur retrait expert:', error);
     } finally {
       setEnregistrement(false);
     }
@@ -587,6 +693,56 @@ export default function TacheDetailPage() {
           </div>
         </div>
 
+        {/* Section Expert Assigné */}
+        {tache.expertAssigneId && (
+          <div className="card bg-base-100 shadow-sm">
+            <div className="card-body p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {/* Avatar expert */}
+                  {tache.expertPhotoUrl ? (
+                    <img
+                      src={`/api/photos/${tache.expertAssigneId}`}
+                      alt=""
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        // Fallback aux initiales si l'image ne charge pas
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-12 h-12 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold text-lg ${tache.expertPhotoUrl ? 'hidden' : ''}`}>
+                    {tache.expertPrenom?.charAt(0).toUpperCase() || tache.expertNom?.charAt(0).toUpperCase() || '?'}
+                    {tache.expertNom?.charAt(0).toUpperCase() || ''}
+                  </div>
+                  <div>
+                    <h2 className="font-semibold flex items-center gap-2">
+                      <Target size={18} />
+                      Expert assigné
+                    </h2>
+                    <p className="text-sm font-medium">
+                      {tache.expertPrenom} {tache.expertNom}
+                    </p>
+                    <p className="text-xs text-base-content/60">
+                      Assigné le {formaterDate(tache.dateAssignation)}
+                    </p>
+                  </div>
+                </div>
+                {estProprietaire && (
+                  <button
+                    onClick={() => setAfficherModalRetrait(true)}
+                    className="btn btn-error btn-sm btn-outline gap-1"
+                  >
+                    <UserMinus size={14} />
+                    Retirer l'expert
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Section Livrables */}
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body p-4">
@@ -710,20 +866,98 @@ export default function TacheDetailPage() {
                     {livrableOuvert === livrable.id && (
                       <div className="border-t border-base-300 p-3 space-y-4">
                         {/* Fichier soumis (si livrable soumis) */}
-                        {livrable.fichierUrl && (
+                        {(livrable.fichierUrl || livrable.fichierNom) && (
                           <div className="bg-base-300/50 rounded-lg p-3">
-                            <div className="text-xs font-medium text-base-content/70 mb-2">Livrable soumis</div>
-                            <a
-                              href={livrable.fichierUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline break-all"
-                            >
-                              {livrable.fichierUrl}
-                            </a>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-xs font-medium text-base-content/70">Livrable soumis</div>
+                              {livrable.dateSoumission && (
+                                <div className="text-xs text-base-content/50 flex items-center gap-1">
+                                  <Clock size={10} />
+                                  {new Date(livrable.dateSoumission).toLocaleDateString('fr-FR', {
+                                    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                            {livrable.fichierUrl ? (
+                              livrable.fichierUrl.startsWith('livrables/') ? (
+                                // Fichier uploadé - afficher avec boutons de preview et téléchargement
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <FileText size={14} className="text-primary" />
+                                    <span className="text-sm font-medium">
+                                      {livrable.fichierNom || livrable.fichierUrl.split('/').pop()}
+                                    </span>
+                                    {livrable.fichierTaille && (
+                                      <span className="badge badge-xs badge-ghost">
+                                        {livrable.fichierTaille > 1024 * 1024
+                                          ? `${(livrable.fichierTaille / (1024 * 1024)).toFixed(1)} Mo`
+                                          : `${(livrable.fichierTaille / 1024).toFixed(1)} Ko`}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <a
+                                      href={livrableService.getUrlPrevisualisation(livrable.fichierUrl)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="btn btn-xs btn-ghost gap-1"
+                                    >
+                                      <Eye size={12} />
+                                      Prévisualiser
+                                    </a>
+                                    <a
+                                      href={livrableService.getUrlTelechargement(livrable.fichierUrl)}
+                                      className="btn btn-xs btn-ghost gap-1"
+                                    >
+                                      <Download size={12} />
+                                      Télécharger
+                                    </a>
+                                  </div>
+                                </div>
+                              ) : (
+                                // URL externe
+                                <a
+                                  href={livrable.fichierUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline break-all flex items-center gap-1"
+                                >
+                                  <LinkIcon size={14} />
+                                  {livrable.fichierUrl}
+                                </a>
+                              )
+                            ) : livrable.fichierNom && (
+                              <div className="text-sm flex items-center gap-1">
+                                <FileText size={14} />
+                                {livrable.fichierNom}
+                              </div>
+                            )}
                             {livrable.commentaireSoumission && (
-                              <p className="text-xs text-base-content/60 mt-1">
-                                {livrable.commentaireSoumission}
+                              <p className="text-xs text-base-content/60 mt-2 italic">
+                                "{livrable.commentaireSoumission}"
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Date de validation (si livrable validé ou refusé) */}
+                        {livrable.dateValidation && (livrable.statut === 'ACCEPTE' || livrable.statut === 'REFUSE' || livrable.statut === 'A_REVISER') && (
+                          <div className={`rounded-lg p-3 ${livrable.statut === 'ACCEPTE' ? 'bg-success/10' : 'bg-error/10'}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className={`text-xs font-medium ${livrable.statut === 'ACCEPTE' ? 'text-success' : 'text-error'}`}>
+                                {livrable.statut === 'ACCEPTE' ? 'Validé' : livrable.statut === 'REFUSE' ? 'Refusé' : 'Révision demandée'}
+                              </div>
+                              <div className="text-xs text-base-content/50 flex items-center gap-1">
+                                <Clock size={10} />
+                                {new Date(livrable.dateValidation).toLocaleDateString('fr-FR', {
+                                  day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                })}
+                              </div>
+                            </div>
+                            {livrable.commentaireValidation && (
+                              <p className="text-xs text-base-content/70 italic">
+                                "{livrable.commentaireValidation}"
                               </p>
                             )}
                           </div>
@@ -733,17 +967,71 @@ export default function TacheDetailPage() {
                         {estExpertAssigne && (livrable.statut === 'A_FOURNIR' || livrable.statut === 'A_REVISER') && (
                           <div className="bg-primary/10 rounded-lg p-3">
                             {soumissionLivrableId === livrable.id ? (
-                              <div className="space-y-2">
-                                <input
-                                  type="text"
-                                  placeholder="URL du livrable (lien Drive, Dropbox, Github, etc.)"
-                                  className="input input-bordered input-sm w-full"
-                                  value={formSoumission.fichierUrl}
-                                  onChange={(e) => setFormSoumission({ ...formSoumission, fichierUrl: e.target.value })}
-                                  autoFocus
-                                />
+                              <div className="space-y-3">
+                                {/* Toggle URL / Fichier */}
+                                <div className="flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTypeSoumission('url');
+                                      setFormSoumission({ ...formSoumission, fichierNom: '' });
+                                    }}
+                                    className={`btn btn-xs flex-1 gap-1 ${typeSoumission === 'url' ? 'btn-primary' : 'btn-ghost'}`}
+                                  >
+                                    <LinkIcon size={12} />
+                                    Lien URL
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTypeSoumission('fichier');
+                                      setFormSoumission({ ...formSoumission, fichierUrl: '' });
+                                    }}
+                                    className={`btn btn-xs flex-1 gap-1 ${typeSoumission === 'fichier' ? 'btn-primary' : 'btn-ghost'}`}
+                                  >
+                                    <Upload size={12} />
+                                    Fichier
+                                  </button>
+                                </div>
+
+                                {/* Champ selon le type */}
+                                {typeSoumission === 'url' ? (
+                                  <input
+                                    type="text"
+                                    placeholder="URL du livrable (lien Drive, Dropbox, Github, etc.)"
+                                    className="input input-bordered input-sm w-full"
+                                    value={formSoumission.fichierUrl}
+                                    onChange={(e) => setFormSoumission({ ...formSoumission, fichierUrl: e.target.value })}
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <div className="space-y-2">
+                                    <input
+                                      type="file"
+                                      className="file-input file-input-bordered file-input-sm w-full"
+                                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        setFichierSelectionne(file || null);
+                                      }}
+                                    />
+                                    {fichierSelectionne && (
+                                      <div className="text-xs text-base-content/60 flex items-center gap-2">
+                                        <FileText size={12} />
+                                        <span>{fichierSelectionne.name}</span>
+                                        <span className="badge badge-xs">
+                                          {(fichierSelectionne.size / 1024).toFixed(1)} Ko
+                                        </span>
+                                      </div>
+                                    )}
+                                    <p className="text-xs text-base-content/50">
+                                      Formats acceptés: PDF, DOC, DOCX, JPG, PNG, GIF (max 10 Mo)
+                                    </p>
+                                  </div>
+                                )}
+
                                 <textarea
-                                  placeholder="Commentaire (optionnel)"
+                                  placeholder="Commentaire (optionnel) - décrivez ce que vous soumettez"
                                   className="textarea textarea-bordered textarea-sm w-full h-16"
                                   value={formSoumission.commentaire}
                                   onChange={(e) => setFormSoumission({ ...formSoumission, commentaire: e.target.value })}
@@ -752,24 +1040,31 @@ export default function TacheDetailPage() {
                                   <button
                                     onClick={() => {
                                       setSoumissionLivrableId(null);
-                                      setFormSoumission({ fichierUrl: '', commentaire: '' });
+                                      setTypeSoumission('url');
+                                      setFichierSelectionne(null);
+                                      setFormSoumission({ fichierUrl: '', fichierNom: '', commentaire: '' });
                                     }}
                                     className="btn btn-ghost btn-xs"
-                                    disabled={enregistrement}
+                                    disabled={enregistrement || uploadEnCours}
                                   >
                                     Annuler
                                   </button>
                                   <button
                                     onClick={() => soumettreLivrable(livrable.id)}
-                                    disabled={!formSoumission.fichierUrl.trim() || enregistrement}
+                                    disabled={(typeSoumission === 'url' ? !formSoumission.fichierUrl.trim() : !fichierSelectionne) || enregistrement || uploadEnCours}
                                     className="btn btn-primary btn-xs gap-1"
                                   >
-                                    {enregistrement ? (
-                                      <span className="loading loading-spinner loading-xs"></span>
+                                    {enregistrement || uploadEnCours ? (
+                                      <>
+                                        <span className="loading loading-spinner loading-xs"></span>
+                                        {uploadEnCours ? 'Upload...' : 'Envoi...'}
+                                      </>
                                     ) : (
-                                      <CheckCircle size={12} />
+                                      <>
+                                        <CheckCircle size={12} />
+                                        Soumettre
+                                      </>
                                     )}
-                                    Soumettre
                                   </button>
                                 </div>
                               </div>
@@ -789,14 +1084,14 @@ export default function TacheDetailPage() {
                         {estProprietaire && (livrable.statut === 'SOUMIS' || livrable.statut === 'EN_REVUE') && (
                           <div className="bg-warning/10 rounded-lg p-3">
                             {validationLivrableId === livrable.id ? (
-                              <div className="space-y-2">
+                              <div className="space-y-3">
                                 <textarea
-                                  placeholder="Commentaire de validation (optionnel)"
+                                  placeholder="Commentaire (expliquez votre décision à l'expert)"
                                   className="textarea textarea-bordered textarea-sm w-full h-16"
                                   value={formValidation.commentaire}
                                   onChange={(e) => setFormValidation({ ...formValidation, commentaire: e.target.value })}
                                 />
-                                <div className="flex justify-end gap-2">
+                                <div className="flex flex-wrap justify-end gap-2">
                                   <button
                                     onClick={() => {
                                       setValidationLivrableId(null);
@@ -808,9 +1103,19 @@ export default function TacheDetailPage() {
                                     Annuler
                                   </button>
                                   <button
+                                    onClick={() => demanderRevisionLivrable(livrable.id)}
+                                    disabled={enregistrement}
+                                    className="btn btn-warning btn-xs gap-1"
+                                    title="L'expert pourra resoumettre"
+                                  >
+                                    <Edit size={12} />
+                                    Révision
+                                  </button>
+                                  <button
                                     onClick={() => validerLivrable(livrable.id, false)}
                                     disabled={enregistrement}
                                     className="btn btn-error btn-xs gap-1"
+                                    title="L'expert ne pourra pas resoumettre"
                                   >
                                     <X size={12} />
                                     Refuser
@@ -828,6 +1133,10 @@ export default function TacheDetailPage() {
                                     Accepter
                                   </button>
                                 </div>
+                                <p className="text-xs text-base-content/50">
+                                  <strong>Révision</strong> : l'expert peut corriger et resoumettre.
+                                  <strong> Refuser</strong> : définitif, envisagez de retirer l'expert.
+                                </p>
                               </div>
                             ) : (
                               <button
@@ -996,6 +1305,58 @@ export default function TacheDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de confirmation de retrait d'expert */}
+      {afficherModalRetrait && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <AlertTriangle size={20} className="text-warning" />
+              Retirer l'expert de cette tâche ?
+            </h3>
+            <p className="py-4 text-sm text-base-content/70">
+              L'expert sera notifié et tous les livrables non-acceptés seront réinitialisés.
+              La tâche redeviendra disponible pour d'autres experts.
+            </p>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Motif (optionnel)</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered h-20"
+                placeholder="Expliquez pourquoi vous retirez l'expert..."
+                value={motifRetrait}
+                onChange={(e) => setMotifRetrait(e.target.value)}
+              />
+            </div>
+            <div className="modal-action">
+              <button
+                onClick={() => {
+                  setAfficherModalRetrait(false);
+                  setMotifRetrait('');
+                }}
+                className="btn btn-ghost"
+                disabled={enregistrement}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={retirerExpert}
+                className="btn btn-error gap-1"
+                disabled={enregistrement}
+              >
+                {enregistrement ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <UserMinus size={16} />
+                )}
+                Confirmer le retrait
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop bg-black/50" onClick={() => setAfficherModalRetrait(false)} />
+        </div>
+      )}
     </div>
   );
 }

@@ -89,6 +89,9 @@ export interface Tache {
   priorite: PrioriteTache;
   progression: number;
   expertAssigneId?: string;
+  expertNom?: string;
+  expertPrenom?: string;
+  expertPhotoUrl?: string;
   dateAssignation?: string;
   dateDebutPrevue?: string;
   dateFinPrevue?: string;

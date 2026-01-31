@@ -85,16 +85,26 @@ public class UtilisateurRhService {
                 Map<String, Object> userMap = response.getBody();
                 String userId = String.valueOf(userMap.get("id"));
                 String email = (String) userMap.get("email");
-                String nom = (String) userMap.getOrDefault("nom",
-                              userMap.getOrDefault("prenom", email));
+                String nom = (String) userMap.get("nom");
+                String prenom = (String) userMap.get("prenom");
+                String photoUrl = (String) userMap.get("photoUrl");
 
-                // Si nom et prenom existent séparément
-                if (userMap.containsKey("prenom") && userMap.containsKey("nom")) {
-                    nom = userMap.get("prenom") + " " + userMap.get("nom");
+                // Construire le nom complet
+                String nomComplet;
+                if (prenom != null && nom != null) {
+                    nomComplet = prenom + " " + nom;
+                } else if (prenom != null) {
+                    nomComplet = prenom;
+                } else if (nom != null) {
+                    nomComplet = nom;
+                } else {
+                    nomComplet = email;
                 }
 
                 UtilisateurRhDTO rh = new UtilisateurRhDTO(userId, email);
-                rh.setNom(nom);
+                rh.setNom(nomComplet);
+                rh.setPrenom(prenom);
+                rh.setPhotoUrl(photoUrl);
                 return rh;
             }
         } catch (Exception e) {

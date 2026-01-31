@@ -2051,6 +2051,31 @@ function TacheCard({ tache, onClick }: { tache: Tache; onClick?: () => void }) {
       <div className="card-body p-3">
         {/* Ligne principale */}
         <div className="flex items-start gap-3">
+          {/* Avatar expert assigné */}
+          {tache.expertAssigneId ? (
+            <div className="flex-shrink-0 tooltip tooltip-right" data-tip={`${tache.expertPrenom || ''} ${tache.expertNom || ''}`}>
+              {tache.expertPhotoUrl ? (
+                <img
+                  src={`/api/photos/${tache.expertAssigneId}`}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <div className={`w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center font-semibold text-xs ${tache.expertPhotoUrl ? 'hidden' : ''}`}>
+                {tache.expertPrenom?.charAt(0).toUpperCase() || tache.expertNom?.charAt(0).toUpperCase() || '?'}
+                {tache.expertNom?.charAt(0).toUpperCase() || ''}
+              </div>
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-base-300 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs text-base-content/40">?</span>
+            </div>
+          )}
+
           <div className={`badge badge-sm gap-1 flex-shrink-0 ${config?.classe}`}>
             {config?.icone}
             {config?.label}

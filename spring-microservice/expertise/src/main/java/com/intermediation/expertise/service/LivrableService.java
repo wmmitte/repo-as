@@ -25,13 +25,16 @@ public class LivrableService {
     private final LivrableTacheRepository livrableRepository;
     private final TacheProjetRepository tacheRepository;
     private final CritereAcceptationLivrableRepository critereRepository;
+    private final NotificationService notificationService;
 
     public LivrableService(LivrableTacheRepository livrableRepository,
                            TacheProjetRepository tacheRepository,
-                           CritereAcceptationLivrableRepository critereRepository) {
+                           CritereAcceptationLivrableRepository critereRepository,
+                           NotificationService notificationService) {
         this.livrableRepository = livrableRepository;
         this.tacheRepository = tacheRepository;
         this.critereRepository = critereRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -65,6 +68,10 @@ public class LivrableService {
 
         livrable.setDateModification(LocalDateTime.now());
         livrable = livrableRepository.save(livrable);
+
+        // Notifier le propriétaire du projet qu'un livrable a été soumis
+        UUID proprietaireId = livrable.getTache().getProjet().getProprietaireId();
+        notificationService.notifierSoumissionLivrable(proprietaireId, livrable, null);
 
         log.info("Livrable {} soumis avec succès", livrableId);
         return new LivrableTacheDTO(livrable);
@@ -113,9 +120,22 @@ public class LivrableService {
         livrable.setDateModification(LocalDateTime.now());
         livrable = livrableRepository.save(livrable);
 
-        // Si le livrable est accepté, mettre à jour la progression de la tâche
+        // Récupérer l'expert assigné pour la notification
+        UUID expertId = livrable.getTache().getExpertAssigneId();
+
         if (request.getAccepte()) {
+            // Si le livrable est accepté, mettre à jour la progression de la tâche
             mettreAJourProgressionTache(livrable.getTache());
+
+            // Notifier l'expert que le livrable a été validé
+            if (expertId != null) {
+                notificationService.notifierValidationLivrable(expertId, livrable);
+            }
+        } else {
+            // Notifier l'expert que le livrable a été refusé
+            if (expertId != null) {
+                notificationService.notifierRejetLivrable(expertId, livrable);
+            }
         }
 
         log.info("Livrable {} {} par le propriétaire", livrableId, request.getAccepte() ? "accepté" : "refusé");
@@ -143,6 +163,12 @@ public class LivrableService {
         livrable.setValideParId(proprietaireUUID);
         livrable.setDateModification(LocalDateTime.now());
         livrable = livrableRepository.save(livrable);
+
+        // Notifier l'expert que le livrable nécessite une révision
+        UUID expertId = livrable.getTache().getExpertAssigneId();
+        if (expertId != null) {
+            notificationService.notifierRejetLivrable(expertId, livrable);
+        }
 
         log.info("Révision demandée pour le livrable {}", livrableId);
         return new LivrableTacheDTO(livrable);
@@ -269,7 +295,21 @@ public class LivrableService {
         if (totalLivrables > 0) {
             int progression = (int) ((livrablesAcceptes * 100) / totalLivrables);
             tache.setProgression(progression);
+
+            // Si tous les livrables sont acceptés (100%), passer la tâche en TERMINEE
+            if (progression == 100 && tache.getStatut() == TacheProjet.StatutTache.EN_COURS) {
+                tache.setStatut(TacheProjet.StatutTache.TERMINEE);
+                log.info("Tâche {} marquée comme TERMINEE car tous les livrables sont acceptés", tache.getId());
+            }
+
             tacheRepository.save(tache);
+
+            // Recalculer la progression du projet
+            Projet projet = tache.getProjet();
+            if (projet != null) {
+                projet.calculerProgression();
+                log.info("Progression du projet {} mise à jour: {}%", projet.getId(), projet.getProgression());
+            }
         }
     }
 }
