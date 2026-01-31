@@ -11,6 +11,7 @@ import CompetenceDetailPage from '@/pages/CompetenceDetailPage';
 import ProjetsPage from '@/pages/ProjetsPage';
 import CreerProjetPage from '@/pages/CreerProjetPage';
 import ProjetDetailPage from '@/pages/ProjetDetailPage';
+import TacheDetailPage from '@/pages/TacheDetailPage';
 import MesCandidaturesPage from '@/pages/MesCandidaturesPage';
 import MesTachesPage from '@/pages/MesTachesPage';
 import PlusPage from '@/pages/PlusPage';
@@ -138,6 +139,10 @@ export const router = createBrowserRouter([
             <CreerProjetPage />
           </RequireAuth>
         ),
+      },
+      {
+        path: 'projets/:projetId/taches/:tacheId',
+        element: <TacheDetailPage />,
       },
       {
         path: 'projets/:id',

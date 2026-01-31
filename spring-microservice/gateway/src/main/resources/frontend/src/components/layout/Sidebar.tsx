@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Compass, Component, Users, Briefcase, MoreHorizontal, ChevronLeft, ChevronRight, ChevronDown, LogOut, LogIn, FileText, MapPin, Award, Search, Inbox, FolderTree, CheckSquare, Microscope } from 'lucide-react';
+import { Home, Compass, Component, Users, Briefcase, MoreHorizontal, ChevronLeft, ChevronRight, ChevronDown, LogOut, LogIn, FileText, MapPin, Award, Search, Inbox, FolderTree, CheckSquare, Microscope, ListTodo, Send } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import ModalConnexion from '../auth/ModalConnexion';
 import ThemeCustomizer from '../theme/ThemeCustomizer';
@@ -65,6 +65,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     // Mon réseau - Réservé aux Experts uniquement
     ...(canManageNetwork ? [{ icon: Users, label: 'Mon réseau', path: '/reseau' }] : []),
     { icon: Briefcase, label: 'Projets', path: '/projets' },
+    // Mes tâches et candidatures - Réservé aux utilisateurs connectés
+    ...(isAuthenticated ? [
+      { icon: ListTodo, label: 'Mes tâches', path: '/mes-taches', requiresAuth: true },
+      { icon: Send, label: 'Mes candidatures', path: '/mes-candidatures', requiresAuth: true },
+    ] : []),
     { icon: MoreHorizontal, label: 'Plus', path: '/plus' },
   ];
 
@@ -218,8 +223,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           }
           
           // Vérifier si cette page nécessite une authentification
-          const requiresAuth = item.path === '/reseau';
-          
+          const requiresAuth = item.path === '/reseau' || (item as any).requiresAuth === true;
+
           return (
             <Link
               key={item.path}

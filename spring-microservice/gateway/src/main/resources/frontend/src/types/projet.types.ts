@@ -172,6 +172,10 @@ export interface Candidature {
   tacheId?: number;
   tacheNom?: string;
   expertId: string;
+  expertNom?: string;
+  expertPrenom?: string;
+  expertPhotoUrl?: string;
+  expertTitre?: string;
   message?: string;
   tarifPropose?: number;
   delaiProposeJours?: number;

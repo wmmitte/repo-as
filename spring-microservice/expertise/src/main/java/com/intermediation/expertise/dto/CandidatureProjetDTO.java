@@ -16,6 +16,10 @@ public class CandidatureProjetDTO {
     private Long tacheId;
     private String tacheNom;
     private String expertId;
+    private String expertNom;
+    private String expertPrenom;
+    private String expertPhotoUrl;
+    private String expertTitre; // Titre d'expertise
     private String message;
     private BigDecimal tarifPropose;
     private Integer delaiProposeJours;
@@ -96,6 +100,38 @@ public class CandidatureProjetDTO {
 
     public void setExpertId(String expertId) {
         this.expertId = expertId;
+    }
+
+    public String getExpertNom() {
+        return expertNom;
+    }
+
+    public void setExpertNom(String expertNom) {
+        this.expertNom = expertNom;
+    }
+
+    public String getExpertPrenom() {
+        return expertPrenom;
+    }
+
+    public void setExpertPrenom(String expertPrenom) {
+        this.expertPrenom = expertPrenom;
+    }
+
+    public String getExpertPhotoUrl() {
+        return expertPhotoUrl;
+    }
+
+    public void setExpertPhotoUrl(String expertPhotoUrl) {
+        this.expertPhotoUrl = expertPhotoUrl;
+    }
+
+    public String getExpertTitre() {
+        return expertTitre;
+    }
+
+    public void setExpertTitre(String expertTitre) {
+        this.expertTitre = expertTitre;
     }
 
     public String getMessage() {

@@ -5,13 +5,19 @@ import com.intermediation.expertise.model.*;
 import com.intermediation.expertise.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,13 +33,19 @@ public class CandidatureProjetService {
     private final CandidatureProjetRepository candidatureRepository;
     private final ProjetRepository projetRepository;
     private final TacheProjetRepository tacheRepository;
+    private final ExpertiseRepository expertiseRepository;
+
+    @Autowired(required = false)
+    private RestTemplate restTemplate;
 
     public CandidatureProjetService(CandidatureProjetRepository candidatureRepository,
                                     ProjetRepository projetRepository,
-                                    TacheProjetRepository tacheRepository) {
+                                    TacheProjetRepository tacheRepository,
+                                    ExpertiseRepository expertiseRepository) {
         this.candidatureRepository = candidatureRepository;
         this.projetRepository = projetRepository;
         this.tacheRepository = tacheRepository;
+        this.expertiseRepository = expertiseRepository;
     }
 
     /**
@@ -124,11 +136,13 @@ public class CandidatureProjetService {
         switch (action) {
             case "ACCEPTER":
                 candidature.accepter(request.getReponse());
-                // Assigner l'expert à la tâche si c'est une candidature sur une tâche
+                // Assigner l'expert à la tâche si c'est une candidature sur une tâche spécifique
                 if (candidature.getTache() != null) {
                     candidature.getTache().assignerExpert(candidature.getExpertId());
                     tacheRepository.save(candidature.getTache());
                 }
+                // Note: Pour les candidatures sur le projet entier, l'assignation des tâches
+                // est gérée par le frontend qui permet de sélectionner les tâches spécifiques
                 break;
             case "REFUSER":
                 candidature.refuser(request.getReponse());
@@ -220,7 +234,7 @@ public class CandidatureProjetService {
 
         return candidatureRepository.findByProjetIdOrderByDateCreationDesc(projetId)
                 .stream()
-                .map(CandidatureProjetDTO::new)
+                .map(this::convertirEtEnrichir)
                 .collect(Collectors.toList());
     }
 
@@ -268,5 +282,52 @@ public class CandidatureProjetService {
     public long compterMesCandidaturesParStatut(String expertId, String statut) {
         CandidatureProjet.StatutCandidature statutEnum = CandidatureProjet.StatutCandidature.valueOf(statut);
         return candidatureRepository.countByExpertIdAndStatut(UUID.fromString(expertId), statutEnum);
+    }
+
+    /**
+     * Enrichir une candidature avec les infos de l'expert.
+     */
+    private CandidatureProjetDTO enrichirAvecInfosExpert(CandidatureProjetDTO dto) {
+        if (dto.getExpertId() == null) return dto;
+
+        try {
+            // Récupérer l'expertise de l'utilisateur (photoUrl et titre)
+            expertiseRepository.findByUtilisateurId(dto.getExpertId()).ifPresent(expertise -> {
+                dto.setExpertPhotoUrl(expertise.getPhotoUrl());
+                dto.setExpertTitre(expertise.getTitre());
+            });
+
+            // Récupérer nom/prénom depuis le service Auth
+            if (restTemplate != null) {
+                try {
+                    String authServiceUrl = "http://auth/api/utilisateurs/" + dto.getExpertId();
+                    ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                        authServiceUrl,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<Map<String, Object>>() {}
+                    );
+
+                    if (response.getBody() != null) {
+                        Map<String, Object> userMap = response.getBody();
+                        dto.setExpertNom((String) userMap.get("nom"));
+                        dto.setExpertPrenom((String) userMap.get("prenom"));
+                    }
+                } catch (Exception e) {
+                    log.warn("Impossible de récupérer les infos de l'expert {}: {}", dto.getExpertId(), e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Erreur lors de l'enrichissement de la candidature: {}", e.getMessage());
+        }
+
+        return dto;
+    }
+
+    /**
+     * Convertir et enrichir une candidature.
+     */
+    private CandidatureProjetDTO convertirEtEnrichir(CandidatureProjet candidature) {
+        return enrichirAvecInfosExpert(new CandidatureProjetDTO(candidature));
     }
 }

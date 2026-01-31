@@ -98,6 +98,7 @@ com\intermediation\expertise\model\DomaineMetier.class
 com\intermediation\expertise\model\CandidatureProjet$StatutCandidature.class
 com\intermediation\expertise\dto\CreateDemandeReconnaissanceRequest.class
 com\intermediation\expertise\dto\UtilisateurRhDTO.class
+com\intermediation\expertise\service\CandidatureProjetService$1.class
 com\intermediation\expertise\service\ReconnaissanceCompetenceService.class
 com\intermediation\expertise\dto\CreerTacheRequest$CompetenceRequiseRequest.class
 com\intermediation\expertise\model\ExigenceProjet.class
@@ -116,6 +117,7 @@ com\intermediation\expertise\dto\PieceJustificativeDTO.class
 com\intermediation\expertise\dto\CommentaireTacheDTO.class
 com\intermediation\expertise\model\TacheProjet.class
 com\intermediation\expertise\dto\DomaineMetierDTO.class
+com\intermediation\expertise\dto\CritereAcceptationLivrableDTO.class
 com\intermediation\expertise\dto\EvaluationCompetenceDTO.class
 com\intermediation\expertise\dto\CompetenceDTO.class
 com\intermediation\expertise\service\CandidatureProjetService.class
@@ -136,6 +138,7 @@ com\intermediation\expertise\model\PieceJustificative$TypePiece.class
 com\intermediation\expertise\ExpertiseApplication.class
 com\intermediation\expertise\repository\DomaineMetierRepository.class
 com\intermediation\expertise\repository\DomaineCompetenceRepository.class
+com\intermediation\expertise\repository\CritereAcceptationLivrableRepository.class
 com\intermediation\expertise\repository\PieceJustificativeRepository.class
 com\intermediation\expertise\service\TraitementDemandeService.class
 com\intermediation\expertise\dto\DemandeReconnaissanceDTO.class

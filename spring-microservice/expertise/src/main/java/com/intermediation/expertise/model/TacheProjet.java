@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -82,18 +82,18 @@ public class TacheProjet {
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
 
-    // Relations
+    // Relations - Utilisation de Set pour éviter MultipleBagFetchException
     @OneToMany(mappedBy = "tache", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LivrableTache> livrables = new ArrayList<>();
+    private Set<LivrableTache> livrables = new HashSet<>();
 
     @OneToMany(mappedBy = "tache", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TacheCompetenceRequise> competencesRequises = new ArrayList<>();
+    private Set<TacheCompetenceRequise> competencesRequises = new HashSet<>();
 
     @OneToMany(mappedBy = "tache", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CommentaireTache> commentaires = new ArrayList<>();
+    private Set<CommentaireTache> commentaires = new HashSet<>();
 
     @OneToMany(mappedBy = "tache", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CandidatureProjet> candidatures = new ArrayList<>();
+    private Set<CandidatureProjet> candidatures = new HashSet<>();
 
     // Enums
     public enum StatutTache {
@@ -319,35 +319,35 @@ public class TacheProjet {
         this.dateModification = dateModification;
     }
 
-    public List<LivrableTache> getLivrables() {
+    public Set<LivrableTache> getLivrables() {
         return livrables;
     }
 
-    public void setLivrables(List<LivrableTache> livrables) {
+    public void setLivrables(Set<LivrableTache> livrables) {
         this.livrables = livrables;
     }
 
-    public List<TacheCompetenceRequise> getCompetencesRequises() {
+    public Set<TacheCompetenceRequise> getCompetencesRequises() {
         return competencesRequises;
     }
 
-    public void setCompetencesRequises(List<TacheCompetenceRequise> competencesRequises) {
+    public void setCompetencesRequises(Set<TacheCompetenceRequise> competencesRequises) {
         this.competencesRequises = competencesRequises;
     }
 
-    public List<CommentaireTache> getCommentaires() {
+    public Set<CommentaireTache> getCommentaires() {
         return commentaires;
     }
 
-    public void setCommentaires(List<CommentaireTache> commentaires) {
+    public void setCommentaires(Set<CommentaireTache> commentaires) {
         this.commentaires = commentaires;
     }
 
-    public List<CandidatureProjet> getCandidatures() {
+    public Set<CandidatureProjet> getCandidatures() {
         return candidatures;
     }
 
-    public void setCandidatures(List<CandidatureProjet> candidatures) {
+    public void setCandidatures(Set<CandidatureProjet> candidatures) {
         this.candidatures = candidatures;
     }
 }

@@ -10,7 +10,6 @@ import {
   Play,
   Pause,
   Package,
-  ArrowRight,
   Calendar,
   FolderOpen
 } from 'lucide-react';
@@ -305,11 +304,12 @@ export default function MesTachesPage() {
                         )}
 
                         <button
-                          onClick={() => navigate(`/projets/${tache.projetId}`)}
-                          className="btn btn-ghost btn-xs btn-circle"
-                          title="Voir le projet"
+                          onClick={() => navigate(`/projets/${tache.projetId}/taches/${tache.id}`)}
+                          className="btn btn-ghost btn-xs gap-1"
+                          title="Voir les détails"
                         >
-                          <ArrowRight size={14} />
+                          <Eye size={14} />
+                          <span className="hidden sm:inline">Détails</span>
                         </button>
                       </div>
                     </div>

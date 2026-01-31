@@ -13,6 +13,11 @@ On doit pouvoir créer une tache indépendamment d'une étape, et avec deux tach
 On doit lui permettre de regrouper ou d'organiser des les projets, les étapes comme il l'entend.. 
 
 
+
+il faut faire en sorte que les acceptations et les validations soit des echanges de messages dans le système
+
+
+
 Donc voici décrit globalement la gestion des projets sur la plateforme. Il y a déjà une petite conception qui avait été faite mais qui doit être enrichie pour répondre complétement au besoin. voici les pages existantes que tu dois analyser et améliorer : 
 - http://localhost:8090/projets : Liste des projets
 - http://localhost:8090/projets/projet_2 : détails d'un projet avec les onglets permettant de suivre l'exécution, …

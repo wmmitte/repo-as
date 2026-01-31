@@ -5,6 +5,7 @@ import com.intermediation.expertise.service.LivrableService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -112,5 +113,43 @@ public class LivrableController {
             count = livrableService.listerLivrablesTache(tacheId).size();
         }
         return ResponseEntity.ok(Map.of("count", count));
+    }
+
+    /**
+     * Ajouter un critère d'acceptation à un livrable.
+     */
+    @PostMapping("/{id}/criteres")
+    public ResponseEntity<CritereAcceptationLivrableDTO> ajouterCritere(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") String utilisateurId,
+            @RequestBody Map<String, String> body) {
+        String description = body.get("description");
+        log.info("POST /api/livrables/{}/criteres - Par {}", id, utilisateurId);
+        CritereAcceptationLivrableDTO critere = livrableService.ajouterCritere(id, utilisateurId, description);
+        return ResponseEntity.status(HttpStatus.CREATED).body(critere);
+    }
+
+    /**
+     * Supprimer un critère d'acceptation.
+     */
+    @DeleteMapping("/criteres/{critereId}")
+    public ResponseEntity<Void> supprimerCritere(
+            @PathVariable Long critereId,
+            @RequestHeader("X-User-Id") String utilisateurId) {
+        log.info("DELETE /api/livrables/criteres/{} - Par {}", critereId, utilisateurId);
+        livrableService.supprimerCritere(critereId, utilisateurId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Supprimer un livrable et tous ses critères.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> supprimerLivrable(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") String utilisateurId) {
+        log.info("DELETE /api/livrables/{} - Par {}", id, utilisateurId);
+        livrableService.supprimerLivrable(id, utilisateurId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -2,8 +2,8 @@ package com.intermediation.expertise.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -66,10 +66,10 @@ public class LivrableTache {
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
 
-    // Relations
+    // Relations - Utilisation de Set pour éviter MultipleBagFetchException
     @OneToMany(mappedBy = "livrable", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("ordre ASC")
-    private List<CritereAcceptationLivrable> criteres = new ArrayList<>();
+    private Set<CritereAcceptationLivrable> criteres = new HashSet<>();
 
     // Enum
     public enum StatutLivrable {
@@ -239,11 +239,11 @@ public class LivrableTache {
         this.dateModification = dateModification;
     }
 
-    public List<CritereAcceptationLivrable> getCriteres() {
+    public Set<CritereAcceptationLivrable> getCriteres() {
         return criteres;
     }
 
-    public void setCriteres(List<CritereAcceptationLivrable> criteres) {
+    public void setCriteres(Set<CritereAcceptationLivrable> criteres) {
         this.criteres = criteres;
     }
 }

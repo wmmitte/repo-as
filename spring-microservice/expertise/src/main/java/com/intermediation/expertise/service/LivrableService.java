@@ -24,11 +24,14 @@ public class LivrableService {
 
     private final LivrableTacheRepository livrableRepository;
     private final TacheProjetRepository tacheRepository;
+    private final CritereAcceptationLivrableRepository critereRepository;
 
     public LivrableService(LivrableTacheRepository livrableRepository,
-                           TacheProjetRepository tacheRepository) {
+                           TacheProjetRepository tacheRepository,
+                           CritereAcceptationLivrableRepository critereRepository) {
         this.livrableRepository = livrableRepository;
         this.tacheRepository = tacheRepository;
+        this.critereRepository = critereRepository;
     }
 
     /**
@@ -184,6 +187,76 @@ public class LivrableService {
     public long compterLivrablesParStatut(Long tacheId, String statut) {
         LivrableTache.StatutLivrable statutEnum = LivrableTache.StatutLivrable.valueOf(statut);
         return livrableRepository.countByTacheIdAndStatut(tacheId, statutEnum);
+    }
+
+    /**
+     * Ajouter un critère d'acceptation à un livrable.
+     */
+    public CritereAcceptationLivrableDTO ajouterCritere(Long livrableId, String proprietaireId, String description) {
+        log.info("Ajout d'un critère au livrable {} par {}", livrableId, proprietaireId);
+
+        LivrableTache livrable = livrableRepository.findByIdAvecCriteres(livrableId)
+                .orElseThrow(() -> new RuntimeException("Livrable non trouvé: " + livrableId));
+
+        // Vérifier que l'utilisateur est le propriétaire du projet
+        UUID proprietaireUUID = UUID.fromString(proprietaireId);
+        if (!livrable.getTache().getProjet().getProprietaireId().equals(proprietaireUUID)) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à modifier ce livrable");
+        }
+
+        // Déterminer l'ordre du nouveau critère
+        Integer maxOrdre = critereRepository.findMaxOrdreByLivrableId(livrableId);
+        int nouvelOrdre = maxOrdre != null ? maxOrdre + 1 : 0;
+
+        CritereAcceptationLivrable critere = new CritereAcceptationLivrable(livrable, description);
+        critere.setOrdre(nouvelOrdre);
+        critere = critereRepository.save(critere);
+
+        log.info("Critère {} ajouté au livrable {}", critere.getId(), livrableId);
+        return new CritereAcceptationLivrableDTO(critere);
+    }
+
+    /**
+     * Supprimer un critère d'acceptation.
+     */
+    public void supprimerCritere(Long critereId, String proprietaireId) {
+        log.info("Suppression du critère {} par {}", critereId, proprietaireId);
+
+        CritereAcceptationLivrable critere = critereRepository.findByIdAvecProjet(critereId)
+                .orElseThrow(() -> new RuntimeException("Critère non trouvé: " + critereId));
+
+        // Vérifier que l'utilisateur est le propriétaire du projet
+        UUID proprietaireUUID = UUID.fromString(proprietaireId);
+        if (!critere.getLivrable().getTache().getProjet().getProprietaireId().equals(proprietaireUUID)) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à supprimer ce critère");
+        }
+
+        critereRepository.delete(critere);
+        log.info("Critère {} supprimé avec succès", critereId);
+    }
+
+    /**
+     * Supprimer un livrable et tous ses critères.
+     */
+    public void supprimerLivrable(Long livrableId, String proprietaireId) {
+        log.info("Suppression du livrable {} par {}", livrableId, proprietaireId);
+
+        LivrableTache livrable = livrableRepository.findByIdAvecCriteres(livrableId)
+                .orElseThrow(() -> new RuntimeException("Livrable non trouvé: " + livrableId));
+
+        // Vérifier que l'utilisateur est le propriétaire du projet
+        UUID proprietaireUUID = UUID.fromString(proprietaireId);
+        if (!livrable.getTache().getProjet().getProprietaireId().equals(proprietaireUUID)) {
+            throw new RuntimeException("Vous n'êtes pas autorisé à supprimer ce livrable");
+        }
+
+        // Vérifier que le livrable n'est pas déjà accepté
+        if (livrable.getStatut() == LivrableTache.StatutLivrable.ACCEPTE) {
+            throw new IllegalStateException("Impossible de supprimer un livrable accepté");
+        }
+
+        livrableRepository.delete(livrable);
+        log.info("Livrable {} supprimé avec succès", livrableId);
     }
 
     // Méthodes privées

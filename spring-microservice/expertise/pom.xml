@@ -20,6 +20,14 @@
     </properties>
 
     <dependencies>
+        <!-- Spring Boot DevTools pour hot reload -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Zeebe pour l'orchestration BPMN -->
         <dependency>
             <groupId>io.camunda</groupId>
