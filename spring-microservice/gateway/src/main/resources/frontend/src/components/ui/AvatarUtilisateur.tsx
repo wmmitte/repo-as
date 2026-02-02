@@ -13,11 +13,11 @@ interface AvatarUtilisateurProps {
 }
 
 const SIZES = {
-  xs: 'w-6 h-6 text-xs',
-  sm: 'w-8 h-8 text-sm',
-  md: 'w-10 h-10 text-sm',
-  lg: 'w-12 h-12 text-base',
-  xl: 'w-16 h-16 text-lg',
+  xs: { container: 'w-6 h-6', text: 'text-[10px]' },
+  sm: { container: 'w-8 h-8', text: 'text-xs' },
+  md: { container: 'w-10 h-10', text: 'text-sm' },
+  lg: { container: 'w-12 h-12', text: 'text-sm' },
+  xl: { container: 'w-16 h-16', text: 'text-lg' },
 };
 
 const INDICATEUR_COLORS = {
@@ -29,7 +29,8 @@ const INDICATEUR_COLORS = {
 
 /**
  * Composant Avatar réutilisable
- * Affiche la photo de l'utilisateur ou ses initiales avec un dégradé coloré
+ * Affiche la photo de l'utilisateur par-dessus ses initiales (approche en couches)
+ * Les initiales sont toujours visibles en arrière-plan pour un affichage immédiat
  */
 export default function AvatarUtilisateur({
   utilisateurId,
@@ -85,32 +86,41 @@ export default function AvatarUtilisateur({
   };
 
   const urlPhoto = getPhotoUrl();
-  const afficherPhoto = urlPhoto && !photoError;
-
-  const baseClasses = `
-    ${SIZES[size]}
-    rounded-full
-    flex-shrink-0
-    relative
-    ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all' : ''}
-    ${className}
-  `;
+  const doitTenterChargerPhoto = urlPhoto && !photoError;
+  const sizeConfig = SIZES[size];
 
   return (
-    <div className={baseClasses} onClick={onClick}>
-      {afficherPhoto ? (
+    <div
+      className={`
+        ${sizeConfig.container}
+        rounded-full
+        flex-shrink-0
+        relative
+        ${onClick ? 'cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all' : ''}
+        ${className}
+      `}
+      onClick={onClick}
+    >
+      {/* Couche 1: Initiales (toujours visibles en arrière-plan) */}
+      <div
+        className={`
+          w-full h-full rounded-full
+          bg-gradient-to-br ${genererCouleurFond()}
+          flex items-center justify-center
+          text-white font-semibold ${sizeConfig.text}
+        `}
+      >
+        {genererInitiales()}
+      </div>
+
+      {/* Couche 2: Photo par-dessus (si disponible et chargée avec succès) */}
+      {doitTenterChargerPhoto && (
         <img
           src={urlPhoto}
           alt={`${prenom} ${nom}`}
-          className="w-full h-full rounded-full object-cover"
+          className="absolute inset-0 w-full h-full rounded-full object-cover"
           onError={() => setPhotoError(true)}
         />
-      ) : (
-        <div
-          className={`w-full h-full rounded-full bg-gradient-to-br ${genererCouleurFond()} flex items-center justify-center text-white font-semibold`}
-        >
-          {genererInitiales()}
-        </div>
       )}
 
       {/* Indicateur de statut */}
