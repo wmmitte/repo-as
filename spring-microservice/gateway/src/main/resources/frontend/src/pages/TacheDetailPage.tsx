@@ -699,22 +699,25 @@ export default function TacheDetailPage() {
             <div className="card-body p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {/* Avatar expert */}
-                  {tache.expertPhotoUrl ? (
+                  {/* Avatar expert avec photo ou initiales */}
+                  <div className="relative flex-shrink-0 w-12 h-12">
+                    {/* Initiales en arrière-plan (toujours visibles) */}
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">
+                        {tache.expertPrenom && tache.expertNom
+                          ? `${tache.expertPrenom.charAt(0)}${tache.expertNom.charAt(0)}`.toUpperCase()
+                          : tache.expertNom
+                            ? tache.expertNom.substring(0, 2).toUpperCase()
+                            : '?'}
+                      </span>
+                    </div>
+                    {/* Photo par-dessus si elle existe */}
                     <img
-                      src={`/api/photos/${tache.expertAssigneId}`}
+                      src={`/api/profil/public/${tache.expertAssigneId}/photo`}
                       alt=""
-                      className="w-12 h-12 rounded-full object-cover"
-                      onError={(e) => {
-                        // Fallback aux initiales si l'image ne charge pas
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                      }}
+                      className="absolute inset-0 w-12 h-12 rounded-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
-                  ) : null}
-                  <div className={`w-12 h-12 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold text-lg ${tache.expertPhotoUrl ? 'hidden' : ''}`}>
-                    {tache.expertPrenom?.charAt(0).toUpperCase() || tache.expertNom?.charAt(0).toUpperCase() || '?'}
-                    {tache.expertNom?.charAt(0).toUpperCase() || ''}
                   </div>
                   <div>
                     <h2 className="font-semibold flex items-center gap-2">
@@ -729,7 +732,7 @@ export default function TacheDetailPage() {
                     </p>
                   </div>
                 </div>
-                {estProprietaire && (
+                {estProprietaire && tache.statut !== 'TERMINEE' && (
                   <button
                     onClick={() => setAfficherModalRetrait(true)}
                     className="btn btn-error btn-sm btn-outline gap-1"

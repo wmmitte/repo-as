@@ -30,6 +30,7 @@ public class ProjetResumeDTO {
     private Integer nombreTachesDisponibles;
     private Integer nombreCandidatures;
     private Integer nombreEtapes;
+    private Integer nombreLivrables;
 
     // Constructeurs
     public ProjetResumeDTO() {}
@@ -55,6 +56,10 @@ public class ProjetResumeDTO {
                 (int) projet.getTaches().stream().filter(t -> t.estDisponible()).count() : 0;
         this.nombreCandidatures = projet.getCandidatures() != null ? projet.getCandidatures().size() : 0;
         this.nombreEtapes = projet.getEtapes() != null ? projet.getEtapes().size() : 0;
+        this.nombreLivrables = projet.getTaches() != null ?
+                projet.getTaches().stream()
+                        .mapToInt(t -> t.getLivrables() != null ? t.getLivrables().size() : 0)
+                        .sum() : 0;
     }
 
     // Getters et Setters
@@ -192,5 +197,13 @@ public class ProjetResumeDTO {
 
     public void setNombreEtapes(Integer nombreEtapes) {
         this.nombreEtapes = nombreEtapes;
+    }
+
+    public Integer getNombreLivrables() {
+        return nombreLivrables;
+    }
+
+    public void setNombreLivrables(Integer nombreLivrables) {
+        this.nombreLivrables = nombreLivrables;
     }
 }

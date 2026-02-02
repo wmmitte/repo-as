@@ -248,23 +248,25 @@ export default function ReseauPage() {
                       <div className="p-4">
                         {/* En-tête avec avatar et infos */}
                         <div className="flex gap-3">
-                          {/* Avatar */}
+                          {/* Avatar avec photo ou initiales */}
                           <Link
                             to={`/expertise-profil/${expert.utilisateurId}`}
                             className="flex-shrink-0"
                           >
-                            <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
-                              {expert.photoUrl ? (
-                                <img
-                                  src={expert.photoUrl}
-                                  alt={expert.titre}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg">
-                                  {expert.titre.charAt(0).toUpperCase()}
-                                </div>
-                              )}
+                            <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                              {/* Initiales en arrière-plan (toujours visibles) */}
+                              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                                <span className="text-white font-bold text-sm">
+                                  {expert.titre.substring(0, 2).toUpperCase()}
+                                </span>
+                              </div>
+                              {/* Photo par-dessus si elle existe */}
+                              <img
+                                src={`/api/profil/public/${expert.utilisateurId}/photo`}
+                                alt={expert.titre}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
                             </div>
                           </Link>
 

@@ -166,6 +166,7 @@ export interface ProjetResume {
   nombreTachesDisponibles: number;
   nombreCandidatures: number;
   nombreEtapes: number;
+  nombreLivrables: number;
 }
 
 export interface Candidature {

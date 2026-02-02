@@ -12,6 +12,29 @@ export default function ModalPartageExpert({ expert, isOpen, onClose }: ModalPar
   const [lienCopie, setLienCopie] = useState(false);
   const [emailDestination, setEmailDestination] = useState('');
   const [messagePersonnalise, setMessagePersonnalise] = useState('');
+  const [photoError, setPhotoError] = useState(false);
+  const [photoLoaded, setPhotoLoaded] = useState(false);
+
+  // Générer les initiales pour l'avatar par défaut
+  const getInitiales = () => {
+    if (expert.prenom && expert.prenom.trim() !== '') {
+      return `${expert.prenom.charAt(0)}${expert.nom.charAt(0)}`.toUpperCase();
+    }
+    return expert.nom.substring(0, 2).toUpperCase();
+  };
+
+  // URL de la photo via l'API
+  const photoApiUrl = `/api/profil/public/${expert.id}/photo`;
+
+  // Vérifier si l'image est valide (dimensions > 0)
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      setPhotoLoaded(true);
+    } else {
+      setPhotoError(true);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -76,11 +99,23 @@ export default function ModalPartageExpert({ expert, isOpen, onClose }: ModalPar
         <div className="p-4 border-b border-slate-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img
-                src={expert.photoUrl}
-                alt={`${expert.prenom} ${expert.nom}`}
-                className="w-10 h-10 rounded-full object-cover"
-              />
+              {/* Photo ou initiales */}
+              <div className="relative flex-shrink-0 w-10 h-10">
+                {/* Initiales en arrière-plan */}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">{getInitiales()}</span>
+                </div>
+                {/* Image par-dessus si elle existe */}
+                {!photoError && (
+                  <img
+                    src={photoApiUrl}
+                    alt={`${expert.prenom} ${expert.nom}`}
+                    className={`absolute inset-0 w-10 h-10 rounded-full object-cover transition-opacity duration-200 ${photoLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={handleImageLoad}
+                    onError={() => setPhotoError(true)}
+                  />
+                )}
+              </div>
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm">Partager le profil</h3>
                 <p className="text-xs text-gray-600">{expert.prenom} {expert.nom}</p>

@@ -51,27 +51,27 @@ import ModalContact from '@/components/contact/ModalContact';
 
 const STATUTS_PROJET: Record<StatutProjet, { label: string; classe: string }> = {
   BROUILLON: { label: 'Brouillon', classe: 'badge-ghost' },
-  PUBLIE: { label: 'Publié', classe: 'badge-info' },
+  PUBLIE: { label: 'Publié', classe: 'badge-info text-white' },
   EN_COURS: { label: 'En cours', classe: 'badge-warning' },
   EN_PAUSE: { label: 'En pause', classe: 'badge-neutral' },
-  TERMINE: { label: 'Terminé', classe: 'badge-success' },
-  ANNULE: { label: 'Annulé', classe: 'badge-error' },
+  TERMINE: { label: 'Terminé', classe: 'badge-success text-white' },
+  ANNULE: { label: 'Annulé', classe: 'badge-error text-white' },
 };
 
 const STATUTS_TACHE: Record<StatutTache, { label: string; classe: string; icone: React.ReactNode }> = {
   A_FAIRE: { label: 'À faire', classe: 'badge-ghost', icone: <Clock size={12} /> },
   EN_COURS: { label: 'En cours', classe: 'badge-warning', icone: <Clock size={12} /> },
-  EN_REVUE: { label: 'En revue', classe: 'badge-info', icone: <Eye size={12} /> },
-  TERMINEE: { label: 'Terminée', classe: 'badge-success', icone: <CheckCircle size={12} /> },
-  BLOQUEE: { label: 'Bloquée', classe: 'badge-error', icone: <AlertCircle size={12} /> },
+  EN_REVUE: { label: 'En revue', classe: 'badge-info text-white', icone: <Eye size={12} /> },
+  TERMINEE: { label: 'Terminée', classe: 'badge-success text-white', icone: <CheckCircle size={12} /> },
+  BLOQUEE: { label: 'Bloquée', classe: 'badge-error text-white', icone: <AlertCircle size={12} /> },
   ANNULEE: { label: 'Annulée', classe: 'badge-neutral', icone: <Trash2 size={12} /> },
 };
 
 const STATUTS_CANDIDATURE: Record<StatutCandidature, { label: string; classe: string }> = {
   EN_ATTENTE: { label: 'En attente', classe: 'badge-warning' },
-  EN_DISCUSSION: { label: 'En discussion', classe: 'badge-info' },
-  ACCEPTEE: { label: 'Acceptée', classe: 'badge-success' },
-  REFUSEE: { label: 'Refusée', classe: 'badge-error' },
+  EN_DISCUSSION: { label: 'En discussion', classe: 'badge-info text-white' },
+  ACCEPTEE: { label: 'Acceptée', classe: 'badge-success text-white' },
+  REFUSEE: { label: 'Refusée', classe: 'badge-error text-white' },
   RETIREE: { label: 'Retirée', classe: 'badge-ghost' },
 };
 
@@ -140,6 +140,7 @@ export default function ProjetDetailPage() {
   // Modal sélection tâches pour assignation
   const [modalSelectionTachesOuverte, setModalSelectionTachesOuverte] = useState(false);
   const [candidatureEnCoursAcceptation, setCandidatureEnCoursAcceptation] = useState<Candidature | null>(null);
+  const [modeAssignationDirecte, setModeAssignationDirecte] = useState(false);
 
   // Modal contact pour discussion avec l'expert
   const [modalContactOuvert, setModalContactOuvert] = useState(false);
@@ -467,14 +468,16 @@ export default function ProjetDetailPage() {
     setCandidaturePourContact(null);
   };
 
-  // Confirmer l'acceptation avec les tâches sélectionnées
+  // Confirmer l'acceptation avec les tâches sélectionnées (ou assignation directe)
   const confirmerAcceptationAvecTaches = async (tachesIds: number[]) => {
     if (!candidatureEnCoursAcceptation) return;
 
     setEnregistrement(true);
     try {
-      // D'abord accepter la candidature
-      await candidatureService.repondreCandidature(candidatureEnCoursAcceptation.id, { action: 'ACCEPTER' });
+      // Si ce n'est pas une assignation directe, d'abord accepter la candidature
+      if (!modeAssignationDirecte) {
+        await candidatureService.repondreCandidature(candidatureEnCoursAcceptation.id, { action: 'ACCEPTER' });
+      }
 
       // Puis assigner l'expert aux tâches sélectionnées
       for (const tacheId of tachesIds) {
@@ -484,16 +487,24 @@ export default function ProjetDetailPage() {
       // Fermer le modal et recharger
       setModalSelectionTachesOuverte(false);
       setCandidatureEnCoursAcceptation(null);
+      setModeAssignationDirecte(false);
 
       // Recharger les données
       const candidaturesData = await candidatureService.listerCandidaturesProjet(parseInt(id!));
       setCandidatures(candidaturesData);
       await chargerProjet();
     } catch (error) {
-      console.error('Erreur acceptation candidature:', error);
+      console.error('Erreur acceptation/assignation:', error);
     } finally {
       setEnregistrement(false);
     }
+  };
+
+  // Ouvrir le modal pour assigner des tâches à un expert déjà accepté
+  const ouvrirModalAssignationTaches = (candidature: Candidature) => {
+    setCandidatureEnCoursAcceptation(candidature);
+    setModeAssignationDirecte(true);
+    setModalSelectionTachesOuverte(true);
   };
 
   // Assigner un expert à toutes les tâches disponibles du projet
@@ -507,8 +518,8 @@ export default function ProjetDetailPage() {
         ...(projet.etapes?.flatMap(e => e.taches || []) || [])
       ];
 
-      // Assigner l'expert aux tâches disponibles (sans expert assigné)
-      const tachesDisponibles = toutesLesTaches.filter(t => !t.expertAssigneId && t.statut === 'A_FAIRE');
+      // Assigner l'expert aux tâches disponibles (non terminées et sans expert assigné)
+      const tachesDisponibles = toutesLesTaches.filter(t => !t.expertAssigneId && t.statut !== 'TERMINEE');
 
       for (const tache of tachesDisponibles) {
         await tacheService.assignerExpert(tache.id, expertId);
@@ -698,25 +709,28 @@ export default function ProjetDetailPage() {
 
               {/* Progression */}
               <div className="card bg-base-100 shadow-sm">
-                <div className="card-body p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold">Progression</h3>
-                    <span className="text-xl font-bold text-primary">{projet.progression}%</span>
+                <div className="card-body p-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className="font-semibold text-sm">Progression</h3>
+                    <span className="text-base font-bold text-primary">{projet.progression}%</span>
                   </div>
-                  <progress className="progress progress-primary" value={projet.progression} max="100" />
+                  <progress className="progress progress-primary h-2" value={projet.progression} max="100" />
 
-                  <div className="grid grid-cols-3 gap-4 mt-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold">{statsProjet.tachesTerminees}</div>
-                      <div className="text-xs text-base-content/60">Terminées</div>
+                  <div className="flex justify-between items-center mt-2 text-center">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle size={14} className="text-success" />
+                      <span className="text-sm font-medium">{statsProjet.tachesTerminees}</span>
+                      <span className="text-xs text-base-content/60">terminées</span>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-warning">{statsProjet.tachesEnCours}</div>
-                      <div className="text-xs text-base-content/60">En cours</div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={14} className="text-warning" />
+                      <span className="text-sm font-medium">{statsProjet.tachesEnCours}</span>
+                      <span className="text-xs text-base-content/60">en cours</span>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold">{statsProjet.totalTaches - statsProjet.tachesTerminees - statsProjet.tachesEnCours}</div>
-                      <div className="text-xs text-base-content/60">À faire</div>
+                    <div className="flex items-center gap-1.5">
+                      <ListTodo size={14} className="text-base-content/40" />
+                      <span className="text-sm font-medium">{statsProjet.totalTaches - statsProjet.tachesTerminees - statsProjet.tachesEnCours}</span>
+                      <span className="text-xs text-base-content/60">à faire</span>
                     </div>
                   </div>
                 </div>
@@ -934,7 +948,16 @@ export default function ProjetDetailPage() {
             )}
 
             {/* Étapes avec tâches */}
-            {projet.etapes.map((etape) => (
+            {projet.etapes.map((etape) => {
+              // Calculer les stats de l'étape
+              const totalTaches = etape.taches.length;
+              const tachesTerminees = etape.taches.filter(t => t.statut === 'TERMINEE').length;
+              const tachesEnCours = etape.taches.filter(t => t.statut === 'EN_COURS').length;
+              const tachesAFaire = etape.taches.filter(t => t.statut === 'A_FAIRE').length;
+              // Calculer le taux de progression basé sur les tâches terminées
+              const tauxProgression = totalTaches > 0 ? Math.round((tachesTerminees / totalTaches) * 100) : 0;
+
+              return (
               <div key={etape.id} className="card bg-base-100 shadow-sm">
                 <div
                   className="card-body p-4 cursor-pointer"
@@ -948,16 +971,38 @@ export default function ProjetDetailPage() {
                         <ChevronRight size={18} />
                       )}
                       <h3 className="font-semibold">{etape.nom}</h3>
-                      <span className="badge badge-sm">{etape.taches.length} tâches</span>
+                      <span className="badge badge-sm badge-ghost">({totalTaches})</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-base-content/60">{etape.progression}%</span>
+                      <span className="text-sm font-medium text-primary">{tauxProgression}%</span>
                       <progress
-                        className="progress progress-primary w-20 h-2"
-                        value={etape.progression}
+                        className="progress progress-primary w-24 h-2"
+                        value={tauxProgression}
                         max="100"
                       />
                     </div>
+                  </div>
+
+                  {/* Résumé statuts des tâches */}
+                  <div className="flex items-center gap-2 ml-6 mt-2">
+                    {tachesTerminees > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-success">
+                        <CheckCircle size={12} />
+                        {tachesTerminees} terminée{tachesTerminees > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {tachesEnCours > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-warning">
+                        <Clock size={12} />
+                        {tachesEnCours} en cours
+                      </span>
+                    )}
+                    {tachesAFaire > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-base-content/50">
+                        <ListTodo size={12} />
+                        {tachesAFaire} à faire
+                      </span>
+                    )}
                   </div>
 
                   {etape.description && (
@@ -991,7 +1036,8 @@ export default function ProjetDetailPage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
 
             {/* État vide */}
             {projet.etapes.length === 0 && projet.tachesIndependantes.length === 0 && (
@@ -1045,31 +1091,42 @@ export default function ProjetDetailPage() {
                   <div key={candidature.id} className="card bg-base-100 shadow-sm">
                     <div className="card-body p-4">
                       <div className="flex items-start gap-3">
-                        {/* Photo de l'expert */}
-                        <div className="avatar">
-                          <div className="w-12 h-12 rounded-full bg-base-300">
-                            {candidature.expertPhotoUrl ? (
-                              <img src={candidature.expertPhotoUrl} alt="Expert" />
-                            ) : (
-                              <div className="flex items-center justify-center w-full h-full text-lg font-bold text-base-content/50">
-                                {candidature.expertPrenom?.charAt(0) || candidature.expertNom?.charAt(0) || '?'}
-                              </div>
-                            )}
+                        {/* Photo ou initiales de l'expert */}
+                        <div className="relative flex-shrink-0 w-12 h-12">
+                          {/* Initiales en arrière-plan */}
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                              {candidature.expertPrenom && candidature.expertNom
+                                ? `${candidature.expertPrenom.charAt(0)}${candidature.expertNom.charAt(0)}`.toUpperCase()
+                                : candidature.expertNom
+                                  ? candidature.expertNom.substring(0, 2).toUpperCase()
+                                  : '?'}
+                            </span>
                           </div>
+                          {/* Image par-dessus si elle existe */}
+                          <img
+                            src={`/api/profil/public/${candidature.expertId}/photo`}
+                            alt="Expert"
+                            className="absolute inset-0 w-12 h-12 rounded-full object-cover"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
                         </div>
 
                         {/* Infos expert */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <div className="font-semibold">
+                              <div
+                                className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                                onClick={() => navigate(`/expertise-profil/${candidature.expertId}`)}
+                              >
                                 {candidature.expertPrenom && candidature.expertNom
                                   ? `${candidature.expertPrenom} ${candidature.expertNom}`
                                   : `Expert #${candidature.expertId.slice(0, 8)}`
                                 }
                               </div>
                               {candidature.expertTitre && (
-                                <div className="text-xs text-base-content/60">{candidature.expertTitre}</div>
+                                <div className="text-xs text-base-content/60 line-clamp-1">{candidature.expertTitre}</div>
                               )}
                               {candidature.tacheNom && (
                                 <div className="text-xs text-primary mt-1">
@@ -1109,14 +1166,14 @@ export default function ProjetDetailPage() {
                           <button
                             onClick={() => repondreCandidature(candidature.id, 'ACCEPTER')}
                             disabled={enregistrement}
-                            className="btn btn-success btn-xs flex-1"
+                            className="btn btn-success btn-xs flex-1 text-white"
                           >
                             {enregistrement ? <span className="loading loading-spinner loading-xs"></span> : 'Accepter'}
                           </button>
                           <button
                             onClick={() => repondreCandidature(candidature.id, 'EN_DISCUSSION')}
                             disabled={enregistrement}
-                            className="btn btn-info btn-xs flex-1 gap-1"
+                            className="btn btn-info btn-xs flex-1 gap-1 text-white"
                           >
                             <Mail size={12} />
                             Contacter
@@ -1135,7 +1192,7 @@ export default function ProjetDetailPage() {
                           <button
                             onClick={() => repondreCandidature(candidature.id, 'ACCEPTER')}
                             disabled={enregistrement}
-                            className="btn btn-success btn-xs flex-1"
+                            className="btn btn-success btn-xs flex-1 text-white"
                           >
                             Accepter
                           </button>
@@ -1154,22 +1211,30 @@ export default function ProjetDetailPage() {
                           ...(projet.tachesIndependantes || []),
                           ...(projet.etapes?.flatMap(e => e.taches || []) || [])
                         ];
-                        const tachesNonAssignees = toutesLesTaches.filter(t => !t.expertAssigneId && t.statut === 'A_FAIRE');
+                        const tachesNonAssignees = toutesLesTaches.filter(t => !t.expertAssigneId && t.statut !== 'TERMINEE');
                         return tachesNonAssignees.length > 0 ? (
-                          <div className="mt-3">
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              onClick={() => ouvrirModalAssignationTaches(candidature)}
+                              disabled={enregistrement}
+                              className="btn btn-primary btn-xs flex-1 gap-1"
+                            >
+                              <ListTodo size={12} />
+                              Choisir ({tachesNonAssignees.length})
+                            </button>
                             <button
                               onClick={() => assignerExpertAuxTaches(candidature.expertId)}
                               disabled={enregistrement}
-                              className="btn btn-primary btn-xs w-full gap-1"
+                              className="btn btn-success btn-xs flex-1 gap-1 text-white"
                             >
                               <Users size={12} />
-                              Assigner aux {tachesNonAssignees.length} tâche(s) disponible(s)
+                              Tout assigner
                             </button>
                           </div>
                         ) : (
                           <div className="mt-3 text-xs text-success flex items-center gap-1">
                             <CheckCircle size={12} />
-                            Déjà assigné aux tâches
+                            Toutes les tâches sont assignées
                           </div>
                         );
                       })()}
@@ -1879,96 +1944,87 @@ export default function ProjetDetailPage() {
       {/* Modal Candidature */}
       {modalCandidatureOuverte && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-md">
+          <div className="modal-box max-w-md p-4">
             <button
               onClick={() => setModalCandidatureOuverte(false)}
               className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
 
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <Send size={20} />
+            <h3 className="font-bold text-base mb-3 flex items-center gap-2">
+              <Send size={18} />
               Candidater
               {tacheIdCandidature && (
                 <span className="badge badge-ghost text-xs">pour une tâche</span>
               )}
             </h3>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Message de motivation</span>
+                <label className="label py-1">
+                  <span className="label-text text-sm">Message de motivation</span>
                 </label>
                 <textarea
-                  placeholder="Présentez-vous et expliquez pourquoi vous êtes le bon expert pour ce projet..."
-                  className="textarea textarea-bordered w-full h-32"
+                  placeholder="Présentez-vous et expliquez pourquoi vous êtes le bon expert..."
+                  className="textarea textarea-bordered textarea-sm w-full h-20"
                   value={candidatureForm.message}
                   onChange={(e) => setCandidatureForm({ ...candidatureForm, message: e.target.value })}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Tarif proposé (FCFA)</span>
+                  <label className="label py-1">
+                    <span className="label-text text-sm">Tarif (FCFA)</span>
+                    <span className="label-text-alt text-xs">Optionnel</span>
                   </label>
                   <input
                     type="number"
                     placeholder="Ex: 150000"
-                    className="input input-bordered w-full"
+                    className="input input-bordered input-sm w-full"
                     value={candidatureForm.tarifPropose}
                     onChange={(e) => setCandidatureForm({ ...candidatureForm, tarifPropose: e.target.value })}
                   />
-                  <label className="label">
-                    <span className="label-text-alt">Optionnel</span>
-                  </label>
                 </div>
                 <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Délai (jours)</span>
+                  <label className="label py-1">
+                    <span className="label-text text-sm">Délai (jours)</span>
+                    <span className="label-text-alt text-xs">Optionnel</span>
                   </label>
                   <input
                     type="number"
                     placeholder="Ex: 14"
-                    className="input input-bordered w-full"
+                    className="input input-bordered input-sm w-full"
                     value={candidatureForm.delaiProposeJours}
                     onChange={(e) => setCandidatureForm({ ...candidatureForm, delaiProposeJours: e.target.value })}
                   />
-                  <label className="label">
-                    <span className="label-text-alt">Optionnel</span>
-                  </label>
                 </div>
               </div>
 
-              <div className="alert alert-info py-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span className="text-xs">
-                  Le propriétaire du projet pourra voir votre profil et vos compétences.
-                </span>
-              </div>
+              <p className="text-xs text-base-content/60 bg-base-200 rounded-lg px-3 py-2">
+                💡 Le propriétaire pourra voir votre profil et compétences.
+              </p>
             </div>
 
-            <div className="modal-action">
+            <div className="modal-action mt-4">
               <button
                 onClick={() => setModalCandidatureOuverte(false)}
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
               >
                 Annuler
               </button>
               <button
                 onClick={soumettreCandidate}
                 disabled={enregistrement}
-                className="btn btn-primary gap-1"
+                className="btn btn-primary btn-sm gap-1"
               >
                 {enregistrement ? (
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="loading loading-spinner loading-xs"></span>
                 ) : (
-                  <Send size={16} />
+                  <Send size={14} />
                 )}
-                Envoyer ma candidature
+                Envoyer
               </button>
             </div>
           </div>
@@ -2054,20 +2110,24 @@ function TacheCard({ tache, onClick }: { tache: Tache; onClick?: () => void }) {
           {/* Avatar expert assigné */}
           {tache.expertAssigneId ? (
             <div className="flex-shrink-0 tooltip tooltip-right" data-tip={`${tache.expertPrenom || ''} ${tache.expertNom || ''}`}>
-              {tache.expertPhotoUrl ? (
+              <div className="relative w-8 h-8">
+                {/* Initiales en arrière-plan (toujours visibles) */}
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <span className="text-white font-semibold text-xs">
+                    {tache.expertPrenom && tache.expertNom
+                      ? `${tache.expertPrenom.charAt(0)}${tache.expertNom.charAt(0)}`.toUpperCase()
+                      : tache.expertNom
+                        ? tache.expertNom.substring(0, 2).toUpperCase()
+                        : '?'}
+                  </span>
+                </div>
+                {/* Photo par-dessus si elle existe */}
                 <img
-                  src={`/api/photos/${tache.expertAssigneId}`}
+                  src={`/api/profil/public/${tache.expertAssigneId}/photo`}
                   alt=""
-                  className="w-8 h-8 rounded-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                  }}
+                  className="absolute inset-0 w-8 h-8 rounded-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
-              ) : null}
-              <div className={`w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center font-semibold text-xs ${tache.expertPhotoUrl ? 'hidden' : ''}`}>
-                {tache.expertPrenom?.charAt(0).toUpperCase() || tache.expertNom?.charAt(0).toUpperCase() || '?'}
-                {tache.expertNom?.charAt(0).toUpperCase() || ''}
               </div>
             </div>
           ) : (

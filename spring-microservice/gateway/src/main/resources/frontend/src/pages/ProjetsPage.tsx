@@ -20,11 +20,11 @@ type OngletActif = 'mes-projets' | 'explorer';
 
 const STATUTS_CONFIG: Record<StatutProjet, { label: string; classe: string }> = {
   BROUILLON: { label: 'Brouillon', classe: 'badge-ghost' },
-  PUBLIE: { label: 'Publié', classe: 'badge-info' },
+  PUBLIE: { label: 'Publié', classe: 'badge-info text-white' },
   EN_COURS: { label: 'En cours', classe: 'badge-warning' },
   EN_PAUSE: { label: 'En pause', classe: 'badge-neutral' },
-  TERMINE: { label: 'Terminé', classe: 'badge-success' },
-  ANNULE: { label: 'Annulé', classe: 'badge-error' },
+  TERMINE: { label: 'Terminé', classe: 'badge-success text-white' },
+  ANNULE: { label: 'Annulé', classe: 'badge-error text-white' },
 };
 
 export default function ProjetsPage() {

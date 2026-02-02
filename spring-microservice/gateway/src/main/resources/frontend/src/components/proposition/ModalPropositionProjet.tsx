@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Loader from '@/components/ui/Loader';
 import { projetService } from '@/services/projet.service';
 import { tacheService } from '@/services/tacheService';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ModalPropositionProjetProps {
   expert: Expert;
@@ -19,7 +20,13 @@ interface ProjetAvecSelection extends ProjetResume {
   expanded: boolean;
 }
 
+// Fonction pour filtrer les tâches disponibles (non assignées et non terminées)
+const filtrerTachesDisponibles = (taches: Tache[]): Tache[] => {
+  return taches.filter(t => !t.expertAssigneId && t.statut !== 'TERMINEE');
+};
+
 export default function ModalPropositionProjet({ expert, isOpen, onClose }: ModalPropositionProjetProps) {
+  const toast = useToast();
   const [projets, setProjets] = useState<ProjetAvecSelection[]>([]);
   const [chargement, setChargement] = useState(true);
   const [envoi, setEnvoi] = useState(false);
@@ -70,8 +77,10 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
     setProjets(projets.map(projet => {
       if (projet.id === projetId) {
         const toutSelectionne = !projet.toutSelectionne;
+        // Ne sélectionner que les tâches disponibles (non assignées et non terminées)
+        const tachesDisponibles = filtrerTachesDisponibles(projet.taches);
         const tachesSelectionnees = toutSelectionne
-          ? new Set(projet.taches.map(t => t.id))
+          ? new Set(tachesDisponibles.map(t => t.id))
           : new Set<number>();
 
         return {
@@ -96,7 +105,9 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
           nouvelleTachesSelectionnees.add(tacheId);
         }
 
-        const toutSelectionne = nouvelleTachesSelectionnees.size === projet.taches.length && projet.taches.length > 0;
+        // Vérifier si toutes les tâches disponibles sont sélectionnées
+        const tachesDisponibles = filtrerTachesDisponibles(projet.taches);
+        const toutSelectionne = nouvelleTachesSelectionnees.size === tachesDisponibles.length && tachesDisponibles.length > 0;
 
         return {
           ...projet,
@@ -115,8 +126,8 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
         projet.tachesSelectionnees.forEach(tacheId => {
           selections.push({ projetId: projet.id, tacheId });
         });
-      } else if (projet.toutSelectionne && projet.taches.length === 0) {
-        // Projet entier sélectionné sans tâches
+      } else if (projet.toutSelectionne && filtrerTachesDisponibles(projet.taches).length === 0) {
+        // Projet entier sélectionné sans tâches disponibles
         selections.push({ projetId: projet.id });
       }
     });
@@ -127,7 +138,7 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
     const selections = obtenirSelections();
 
     if (selections.length === 0) {
-      alert('Veuillez sélectionner au moins un projet ou une tâche');
+      toast.erreur('Veuillez sélectionner au moins un projet ou une tâche');
       return;
     }
 
@@ -142,7 +153,7 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
         message: messagePersonnalise
       });
 
-      alert(`Proposition envoyée à ${expert.prenom} ${expert.nom}`);
+      toast.succes(`Proposition envoyée à ${expert.prenom} ${expert.nom}`);
       onClose();
 
       // Réinitialiser le formulaire
@@ -156,7 +167,7 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
 
     } catch (error) {
       console.error('Erreur lors de l\'envoi de la proposition:', error);
-      alert('Erreur lors de l\'envoi de la proposition');
+      toast.erreur('Erreur lors de l\'envoi de la proposition');
     } finally {
       setEnvoi(false);
     }
@@ -182,14 +193,27 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
             </button>
           </div>
           <div className="mt-3 flex items-center gap-3">
-            <img
-              src={expert.photoUrl}
-              alt={`${expert.prenom} ${expert.nom}`}
-              className="w-12 h-12 rounded-full object-cover"
-            />
+            {/* Photo ou initiales */}
+            <div className="relative flex-shrink-0 w-12 h-12">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {expert.prenom && expert.nom
+                    ? `${expert.prenom.charAt(0)}${expert.nom.charAt(0)}`.toUpperCase()
+                    : expert.nom
+                      ? expert.nom.substring(0, 2).toUpperCase()
+                      : '?'}
+                </span>
+              </div>
+              <img
+                src={`/api/profil/public/${expert.id}/photo`}
+                alt={`${expert.prenom} ${expert.nom}`}
+                className="absolute inset-0 w-12 h-12 rounded-full object-cover"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
+            </div>
             <div>
               <h4 className="font-semibold text-gray-800">{expert.prenom} {expert.nom}</h4>
-              <p className="text-sm text-gray-600">{expert.titre}</p>
+              <p className="text-sm text-gray-600 line-clamp-1">{expert.titre}</p>
             </div>
           </div>
         </div>
@@ -250,17 +274,24 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
                           </label>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600">
-                            {projet.taches.length} tâche{projet.taches.length > 1 ? 's' : ''}
-                          </span>
-                          {projet.taches.length > 0 && (
-                            <button
-                              onClick={() => toggleExpand(projet.id)}
-                              className="text-primary hover:underline text-sm"
-                            >
-                              {projet.expanded ? 'Masquer' : 'Voir'}
-                            </button>
-                          )}
+                          {(() => {
+                            const tachesDisponibles = filtrerTachesDisponibles(projet.taches);
+                            return (
+                              <>
+                                <span className="text-sm text-gray-600">
+                                  {tachesDisponibles.length} tâche{tachesDisponibles.length > 1 ? 's' : ''} disponible{tachesDisponibles.length > 1 ? 's' : ''}
+                                </span>
+                                {tachesDisponibles.length > 0 && (
+                                  <button
+                                    onClick={() => toggleExpand(projet.id)}
+                                    className="text-primary hover:underline text-sm"
+                                  >
+                                    {projet.expanded ? 'Masquer' : 'Voir'}
+                                  </button>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
 
@@ -285,12 +316,12 @@ export default function ModalPropositionProjet({ expert, isOpen, onClose }: Moda
                         </div>
                       </div>
 
-                      {/* Liste des tâches */}
-                      {projet.expanded && projet.taches.length > 0 && (
+                      {/* Liste des tâches disponibles */}
+                      {projet.expanded && filtrerTachesDisponibles(projet.taches).length > 0 && (
                         <div>
-                          <h6 className="font-medium text-gray-700 mb-3">Tâches du projet</h6>
+                          <h6 className="font-medium text-gray-700 mb-3">Tâches disponibles</h6>
                           <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {projet.taches.map((tache) => (
+                            {filtrerTachesDisponibles(projet.taches).map((tache) => (
                               <label
                                 key={tache.id}
                                 className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-50/80

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Compass, Component, Users, Briefcase, MoreHorizontal, ChevronLeft, ChevronRight, ChevronDown, LogOut, LogIn, FileText, MapPin, Award, Search, Inbox, FolderTree, CheckSquare, Microscope, ListTodo, Send } from 'lucide-react';
+import { Home, Component, Users, Briefcase, MoreHorizontal, ChevronLeft, ChevronRight, ChevronDown, LogOut, LogIn, FileText, MapPin, Award, Search, Inbox, FolderTree, CheckSquare, Microscope, ListTodo, Send } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import ModalConnexion from '../auth/ModalConnexion';
 import ThemeCustomizer from '../theme/ThemeCustomizer';
@@ -60,7 +60,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   // Filtrer les menus selon les permissions
   const menuItems = [
     { icon: Home, label: 'Aperçu', path: '/' },
-    { icon: Compass, label: 'Explorer', path: '/explorer' },
+   // { icon: Compass, label: 'Explorer', path: '/explorer' },
     { icon: Search, label: 'Rechercher', path: '/rechercher' },
     // Mon réseau - Réservé aux Experts uniquement
     ...(canManageNetwork ? [{ icon: Users, label: 'Mon réseau', path: '/reseau' }] : []),

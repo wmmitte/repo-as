@@ -10,7 +10,8 @@ import {
   CreerProjetRequest,
   ModifierProjetRequest,
   CreerEtapeRequest,
-  PageResponse
+  PageResponse,
+  Candidature
 } from '../types/projet.types';
 import { fetchWithAuthHandler } from '../utils/authErrorHandler';
 
@@ -300,6 +301,26 @@ class ProjetService {
 
     if (!response.ok) {
       throw new Error(`Erreur lors de la récupération des projets: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  // ==================== CANDIDATURES ====================
+
+  /**
+   * Lister mes candidatures (en tant qu'expert)
+   */
+  async listerMesCandidatures(): Promise<Candidature[]> {
+    const response = await fetchWithAuthHandler('/api/candidatures/mes-candidatures', {
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erreur lors de la récupération des candidatures: ${response.status}`);
     }
 
     return await response.json();

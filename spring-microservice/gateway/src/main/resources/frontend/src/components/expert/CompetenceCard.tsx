@@ -1,5 +1,5 @@
 import { Competence } from '@/types/expert.types';
-import { Star } from 'lucide-react';
+import { Star, Award } from 'lucide-react';
 
 interface CompetenceCardProps {
   competence: Competence;
@@ -7,22 +7,24 @@ interface CompetenceCardProps {
 
 export default function CompetenceCard({ competence }: CompetenceCardProps) {
   return (
-    <div className={`bg-slate-50 border ${competence.favorite ? 'border-warning' : 'border-slate-200'} rounded-lg p-3`}>
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="font-semibold text-gray-900 flex items-center gap-1">
-          {competence.nom}
+    <div className={`bg-white border ${competence.favorite ? 'border-amber-300 bg-amber-50/50' : 'border-gray-100'} rounded-lg px-3 py-2`}>
+      {/* Nom et étoile favorite */}
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <h4 className="font-medium text-gray-900 text-xs line-clamp-1 flex items-center gap-1">
           {competence.favorite && (
-            <Star className="w-4 h-4 fill-warning text-warning" />
+            <Star className="w-3 h-3 fill-amber-500 text-amber-500 flex-shrink-0" />
           )}
+          {competence.nom}
         </h4>
+        {/* Niveau de maîtrise - mini étoiles */}
         {competence.niveauMaitrise && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`w-3 h-3 ${
+                className={`w-2.5 h-2.5 ${
                   i < competence.niveauMaitrise!
-                    ? 'fill-warning text-warning'
+                    ? 'fill-amber-500 text-amber-500'
                     : 'text-gray-300'
                 }`}
               />
@@ -30,31 +32,33 @@ export default function CompetenceCard({ competence }: CompetenceCardProps) {
           </div>
         )}
       </div>
-      
-      <div className="flex flex-wrap gap-2 text-xs">
+
+      {/* Infos compactes */}
+      <div className="flex flex-wrap items-center gap-1.5">
         {competence.anneesExperience !== undefined && competence.anneesExperience > 0 && (
-          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-            Exp.: {competence.anneesExperience} an{competence.anneesExperience > 1 ? 's' : ''}
+          <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+            {competence.anneesExperience} an{competence.anneesExperience > 1 ? 's' : ''}
           </span>
         )}
         {competence.thm && (
-          <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-            THM: {competence.thm.toLocaleString()} FCFA/h
+          <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+            {competence.thm >= 1000
+              ? `${(competence.thm / 1000).toFixed(0)}K`
+              : competence.thm.toLocaleString()}/h
           </span>
         )}
         {competence.nombreProjets !== undefined && competence.nombreProjets > 0 && (
-          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
-            Nbre projet: {competence.nombreProjets}
+          <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+            {competence.nombreProjets} projet{competence.nombreProjets > 1 ? 's' : ''}
+          </span>
+        )}
+        {competence.certifications && (
+          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+            <Award className="w-2.5 h-2.5" />
+            Certifié
           </span>
         )}
       </div>
-      
-      {competence.certifications && (
-        <div className="mt-2 text-xs text-gray-600">
-          <span className="font-medium">Certifications: </span>
-          {competence.certifications}
-        </div>
-      )}
     </div>
   );
 }
